@@ -53,22 +53,23 @@ model{
   #-------------------------------------##
   
   for(i in 1:n.bbs.trans){
-    for(t in 1:n.bbs.years){
+    for(t in 1:n.years){
+      
+      #Detection probability is dependent on covariates
+      logit(p.bbs[i,t]) <- b0 + #could make this have random effects
+        #observer experience - make this a continous variable 
+        #based on observer ID from 1966-onward
+        b[1]*ObserverExp[i,t] #+
+      #b[2]*AreaSampled[i,t] #look at OG paper and figure out how much of grid was 
+      #sampled by each bbs survey - maybe don't include this, might always be the same...
+      
       for(r in 1:n.bbs.points[i,t]){
     
         #bbs raw data:
-        bbs.count[i,t,r] ~ dbin(p.bbs[i,t], N[bbs.grid[i], bbs.year[i]])
-    
-        #Detection probability is dependent on covariates
-        logit(p.bbs[i,t]) <- b0 + #could make this have random effects
-          #observer experience - make this a continous variable 
-          #based on observer ID from 1966-onward
-          b[1]*ObserverExp[i,t] +
-          b[2]*AreaSampled[i,t] #look at OG paper and figure out how much of grid was 
-        #sampled by each bbs survey - maybe don't include this...
-        
+        bbs.count[i,t,r] ~ dbin(p.bbs[i,t], N[bbs.grid[i], t])
+
         #GOODNESS-OF-FIT EVALUATION
-        bbs.count.rep[i,t,r] ~ dbin(p.bbs[i,t], N[bbs.grid[i], bbs.year[i]])
+        bbs.count.rep[i,t,r] ~ dbin(p.bbs[i,t], N[bbs.grid[i], t])
         
         } #bbs rep points
       } #bbs years
@@ -78,16 +79,16 @@ model{
   # eBIRD Observation Model ###
   #-------------------------------------##
   
-  for(i in 1:n.ebird.sites){ #number of grid cells???
-    for(t in 1:n.ebird.years){
+  for(i in 1:n.ebird.grids){ #number of grid cells???
+    for(t in 1:n.years){
       for(r in 1:n.ebird.check[i,t]){
     
     #ebird raw data
-    ebird.count[i,t,r] ~ dbin(p.ebird[i,t,r], N[ebird.grid[i], ebird.year[i]])
+    ebird.count[i,t,r] ~ dbin(p.ebird[i,t,r], N[ebird.grid[i], t])
     
     #Detection probability is dependent on covariates
     logit(p.ebird[i,t,r]) <- c0 + #could make this have random effects, maybe observer ID
-      c1[SurveyType[i,t,r]] +
+      #c1[SurveyType[i,t,r]] +
       c[2]*StartTime[i,t,r] +
       c[3]*Duration[i,t,r] +
       c[4]*Distance[i,t,r] +
@@ -108,7 +109,7 @@ model{
     #doesnt matter when only thinking about one species
     
     #GOODNESS-OF-FIT EVALUATION
-    ebird.count.rep[i,t,r] ~ dbin(p.ebird[i,t,r], N[ebird.grid[i], ebird.year[i]])
+    ebird.count.rep[i,t,r] ~ dbin(p.ebird[i,t,r], N[ebird.grid[i], t])
     
       } #ebird checklists
     } #ebird years
@@ -168,7 +169,7 @@ model{
   #intercept
   b0 ~ dnorm(0, 1E-2)
   #slopes
-  for(i in 1:2){
+  for(i in 1:1){
     b[i] ~ dnorm(0, 1E-2)
   }
   
@@ -180,9 +181,9 @@ model{
   c0 ~ dnorm(0, 1E-2)
   
   #categorical covariate
-  for(i in 2){
-    c1[i] ~ dnorm(0, 1E-2)
-  }
+  # for(i in 2:2){
+  #   c1[i] ~ dnorm(0, 1E-2)
+  # }
   
   #cell-referenced by setting baseline level to 0
   c1[1] <- 0
@@ -205,6 +206,15 @@ model{
   mu.ppt ~ dunif(-10,10)
   sig.ppt ~ dunif(0, 20)
   tau.ppt <- pow(sig.ppt, -2)
+  
+  #-------------------------------------## 
+  # Derived quantities ###
+  #-------------------------------------##
+  
+  for(t in 1:n.years){
+   N.tot[t] <- sum(N[,t]) 
+  }
+
   
   
 }
