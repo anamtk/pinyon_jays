@@ -57,13 +57,17 @@ plot(cones)
 
 #may need to download different data, we got this here:
 #https://prism.oregonstate.edu/recent/
-# grid <- rast(x = here('data',
-#                       'spatial_data',
-#                       'example_grid',
-#                       'PRISM_ppt_stable_4kmM3_2023_bil.bil'))
+grid <- rast(x = here('data',
+                      'spatial_data',
+                      'PRISM_ppt_30yr_normal_4kmM4_all_bil',
+                      'PRISM_ppt_30yr_normal_4kmM4_annual_bil.bil'))
 # 
 # #look at it
 # plot(grid)
+
+grid_df <- terra::as.data.frame(grid,
+                                xy = TRUE,
+                                cells = TRUE)
 
 # Set the CRS for both bird datasets -------------------------------------------
 
