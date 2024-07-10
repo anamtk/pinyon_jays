@@ -118,7 +118,7 @@ model{
         
         #Detection probability is dependent on covariates
         logit(p.ebird[t,i,r]) <- c0 + #could make this have random effects, maybe observer ID
-          #c1[SurveyType[t,i,r]] +
+          c1[SurveyType[t,i,r]] +
           c[2]*StartTime[t,i,r] +
           c[3]*Duration[t,i,r] +
           c[4]*Distance[t,i,r] +
@@ -250,9 +250,9 @@ model{
   c0 ~ dnorm(0, 1E-2)
   
   #categorical covariate
-  # for(i in 2:2){
-  #   c1[i] ~ dnorm(0, 1E-2)
-  # }
+  for(i in 2:2){
+    c1[i] ~ dnorm(0, 1E-2)
+  }
   
   #cell-referenced by setting baseline level to 0
   c1[1] <- 0

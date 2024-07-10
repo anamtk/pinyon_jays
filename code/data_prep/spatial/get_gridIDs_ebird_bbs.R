@@ -46,23 +46,24 @@ bbs2 <- bbs %>%
 
 # Load cone dataset -------------------------------------------------------
 
-cones <- read_xlsx(here('data',
-                        'spatial_data',
-                        'cones.xlsx'))
+cones <- terra::rast(here("data",
+                          "spatial_data", 
+                          "masting_data",
+                          "full_pied_masting.tif"))
+plot(cones)
 
-cones <- cones %>%
-  mutate(Longitude = -Longitude)
+
 # Read in example grid ----------------------------------------------------
 
 #may need to download different data, we got this here:
 #https://prism.oregonstate.edu/recent/
-grid <- rast(x = here('data',
-                      'spatial_data',
-                      'example_grid',
-                      'PRISM_ppt_stable_4kmM3_2023_bil.bil'))
-
-#look at it
-plot(grid)
+# grid <- rast(x = here('data',
+#                       'spatial_data',
+#                       'example_grid',
+#                       'PRISM_ppt_stable_4kmM3_2023_bil.bil'))
+# 
+# #look at it
+# plot(grid)
 
 # Set the CRS for both bird datasets -------------------------------------------
 
@@ -79,43 +80,58 @@ ebird_spatial <- st_as_sf(ebird, coords = c("longitude", "latitude"),
 bbs_spatial <- st_as_sf(bbs2, coords = c("Longitude", "Latitude"),
                         crs = st_crs(crs_wgs))
 
-cones_spatial <- st_as_sf(cones, coords = c("Longitude", "Latitude"),
-                          crs = st_crs(crs_wgs))
-
 # Extract cell ID from raster ------------------------------------------------------------
 
 # Use template raster and ebird pts to get cell IDs
-ebird_cellIDs <- terra::extract(grid, vect(ebird_spatial), cells = T)
+ebird_cellIDs <- terra::extract(cones, vect(ebird_spatial), cells = T)
 
 # Add as column to ebird data
 ebird$cellID <- ebird_cellIDs$cell
 
+#some ebird observations don't have masting data cells, so I'll remove those
+ebird2 <- ebird %>%
+  filter(!is.na(cellID))
+
 #BBS
-bbs_cellIDs <- terra::extract(grid, vect(bbs_spatial), cells = T)
+bbs_cellIDs <- terra::extract(cones, vect(bbs_spatial), cells = T)
 
 bbs2$cellID <- bbs_cellIDs$cell
 
-#cones
-cone_cellIDs <- terra::extract(grid, vect(cones_spatial), cells = T)
 
-cones$cellID <- cone_cellIDs$cell
+# Turn raster into df with cell IDs ---------------------------------------
+
+cone_df <- terra::as.data.frame(cones, 
+                                xy = TRUE,
+                                cells = TRUE)
+
+
+# Filter datasets for cells with cone data --------------------------------
+
+ids <- cone_df %>%
+  distinct(cell)
+
+ebird3 <- ebird2 %>%
+  filter(cellID %in% ids$cell)
+
+bbs3 <- bbs2 %>%
+  filter(cellID %in% ids$cell)
+
 # Export ------------------------------------------------------------------
 
-write.csv(ebird, here('data',
+write.csv(ebird3, here('data',
                       'ebird_data',
                       'cleaned_data',
                       'all_ebird_data_cellIDs.csv'))
 
-write.csv(bbs2, here('data',
+write.csv(bbs3, here('data',
                      'bbs_data',
                      'cleaned_data',
                      'pjay_data_co_nm_cellIDs.csv'))
 
-write.csv(cones, here('data',
-                     'spatial_data',
-                     'cleaned_data',
-                     'cones_cellIDs.csv'))
-
+write.csv(cone_df, here('data',
+                        'spatial_data',
+                        'cleaned_data',
+                        'cone_masting_df.csv'))
 
 #Get the unique cell IDs that have data - we will just
 #model these cells since it is MUCH smaller than the total 
@@ -139,20 +155,20 @@ write.csv(cones, here('data',
 
 # Look at stats for bbs and ebird datasets --------------------------------
 
-#there are 10275 unique 4km cells
-ebird %>%
+#there are 10264 unique 4km cells
+ebird2 %>%
   distinct(cellID) %>%
   tally()
 
 #there are 1-3135 observations in each cell - will probs want
 #to subsample in these more populated cells
-ebird %>%
+ebird2 %>%
   group_by(cellID) %>%
   tally() %>%
-  arrange(n)
+  arrange(desc(n))
 
 #1-599 in a single cell in a given year - will want to subset these
-ebird %>%
+ebird2 %>%
   group_by(year, cellID) %>%
   tally() %>%
   arrange(desc(n))
@@ -172,7 +188,7 @@ bbs2 %>%
   summarise(min = min(cellID),
             max = max(cellID))
 
-ebird %>%
+ebird2 %>%
   summarise(min = min(cellID),
             max = max(cellID))
 

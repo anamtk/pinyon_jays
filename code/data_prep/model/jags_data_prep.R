@@ -7,7 +7,7 @@
 
 # Load packages -----------------------------------------------------------
 
-package.list <- c("here", "tidyverse")
+package.list <- c("here", "tidyverse", 'data.table')
 
 ## Installing them if they aren't already on the computer
 new.packages <- package.list[!(package.list %in% installed.packages()[,"Package"])]
@@ -35,7 +35,10 @@ bbs <- read.csv(here('data',
 #                          'spatial_data',
 #                          'cleaned_data',
 #                          'all_cellIDs.csv'))
-
+cones <- read.csv(here('data',
+                       'spatial_data',
+                       'cleaned_data',
+                       'cone_masting_df.csv'))
 
 # Subset ebird data -------------------------------------------------------
 
@@ -105,7 +108,7 @@ all_cells <- ebird_cells %>%
   #ones we extracted, since this will be easier to index
   #in the model than random numbers taht aren't consecutive
   mutate(numID = 1:n())
-#9411 - still a lot but much smaller than 300,000+!
+#2733 - that have ebird and/or bbs AND cone data
 
 # Data objects for jags ---------------------------------------------------
 
@@ -117,7 +120,55 @@ n.grids <- nrow(all_cells)
 n.years <- length(2010:2022)
 
 #Covariates(Eventually)
-# n.lag
+n.lag <- 5 #number of lags for each covariate
+
+#Evnrionmental covariates
+cones2 <- cones %>%
+  #get only cell IDs that overlap with bird data
+  filter(cell %in% all_cells$cellID) %>%
+  dplyr::select(cell, X2005:X2022) %>%
+  pivot_longer(X2005:X2022,
+               names_to = "year",
+               values_to = "cones") %>%
+  mutate(year = str_sub(year, 2, nchar(year))) %>%
+  mutate(year = as.numeric(year)) %>%
+  mutate(yearID = as.numeric(as.factor(year)) - 5) %>%
+  left_join(all_cells, by = c("cell" = "cellID")) %>%
+  mutate(cones_l1 = scale(cones)) %>%
+  group_by(cell) %>% 
+  arrange(cell, year) %>%
+  #this creates a column for every lag 1:4 years ago
+  do(data.frame(., setNames(shift(.$cones_l1, 1:4),
+                            c("cones_l2", "cones_l3", "cones_l4", "cones_l5")))) %>%
+  ungroup() %>%
+  filter(yearID >= 1) %>%
+  dplyr::select(yearID, numID, cones_l1:cones_l5) %>%
+  pivot_longer(cones_l1:cones_l5,
+               names_to = 'lagID',
+               values_to = "cones") %>%
+  mutate(lagID = str_sub(lagID, 8, nchar(lagID))) %>%
+  mutate(lagID = as.numeric(lagID))
+
+
+#now, generate IDs for the for loop where
+# we will populate the array
+conegrid <- cones2$numID
+coneyear <- cones2$yearID
+conelag <- cones2$lagID
+
+#make a blank array
+Cone <- array(data = NA, dim = c(n.grids, n.years, n.lag))
+
+#fill taht array based on the values in those columns
+for(i in 1:dim(cones2)[1]){ #dim[1] = n.rows
+  #using info from the dataframe on the year, grid,
+  #and lag ID of row i 
+  # populate that space in the array with the column in
+  # the dataframe that corresponds to the cone data
+  # for that yearxgridxlag combo
+  Cone[conegrid[i], coneyear[i], conelag[i]] <- as.numeric(cones2[i,4])
+}
+
 # Cone[i,t,l]
 # Temp[i,t,l]
 # PPT[i,t,l]
@@ -249,18 +300,6 @@ n.ebird.check <- ebird3 %>%
               values_from = n) %>%
   column_to_rownames(var = 'year') %>%
   as.matrix()
-  
-ebird.grid[t,i]
-
-left_join(bbs.trans.id.yr, by = c("StateNum", "Route", "Year")) %>%
-  distinct(StateNum, Route, cellID, Year, yrtransID) %>%
-  left_join(all_cells, by = "cellID") %>%
-  dplyr::select(Year, yrtransID, numID) %>%
-  pivot_wider(names_from = yrtransID,
-              values_from = numID) %>%
-  arrange(Year) %>%
-  column_to_rownames(var = 'Year') %>%
-  as.matrix()
 
 #[t,i] - this is the reference main grid ID 
 #to link each ebird observation back to
@@ -319,17 +358,90 @@ for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
   ebird.count[yr2[i], grid[i], check[i]] <- as.numeric(ebird_index_df[i,1])
 }
 
+#do the same for the covariates below:
+
 SurveyType <- array(data = NA, dim = c(n.years, max(n.ebird.grids), 2))
+
+#fill taht array based on the values in those columns
+for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
+  SurveyType[yr2[i], grid[i], check[i]] <- as.numeric(ebird_index_df[i,13])
+}
 
 StartTime <- array(data = NA, dim = c(n.years, max(n.ebird.grids), 2))
 
+#fill taht array based on the values in those columns
+for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
+  StartTime[yr2[i], grid[i], check[i]] <- as.numeric(ebird_index_df[i,14])
+}
+
 Duration <- array(data = NA, dim = c(n.years, max(n.ebird.grids), 2))
+
+#fill taht array based on the values in those columns
+for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
+  Duration[yr2[i], grid[i], check[i]] <- as.numeric(ebird_index_df[i,15])
+}
 
 Distance <- array(data = NA, dim = c(n.years, max(n.ebird.grids), 2))
 
-NumObservers <- array(data = NA, dim = c(n.years, max(n.ebird.grids), 2))
+#fill taht array based on the values in those columns
+for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
+  Distance[yr2[i], grid[i], check[i]] <- as.numeric(ebird_index_df[i,16])
+}
 
+NumObservers <- array(data = NA, dim = c(n.years, max(n.ebird.grids), 2))
+#fill taht array based on the values in those columns
+for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
+  NumObservers[yr2[i], grid[i], check[i]] <- as.numeric(ebird_index_df[i,17])
+}
 
 # Values for initials -----------------------------------------------------
 
 #need a starting value for N[i,t]
+
+maxb <- max(bbs.count, na.rm = T)
+maxe <- max(ebird.count, na.rm=T)
+nmax <- max(c(maxb, maxe))
+
+N <- matrix(nmax, nrow =n.grids, ncol = n.years)
+
+# Compile and export ------------------------------------------------------
+
+data_list <- list(#latent N loop:
+                  n.grids = n.grids,
+                  n.years = n.years,
+                  n.lag = n.lag,
+                  Cone = Cone,
+                  #Temp = Temp,
+                  #PPT = PPT,
+                  #BBS loop
+                  n.bbs.years = n.bbs.years,
+                  n.bbs.trans = n.bbs.trans,
+                  ObserverExp = ObserverExp,
+                  n.bbs.points = n.bbs.points,
+                  bbs.count = bbs.count,
+                  bbs.grid = bbs.grid,
+                  bbs.year = bbs.year,
+                  #ebird loop
+                  n.ebird.grids = n.ebird.grids,
+                  n.ebird.check = n.ebird.check,
+                  ebird.count = ebird.count,
+                  ebird.grid = ebird.grid,
+                  SurveyType = SurveyType,
+                  StartTime = StartTime,
+                  Duration = Duration,
+                  Distance = Distance,
+                  NumObservers = NumObservers)
+
+saveRDS(data_list, here('data',
+                        'jags_input_data',
+                        'bbs_ebird_joint_data_list.RDS'))
+
+inits_list <- list(list(N = N),
+                   list(N = N),
+                   list(N = N))
+
+saveRDS(inits_list, here('data',
+                        'jags_input_data',
+                        'bbs_ebird_joint_init_list.RDS'))
+
+
