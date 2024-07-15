@@ -119,9 +119,6 @@ all_cells <- ebird_cells %>%
 n.grids <- nrow(all_cells)
 n.years <- length(2010:2022)
 
-#Covariates(Eventually)
-n.lag <- 5 #number of lags for each covariate
-
 #Evnrionmental covariates
 cones2 <- cones %>%
   #get only cell IDs that overlap with bird data
@@ -134,21 +131,26 @@ cones2 <- cones %>%
   mutate(year = as.numeric(year)) %>%
   mutate(yearID = as.numeric(as.factor(year)) - 5) %>%
   left_join(all_cells, by = c("cell" = "cellID")) %>%
-  mutate(cones_l1 = scale(cones)) %>%
+  mutate(cones_0 = scale(cones)) %>%
   group_by(cell) %>% 
   arrange(cell, year) %>%
   #this creates a column for every lag 1:4 years ago
-  do(data.frame(., setNames(shift(.$cones_l1, 1:4),
-                            c("cones_l2", "cones_l3", "cones_l4", "cones_l5")))) %>%
+  do(data.frame(., setNames(shift(.$cones_0, -6:6),
+                            c('cones_l1', 'cones_l2', 'cones_l3', 'cones_l4',
+                              "cones_l5", "cones_l6", "cones_l7", 'cones_l8',
+                              'cones_l9', 'cones_l10', 'cones_l11', 'cones_l12',
+                              'cones_l13')))) %>%
   ungroup() %>%
   filter(yearID >= 1) %>%
-  dplyr::select(yearID, numID, cones_l1:cones_l5) %>%
-  pivot_longer(cones_l1:cones_l5,
+  dplyr::select(yearID, numID, cones_l1:cones_l13) %>%
+  pivot_longer(cones_l1:cones_l13,
                names_to = 'lagID',
                values_to = "cones") %>%
   mutate(lagID = str_sub(lagID, 8, nchar(lagID))) %>%
   mutate(lagID = as.numeric(lagID))
 
+#Covariates(Eventually)
+n.lag <- max(cones2$lagID) #number of lags for each covariate
 
 #now, generate IDs for the for loop where
 # we will populate the array

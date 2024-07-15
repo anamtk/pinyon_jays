@@ -34,7 +34,7 @@ model{
       #PPTTemp[i,t,l] <- PPT[i,t,l]*wC[l]
       
       #any missing data can be imputed
-      #Cone[i,t,l] ~ dnorm(mu.cone, tau.cone)
+      Cone[i,t,l] ~ dnorm(mu.cone, tau.cone)
       #Temp[i,t,l] ~ dnorm(mu.temp, tau.temp)
       #PPT[i,t,l] ~ dnorm(mu.ppt, tau.ppt)
     }
