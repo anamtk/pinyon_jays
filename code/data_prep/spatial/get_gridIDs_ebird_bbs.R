@@ -53,21 +53,31 @@ cones <- terra::rast(here("data",
 plot(cones)
 
 
-# Read in example grid ----------------------------------------------------
 
-#may need to download different data, we got this here:
-#https://prism.oregonstate.edu/recent/
-grid <- rast(x = here('data',
-                      'spatial_data',
-                      'PRISM_ppt_30yr_normal_4kmM4_all_bil',
-                      'PRISM_ppt_30yr_normal_4kmM4_annual_bil.bil'))
-# 
-# #look at it
-# plot(grid)
+# Load ppt and temp datasets ----------------------------------------------
 
-grid_df <- terra::as.data.frame(grid,
-                                xy = TRUE,
-                                cells = TRUE)
+pptrastlist <- list.files(path = here('data',
+                                      'spatial_data',
+                                      'prism_ppt'), pattern='.bil$', 
+                          recursive = T, all.files= T, full.names= T)
+
+ppt_rast <- terra::rast(pptrastlist)
+
+ppt_df <- terra::as.data.frame(ppt_rast, 
+                               xy = TRUE,
+                               cells = TRUE)
+
+#temperature
+temprastlist <- list.files(path = here('data',
+                                      'spatial_data',
+                                      'prism_temp'), pattern='.bil$', 
+                          recursive = T, all.files= T, full.names= T)
+
+temp_rast <- terra::rast(temprastlist)
+
+temp_df <- terra::as.data.frame(temp_rast, 
+                               xy = TRUE,
+                               cells = TRUE)
 
 # Set the CRS for both bird datasets -------------------------------------------
 
@@ -86,6 +96,7 @@ bbs_spatial <- st_as_sf(bbs2, coords = c("Longitude", "Latitude"),
 
 # Extract cell ID from raster ------------------------------------------------------------
 
+##EBIRD
 # Use template raster and ebird pts to get cell IDs
 ebird_cellIDs <- terra::extract(cones, vect(ebird_spatial), cells = T)
 
@@ -96,13 +107,34 @@ ebird$cellID <- ebird_cellIDs$cell
 ebird2 <- ebird %>%
   filter(!is.na(cellID))
 
-#BBS
+##BBS
 bbs_cellIDs <- terra::extract(cones, vect(bbs_spatial), cells = T)
 
 bbs2$cellID <- bbs_cellIDs$cell
 
+##PPT and TEMP
+ppt_points <- ppt_df %>%
+  dplyr::select(x, y)
 
-# Turn raster into df with cell IDs ---------------------------------------
+ppt_spatial <- st_as_sf(ppt_points, coords = c("x", "y"),
+                        crs = st_crs(crs_wgs))
+
+ppt_cellIDs <- terra::extract(cones, vect(ppt_spatial), cells = T)
+
+ppt_df$cellID <- ppt_cellIDs$cell
+
+#temp
+temp_points <- temp_df %>%
+  dplyr::select(x, y)
+
+temp_spatial <- st_as_sf(temp_points, coords = c("x", "y"),
+                         crs = st_crs(crs_wgs))
+
+temp_cellIDs <- terra::extract(cones, vect(temp_spatial), cells = T)
+
+temp_df$cellID <- temp_cellIDs$cell
+
+# Turn cone raster into df with cell IDs ---------------------------------------
 
 cone_df <- terra::as.data.frame(cones, 
                                 xy = TRUE,
@@ -120,6 +152,15 @@ ebird3 <- ebird2 %>%
 bbs3 <- bbs2 %>%
   filter(cellID %in% ids$cell)
 
+ppt_df2 <- ppt_df %>%
+  filter(cellID %in% ids$cell) %>%
+  dplyr::select(-cell)
+
+temp_df2 <- temp_df %>%
+  filter(cellID %in% ids$cell) %>%
+  dplyr::select(-cell)
+
+
 # Export ------------------------------------------------------------------
 
 write.csv(ebird3, here('data',
@@ -136,6 +177,16 @@ write.csv(cone_df, here('data',
                         'spatial_data',
                         'cleaned_data',
                         'cone_masting_df.csv'))
+
+write.csv(temp_df2, here('data',
+                         'spatial_data',
+                         'cleaned_data',
+                         'temp_data_df.csv'))
+
+write.csv(ppt_df2, here('data',
+                         'spatial_data',
+                         'cleaned_data',
+                         'ppt_data_df.csv'))
 
 #Get the unique cell IDs that have data - we will just
 #model these cells since it is MUCH smaller than the total 
