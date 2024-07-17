@@ -79,6 +79,18 @@ temp_df <- terra::as.data.frame(temp_rast,
                                xy = TRUE,
                                cells = TRUE)
 
+#vpd 
+vpdrastlist <- list.files(path = here('data',
+                                       'spatial_data',
+                                       'prism_vpd'), pattern='.bil$', 
+                           recursive = T, all.files= T, full.names= T)
+
+vpd_rast <- terra::rast(vpdrastlist)
+
+vpd_df <- terra::as.data.frame(vpd_rast, 
+                                xy = TRUE,
+                                cells = TRUE)
+
 # Set the CRS for both bird datasets -------------------------------------------
 
 #these data are in WGS84, so I'll create this crs to call later
@@ -134,6 +146,17 @@ temp_cellIDs <- terra::extract(cones, vect(temp_spatial), cells = T)
 
 temp_df$cellID <- temp_cellIDs$cell
 
+#vpd
+vpd_points <- vpd_df %>%
+  dplyr::select(x, y)
+
+vpd_spatial <- st_as_sf(vpd_points, coords = c("x", "y"),
+                         crs = st_crs(crs_wgs))
+
+vpd_cellIDs <- terra::extract(cones, vect(vpd_spatial), cells = T)
+
+vpd_df$cellID <- vpd_cellIDs$cell
+
 # Turn cone raster into df with cell IDs ---------------------------------------
 
 cone_df <- terra::as.data.frame(cones, 
@@ -160,6 +183,9 @@ temp_df2 <- temp_df %>%
   filter(cellID %in% ids$cell) %>%
   dplyr::select(-cell)
 
+vpd_df2 <- vpd_df %>%
+  filter(cellID %in% ids$cell) %>%
+  dplyr::select(-cell)
 
 # Export ------------------------------------------------------------------
 
@@ -187,6 +213,11 @@ write.csv(ppt_df2, here('data',
                          'spatial_data',
                          'cleaned_data',
                          'ppt_data_df.csv'))
+
+write.csv(vpd_df2, here('data',
+                        'spatial_data',
+                        'cleaned_data',
+                        'vpd_data_df.csv'))
 
 #Get the unique cell IDs that have data - we will just
 #model these cells since it is MUCH smaller than the total 

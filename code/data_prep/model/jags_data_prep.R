@@ -50,6 +50,11 @@ temp <- read.csv(here('data',
                       'cleaned_data',
                       'temp_data_df.csv'))
 
+vpd <- read.csv(here('data',
+                     'spatial_data',
+                     'cleaned_data',
+                     'vpd_data_df.csv'))
+
 # Subset ebird data -------------------------------------------------------
 
 #this paper: 
@@ -134,8 +139,8 @@ n.years <- length(2010:2022)
 cones2 <- cones %>%
   #get only cell IDs that overlap with bird data
   filter(cell %in% all_cells$cellID) %>%
-  dplyr::select(cell, X2005:X2022) %>%
-  pivot_longer(X2005:X2022,
+  dplyr::select(cell, X2005:X2023) %>%
+  pivot_longer(X2005:X2023,
                names_to = "year",
                values_to = "cones") %>%
   mutate(year = str_sub(year, 2, nchar(year))) %>%
@@ -193,37 +198,31 @@ for(i in 1:dim(cones2)[1]){ #dim[1] = n.rows
 temp2 <- temp %>%
   #get only cell IDs that overlap with bird data
   filter(cellID %in% all_cells$cellID) %>%
-  dplyr::select(cellID, PRISM_tmean_stable_4kmM3_2005_bil:PRISM_tmean_stable_4kmM3_2022_bil) %>%
-  pivot_longer(PRISM_tmean_stable_4kmM3_2005_bil:PRISM_tmean_stable_4kmM3_2022_bil,
+  dplyr::select(cellID, PRISM_tmean_stable_4kmM3_2005_bil:PRISM_tmean_stable_4kmM3_2023_bil) %>%
+  pivot_longer(PRISM_tmean_stable_4kmM3_2005_bil:PRISM_tmean_stable_4kmM3_2023_bil,
                names_to = "year",
-               values_to = "tmean") %>%
+               values_to = "tmean_l1") %>%
   mutate(year = str_sub(year, 26, (nchar(year)-4))) %>%
   mutate(year = as.numeric(year)) %>%
   mutate(yearID = as.numeric(as.factor(year)) - 5) %>%
   left_join(all_cells, by = c("cellID")) %>%
-  mutate(tmean = scale(tmean)) %>%
+  mutate(tmean_l1 = scale(tmean_l1)) %>%
   group_by(cellID) %>% 
   arrange(cellID, year) %>%
-  #this creates a column for every lag 3 years previous,
-  do(data.frame(., setNames(shift(.$tmean, 1:3),
-                            c('tmean_l1', 'tmean_l2', 'tmean_l3')))) %>%
-  #this creates a column for every 3 future years
-  do(data.frame(., setNames(shift(.$tmean, 1:3, type = "lead"),
-                            c('tmean_n1', 'tmean_n2', 'tmean_n3')))) %>%
+  #this creates a column for every lag 5 years previous,
+  do(data.frame(., setNames(shift(.$tmean_l1, 1:5),
+                            c('tmean_l2', 'tmean_l3', 'tmean_l4',
+                              'tmean_l5', 'tmean_l6')))) %>%
   ungroup() %>%
   filter(yearID >= 1) %>%
-  dplyr::select(yearID, numID, tmean_l1:tmean_l3, tmean, 
-                tmean_n1:tmean_n3) %>%
-  pivot_longer(tmean_l1:tmean_n3,
+  dplyr::select(yearID, numID, tmean_l1:tmean_l6) %>%
+  pivot_longer(tmean_l1:tmean_l6,
                names_to = 'lag',
                values_to = "tmean") %>%
-  mutate(lagID = case_when(lag == 'tmean_l3' ~ 1,
-                           lag == 'tmean_l2' ~ 2,
-                           lag == 'tmean_l1' ~ 3,
-                           lag == "tmean" ~ 4,
-                           lag == 'tmean_n1' ~ 5,
-                           lag == 'tmean_n2' ~ 6,
-                           lag == 'tmean_n3' ~ 7))
+  mutate(lagID = str_sub(lag, 8, nchar(lag))) %>%
+  mutate(lagID = as.numeric(lagID)) %>%
+  dplyr::select(yearID, numID, lagID, tmean) %>%
+  filter(yearID < 14)
 
 #now, generate IDs for the for loop where
 # we will populate the array
@@ -249,37 +248,31 @@ for(i in 1:dim(temp2)[1]){ #dim[1] = n.rows
 ppt2 <- ppt %>%
   #get only cell IDs that overlap with bird data
   filter(cellID %in% all_cells$cellID) %>%
-  dplyr::select(cellID, PRISM_ppt_stable_4kmM3_2005_bil:PRISM_ppt_stable_4kmM3_2022_bil) %>%
-  pivot_longer(PRISM_ppt_stable_4kmM3_2005_bil:PRISM_ppt_stable_4kmM3_2022_bil,
+  dplyr::select(cellID, PRISM_ppt_stable_4kmM3_2005_bil:PRISM_ppt_stable_4kmM3_2023_bil) %>%
+  pivot_longer(PRISM_ppt_stable_4kmM3_2005_bil:PRISM_ppt_stable_4kmM3_2023_bil,
                names_to = "year",
-               values_to = "ppt") %>%
+               values_to = "ppt_l1") %>%
   mutate(year = str_sub(year, 24, (nchar(year)-4))) %>%
   mutate(year = as.numeric(year)) %>%
   mutate(yearID = as.numeric(as.factor(year)) - 5) %>%
   left_join(all_cells, by = c("cellID")) %>%
-  mutate(ppt = scale(ppt)) %>%
+  mutate(ppt_l1 = scale(ppt_l1)) %>%
   group_by(cellID) %>% 
   arrange(cellID, year) %>%
-  #this creates a column for every lag 3 years previous,
-  do(data.frame(., setNames(shift(.$ppt, 1:3),
-                            c('ppt_l1', 'ppt_l2', 'ppt_l3')))) %>%
-  #this creates a column for every 3 future years
-  do(data.frame(., setNames(shift(.$ppt, 1:3, type = "lead"),
-                            c('ppt_n1', 'ppt_n2', 'ppt_n3')))) %>%
+  #this creates a column for every lag 5 years previous,
+  do(data.frame(., setNames(shift(.$ppt_l1, 1:5),
+                            c('ppt_l2', 'ppt_l3', 'ppt_l4',
+                              'ppt_l5', 'ppt_l6')))) %>%
   ungroup() %>%
   filter(yearID >= 1) %>%
-  dplyr::select(yearID, numID, ppt_l1:ppt_l3, ppt, 
-                ppt_n1:ppt_n3) %>%
-  pivot_longer(ppt_l1:ppt_n3,
+  dplyr::select(yearID, numID, ppt_l1:ppt_l6) %>%
+  pivot_longer(ppt_l1:ppt_l6,
                names_to = 'lag',
                values_to = "ppt") %>%
-  mutate(lagID = case_when(lag == 'ppt_l3' ~ 1,
-                           lag == 'ppt_l2' ~ 2,
-                           lag == 'ppt_l1' ~ 3,
-                           lag == "ppt" ~ 4,
-                           lag == 'ppt_n1' ~ 5,
-                           lag == 'ppt_n2' ~ 6,
-                           lag == 'ppt_n3' ~ 7))
+  mutate(lagID = str_sub(lag, 6, nchar(lag))) %>%
+  mutate(lagID = as.numeric(lagID)) %>%
+  dplyr::select(yearID, numID, lagID, ppt) %>%
+  filter(yearID < 14)
 
 #now, generate IDs for the for loop where
 # we will populate the array
@@ -298,6 +291,56 @@ for(i in 1:dim(ppt2)[1]){ #dim[1] = n.rows
   # the dataframe that corresponds to the cone data
   # for that yearxgridxlag combo
   PPT[pptgrid[i], pptyear[i], pptlag[i]] <- as.numeric(ppt2[i,4])
+}
+
+#VPD
+
+vpd2 <- vpd %>%
+  #get only cell IDs that overlap with bird data
+  filter(cellID %in% all_cells$cellID) %>%
+  dplyr::select(cellID, PRISM_vpdmax_stable_4kmM3_2005_bil:PRISM_vpdmax_stable_4kmM3_2023_bil) %>%
+  pivot_longer(PRISM_vpdmax_stable_4kmM3_2005_bil:PRISM_vpdmax_stable_4kmM3_2023_bil,
+               names_to = "year",
+               values_to = "vpd_l1") %>%
+  mutate(year = str_sub(year, 27, (nchar(year)-4))) %>%
+  mutate(year = as.numeric(year)) %>%
+  mutate(yearID = as.numeric(as.factor(year)) - 5) %>%
+  left_join(all_cells, by = c("cellID")) %>%
+  mutate(vpd_l1 = scale(vpd_l1)) %>%
+  group_by(cellID) %>% 
+  arrange(cellID, year) %>%
+  #this creates a column for every lag 5 years previous,
+  do(data.frame(., setNames(shift(.$vpd_l1, 1:5),
+                            c('vpd_l2', 'vpd_l3', 'vpd_l4',
+                              'vpd_l5', 'vpd_l6')))) %>%
+  ungroup() %>%
+  filter(yearID >= 1) %>%
+  dplyr::select(yearID, numID, vpd_l1:vpd_l6) %>%
+  pivot_longer(vpd_l1:vpd_l6,
+               names_to = 'lag',
+               values_to = "vpd") %>%
+  mutate(lagID = str_sub(lag, 6, nchar(lag))) %>%
+  mutate(lagID = as.numeric(lagID)) %>%
+  dplyr::select(yearID, numID, lagID, vpd) %>%
+  filter(yearID < 14)
+
+#now, generate IDs for the for loop where
+# we will populate the array
+vpdgrid <- vpd2$numID
+vpdyear <- vpd2$yearID
+vpdlag <- vpd2$lagID
+
+#make a blank array
+VPD <- array(data = NA, dim = c(n.grids, n.years, n.lag))
+
+#fill taht array based on the values in those columns
+for(i in 1:dim(vpd2)[1]){ #dim[1] = n.rows
+  #using info from the dataframe on the year, grid,
+  #and lag ID of row i 
+  # populate that space in the array with the column in
+  # the dataframe that corresponds to the cone data
+  # for that yearxgridxlag combo
+  VPD[vpdgrid[i], vpdyear[i], vpdlag[i]] <- as.numeric(vpd2[i,4])
 }
 
 # BBS data prep -----------------------------------------------------------
@@ -540,6 +583,7 @@ data_list <- list(#latent N loop:
                   Cone = Cone,
                   Temp = Temp,
                   PPT = PPT,
+                  VPD = VPD,
                   #BBS loop
                   n.bbs.years = n.bbs.years,
                   n.bbs.trans = n.bbs.trans,

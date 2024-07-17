@@ -16,27 +16,31 @@ model{
     #lambda is based on a likelihood with SAM components
     log(lambda[i,t]) <- a0 + #could make this have random effects
       a[1]*AntCone[i,t] +
-      a[2]*AntTemp[i,t] +
-      a[3]*AntPPT[i,t] #would PPT be highly correlated with cones??
+      a[2]*AntVPD[i,t]
+      #a[2]*AntTemp[i,t] +
+      #a[3]*AntPPT[i,t] #would PPT be highly correlated with cones??
     
     #-------------------------------------## 
     # SAM summing ###
     #-------------------------------------##
     AntCone[i,t] <- sum(ConeTemp[i,t,])
-    AntTemp[i,t] <- sum(TempTemp[i,t,])
-    AntPPT[i,t] <- sum(PPTTemp[i,t,]) #would PPT be highly correlated with cones??
+    AntVPD[i,t] <- sum(VPDTemp[i,t,])
+    # AntTemp[i,t] <- sum(TempTemp[i,t,])
+    # AntPPT[i,t] <- sum(PPTTemp[i,t,]) #would PPT be highly correlated with cones??
     
     #weight the lags for each covariate based on
     #the lag weight for each lag
     for(l in 1:n.lag){
       ConeTemp[i,t,l] <- Cone[i,t,l]*wA[l]
-      TempTemp[i,t,l] <- Temp[i,t,l]*wB[l]
-      PPTTemp[i,t,l] <- PPT[i,t,l]*wC[l]
+      VPDTemp[i,t,l] <- VPD[i,t,l]*wB[l]
+      # TempTemp[i,t,l] <- Temp[i,t,l]*wB[l]
+      # PPTTemp[i,t,l] <- PPT[i,t,l]*wC[l]
       
       #any missing data can be imputed
       Cone[i,t,l] ~ dnorm(mu.cone, tau.cone)
-      Temp[i,t,l] ~ dnorm(mu.temp, tau.temp)
-      PPT[i,t,l] ~ dnorm(mu.ppt, tau.ppt)
+      VPD[i,t,l] ~ dnorm(mu.vpd, tau.vpd)
+      # Temp[i,t,l] ~ dnorm(mu.temp, tau.temp)
+      # PPT[i,t,l] ~ dnorm(mu.ppt, tau.ppt)
     }
     
     #would it be better to do a "time since masting year" covariate? dunno
@@ -194,7 +198,7 @@ model{
   
   #intercept and slope parameters
   a0 ~ dnorm(0, 1E-2)
-  for(i in 1:3){
+  for(i in 1:2){
     a[i] ~ dnorm(0, 1E-2)
   }
 
@@ -204,7 +208,7 @@ model{
   #see Ogle et al. 2015 SAM model paper in Ecology Letters
   sumA <- sum(deltaA[])
   sumB <- sum(deltaB[])
-  sumC <- sum(deltaC[])
+  #sumC <- sum(deltaC[])
   
   for(l in 1:n.lag){
     #weights for cone lags
@@ -214,19 +218,19 @@ model{
     #derived quantity of cumulative weight
     cum.cone.wt[l] <- sum(wA[1:l])
     
-    #weights for temp lags
+    #weights for vpd lags
     wB[l] <- deltaB[l]/sumB
     #relatively uninformative gamma prior
     deltaB[l] ~ dgamma(1,1)
     #derived quantity of cumulative weight
-    cum.temp.wt[l] <- sum(wB[1:l])
+    cum.vpd.wt[l] <- sum(wB[1:l])
 
     #weights for ppt lags
-    wC[l] <- deltaC[l]/sumC
-    #relatively uninformative gamma prior
-    deltaC[l] ~ dgamma(1,1)
-    #derived quantity of cumulative weight
-    cum.ppt.wt[l] <- sum(wC[1:l])
+    # wC[l] <- deltaC[l]/sumC
+    # #relatively uninformative gamma prior
+    # deltaC[l] ~ dgamma(1,1)
+    # #derived quantity of cumulative weight
+    # cum.ppt.wt[l] <- sum(wC[1:l])
     
   }
   
@@ -269,12 +273,15 @@ model{
   mu.cone ~ dunif(-10,10)
   sig.cone ~ dunif(0, 20)
   tau.cone <- pow(sig.cone, -2)
-  mu.temp ~ dunif(-10,10)
-  sig.temp ~ dunif(0, 20)
-  tau.temp <- pow(sig.temp, -2)
-  mu.ppt ~ dunif(-10,10)
-  sig.ppt ~ dunif(0, 20)
-  tau.ppt <- pow(sig.ppt, -2)
+  mu.vpd ~ dunif(-10,10)
+  sig.vpd ~ dunif(0, 20)
+  tau.vpd <- pow(sig.vpd, -2)
+  # mu.temp ~ dunif(-10,10)
+  # sig.temp ~ dunif(0, 20)
+  # tau.temp <- pow(sig.temp, -2)
+  # mu.ppt ~ dunif(-10,10)
+  # sig.ppt ~ dunif(0, 20)
+  # tau.ppt <- pow(sig.ppt, -2)
   
   #-------------------------------------## 
   # Derived quantities ###

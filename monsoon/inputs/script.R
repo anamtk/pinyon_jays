@@ -26,6 +26,7 @@ data_list <- list(n.grids = data$n.grids,
                   Cone = data$Cone,
                   Temp = data$Temp,
                   PPT = data$PPT,
+                  VPD = data$VPD,
                   #BBS loop
                   n.bbs.years = data$n.bbs.years,
                   n.bbs.trans = data$n.bbs.trans,
