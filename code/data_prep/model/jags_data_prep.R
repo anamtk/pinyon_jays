@@ -7,7 +7,8 @@
 
 # Load packages -----------------------------------------------------------
 
-package.list <- c("here", "tidyverse", 'data.table')
+package.list <- c("here", "tidyverse", 'data.table',
+                  'corrplot')
 
 ## Installing them if they aren't already on the computer
 new.packages <- package.list[!(package.list %in% installed.packages()[,"Package"])]
@@ -145,7 +146,7 @@ cones2 <- cones %>%
                values_to = "cones") %>%
   mutate(year = str_sub(year, 2, nchar(year))) %>%
   mutate(year = as.numeric(year)) %>%
-  mutate(yearID = as.numeric(as.factor(year)) - 5) %>%
+  mutate(yearID = as.numeric(as.factor(year)) - 6) %>%
   left_join(all_cells, by = c("cell" = "cellID")) %>%
   mutate(cones_0 = scale(cones)) %>%
   group_by(cell) %>% 
@@ -158,6 +159,7 @@ cones2 <- cones %>%
                             c('cones_n1', 'cones_n2', 'cones_n3')))) %>%
   ungroup() %>%
   filter(yearID >= 1) %>%
+  filter(year < 2023) %>%
   dplyr::select(yearID, numID, cones_l1:cones_l3, cones_0, 
                 cones_n1:cones_n3) %>%
   pivot_longer(cones_l1:cones_n3,
@@ -204,19 +206,19 @@ temp2 <- temp %>%
                values_to = "tmean_l1") %>%
   mutate(year = str_sub(year, 26, (nchar(year)-4))) %>%
   mutate(year = as.numeric(year)) %>%
-  mutate(yearID = as.numeric(as.factor(year)) - 5) %>%
+  mutate(yearID = as.numeric(as.factor(year)) - 6) %>%
   left_join(all_cells, by = c("cellID")) %>%
   mutate(tmean_l1 = scale(tmean_l1)) %>%
   group_by(cellID) %>% 
   arrange(cellID, year) %>%
   #this creates a column for every lag 5 years previous,
-  do(data.frame(., setNames(shift(.$tmean_l1, 1:5),
+  do(data.frame(., setNames(shift(.$tmean_l1, 1:6),
                             c('tmean_l2', 'tmean_l3', 'tmean_l4',
-                              'tmean_l5', 'tmean_l6')))) %>%
+                              'tmean_l5', 'tmean_l6', 'tmean_l7')))) %>%
   ungroup() %>%
   filter(yearID >= 1) %>%
-  dplyr::select(yearID, numID, tmean_l1:tmean_l6) %>%
-  pivot_longer(tmean_l1:tmean_l6,
+  dplyr::select(yearID, numID, tmean_l1:tmean_l7) %>%
+  pivot_longer(tmean_l1:tmean_l7,
                names_to = 'lag',
                values_to = "tmean") %>%
   mutate(lagID = str_sub(lag, 8, nchar(lag))) %>%
@@ -254,19 +256,19 @@ ppt2 <- ppt %>%
                values_to = "ppt_l1") %>%
   mutate(year = str_sub(year, 24, (nchar(year)-4))) %>%
   mutate(year = as.numeric(year)) %>%
-  mutate(yearID = as.numeric(as.factor(year)) - 5) %>%
+  mutate(yearID = as.numeric(as.factor(year)) - 6) %>%
   left_join(all_cells, by = c("cellID")) %>%
   mutate(ppt_l1 = scale(ppt_l1)) %>%
   group_by(cellID) %>% 
   arrange(cellID, year) %>%
   #this creates a column for every lag 5 years previous,
-  do(data.frame(., setNames(shift(.$ppt_l1, 1:5),
+  do(data.frame(., setNames(shift(.$ppt_l1, 1:7),
                             c('ppt_l2', 'ppt_l3', 'ppt_l4',
-                              'ppt_l5', 'ppt_l6')))) %>%
+                              'ppt_l5', 'ppt_l6', 'ppt_l7')))) %>%
   ungroup() %>%
   filter(yearID >= 1) %>%
-  dplyr::select(yearID, numID, ppt_l1:ppt_l6) %>%
-  pivot_longer(ppt_l1:ppt_l6,
+  dplyr::select(yearID, numID, ppt_l1:ppt_l7) %>%
+  pivot_longer(ppt_l1:ppt_l7,
                names_to = 'lag',
                values_to = "ppt") %>%
   mutate(lagID = str_sub(lag, 6, nchar(lag))) %>%
@@ -304,19 +306,19 @@ vpd2 <- vpd %>%
                values_to = "vpd_l1") %>%
   mutate(year = str_sub(year, 27, (nchar(year)-4))) %>%
   mutate(year = as.numeric(year)) %>%
-  mutate(yearID = as.numeric(as.factor(year)) - 5) %>%
+  mutate(yearID = as.numeric(as.factor(year)) - 6) %>%
   left_join(all_cells, by = c("cellID")) %>%
   mutate(vpd_l1 = scale(vpd_l1)) %>%
   group_by(cellID) %>% 
   arrange(cellID, year) %>%
   #this creates a column for every lag 5 years previous,
-  do(data.frame(., setNames(shift(.$vpd_l1, 1:5),
+  do(data.frame(., setNames(shift(.$vpd_l1, 1:6),
                             c('vpd_l2', 'vpd_l3', 'vpd_l4',
-                              'vpd_l5', 'vpd_l6')))) %>%
+                              'vpd_l5', 'vpd_l6', 'vpd_l7')))) %>%
   ungroup() %>%
   filter(yearID >= 1) %>%
-  dplyr::select(yearID, numID, vpd_l1:vpd_l6) %>%
-  pivot_longer(vpd_l1:vpd_l6,
+  dplyr::select(yearID, numID, vpd_l1:vpd_l7) %>%
+  pivot_longer(vpd_l1:vpd_l7,
                names_to = 'lag',
                values_to = "vpd") %>%
   mutate(lagID = str_sub(lag, 6, nchar(lag))) %>%

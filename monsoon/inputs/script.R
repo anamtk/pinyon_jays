@@ -71,7 +71,8 @@ model <- jagsUI::jags(data = data_list,
                       model.file = '/scratch/atm234/pinyon_jays/inputs/ebird_bbs_joint_abund_JAGS.R',
                       parallel = TRUE,
                       n.chains = 3,
-                      n.iter = 1335,
+                      n.iter = 9000,
+                      n.burnin = 5000,
                       DIC = TRUE)
 
 #save as an R data object
