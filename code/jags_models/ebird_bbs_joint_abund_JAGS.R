@@ -63,12 +63,17 @@ model{
     #the lag weight for each lag
     for(l in 1:n.lag){
       ConeTemp[i,t,l] <- Cone[i,t,l]*wA[l]
+      
+      #any missing data can be imputed
+      Cone[i,t,l] ~ dnorm(mu.cone, tau.cone)
+    }
+    
+    for(l in 1:n.clag){
       VPDTemp[i,t,l] <- VPD[i,t,l]*wB[l]
       # TempTemp[i,t,l] <- Temp[i,t,l]*wB[l]
       # PPTTemp[i,t,l] <- PPT[i,t,l]*wC[l]
       
       #any missing data can be imputed
-      Cone[i,t,l] ~ dnorm(mu.cone, tau.cone)
       VPD[i,t,l] ~ dnorm(mu.vpd, tau.vpd)
       # Temp[i,t,l] ~ dnorm(mu.temp, tau.temp)
       # PPT[i,t,l] ~ dnorm(mu.ppt, tau.ppt)
@@ -249,13 +254,17 @@ model{
     #derived quantity of cumulative weight
     cum.cone.wt[l] <- sum(wA[1:l])
     
+  }
+  
+  for(l in 1:n.clag){
+    
     #weights for vpd lags
     wB[l] <- deltaB[l]/sumB
     #relatively uninformative gamma prior
     deltaB[l] ~ dgamma(1,1)
     #derived quantity of cumulative weight
     cum.vpd.wt[l] <- sum(wB[1:l])
-
+    
     #weights for ppt lags
     # wC[l] <- deltaC[l]/sumC
     # #relatively uninformative gamma prior
@@ -264,6 +273,8 @@ model{
     # cum.ppt.wt[l] <- sum(wC[1:l])
     
   }
+  
+  
   
   
   #-------------------------------------## 

@@ -98,11 +98,15 @@ ebird2b <- ebird_yes %>%
 
 # Subset years for both datasets ------------------------------------------
 
+#subsetting without the last year given lack of overlap and forward
+#projectiosn for cones for all data. Insetad of the last lag having
+#~16.5% imputing, it now has ~10% and all the others have all
+#their data
 ebird3 <- ebird2b %>%
-  filter(year > 2009 & year < 2023)
+  filter(year > 2009 & year < 2022)
 
 bbs2 <- bbs %>%
-  filter(Year > 2009)
+  filter(Year > 2009 & Year < 2022)
 
 
 # Get cell IDs for subset -------------------------------------------------
@@ -125,6 +129,7 @@ all_cells <- ebird_cells %>%
   #in the model than random numbers taht aren't consecutive
   mutate(numID = 1:n())
 #2733 - that have ebird and/or bbs AND cone data
+#for all but last year: 2564 cells
 
 # Data objects for jags ---------------------------------------------------
 
@@ -133,20 +138,25 @@ all_cells <- ebird_cells %>%
 
 #Total latent N:
 n.grids <- nrow(all_cells)
-n.years <- length(2010:2022)
+
+#NOTE: Reducing years to not include 2022 of data so that we 
+#can better represent the cone data - when i have the full
+#dataset, ~16.5% of the final lag are being imputed for cone data
+#and i'm wondering if that's why estimates have been weird.
+n.years <- length(2010:2021)
 
 #Evnrionmental covariates
 #cones:
 cones2 <- cones %>%
   #get only cell IDs that overlap with bird data
   filter(cell %in% all_cells$cellID) %>%
-  dplyr::select(cell, X2005:X2023) %>%
-  pivot_longer(X2005:X2023,
+  dplyr::select(cell, X2000:X2023) %>%
+  pivot_longer(X2000:X2023,
                names_to = "year",
                values_to = "cones") %>%
   mutate(year = str_sub(year, 2, nchar(year))) %>%
   mutate(year = as.numeric(year)) %>%
-  mutate(yearID = as.numeric(as.factor(year)) - 6) %>%
+  mutate(yearID = as.numeric(as.factor(year)) - 11) %>%
   left_join(all_cells, by = c("cell" = "cellID")) %>%
   mutate(cones_0 = scale(cones)) %>%
   group_by(cell) %>% 
@@ -159,7 +169,7 @@ cones2 <- cones %>%
                             c('cones_n1', 'cones_n2', 'cones_n3')))) %>%
   ungroup() %>%
   filter(yearID >= 1) %>%
-  filter(year < 2023) %>%
+  filter(year < 2022) %>%
   dplyr::select(yearID, numID, cones_l1:cones_l3, cones_0, 
                 cones_n1:cones_n3) %>%
   pivot_longer(cones_l1:cones_n3,
@@ -224,8 +234,9 @@ temp2 <- temp %>%
   mutate(lagID = str_sub(lag, 8, nchar(lag))) %>%
   mutate(lagID = as.numeric(lagID)) %>%
   dplyr::select(yearID, numID, lagID, tmean) %>%
-  filter(yearID < 14)
+  filter(yearID < 13)
 
+n.clag <- max(temp2$lagID)
 #now, generate IDs for the for loop where
 # we will populate the array
 tempgrid <- temp2$numID
@@ -233,7 +244,7 @@ tempyear <- temp2$yearID
 templag <- temp2$lagID
 
 #make a blank array
-Temp <- array(data = NA, dim = c(n.grids, n.years, n.lag))
+Temp <- array(data = NA, dim = c(n.grids, n.years, n.clag))
 
 #fill taht array based on the values in those columns
 for(i in 1:dim(temp2)[1]){ #dim[1] = n.rows
@@ -274,7 +285,7 @@ ppt2 <- ppt %>%
   mutate(lagID = str_sub(lag, 6, nchar(lag))) %>%
   mutate(lagID = as.numeric(lagID)) %>%
   dplyr::select(yearID, numID, lagID, ppt) %>%
-  filter(yearID < 14)
+  filter(yearID < 13)
 
 #now, generate IDs for the for loop where
 # we will populate the array
@@ -283,7 +294,7 @@ pptyear <- ppt2$yearID
 pptlag <- ppt2$lagID
 
 #make a blank array
-PPT <- array(data = NA, dim = c(n.grids, n.years, n.lag))
+PPT <- array(data = NA, dim = c(n.grids, n.years, n.clag))
 
 #fill taht array based on the values in those columns
 for(i in 1:dim(ppt2)[1]){ #dim[1] = n.rows
@@ -324,7 +335,7 @@ vpd2 <- vpd %>%
   mutate(lagID = str_sub(lag, 6, nchar(lag))) %>%
   mutate(lagID = as.numeric(lagID)) %>%
   dplyr::select(yearID, numID, lagID, vpd) %>%
-  filter(yearID < 14)
+  filter(yearID < 13)
 
 #now, generate IDs for the for loop where
 # we will populate the array
@@ -333,7 +344,7 @@ vpdyear <- vpd2$yearID
 vpdlag <- vpd2$lagID
 
 #make a blank array
-VPD <- array(data = NA, dim = c(n.grids, n.years, n.lag))
+VPD <- array(data = NA, dim = c(n.grids, n.years, n.clag))
 
 #fill taht array based on the values in those columns
 for(i in 1:dim(vpd2)[1]){ #dim[1] = n.rows
@@ -351,7 +362,7 @@ for(i in 1:dim(vpd2)[1]){ #dim[1] = n.rows
 # bbs.trans.id <- bbs2 %>%
 #   distinct(StateNum, Route) %>%
 #   mutate(TransectID = 1:n()) 
-n.bbs.years <- length(c(2010:2019, 2021:2022))
+n.bbs.years <- length(c(2010:2019, 2021:2021))
 #this is dependent on survey year, since not all transects are 
 #surveyed in every year - makes indexing in model easier, hopefully
 bbs.trans.id.yr <- bbs2 %>%
@@ -430,7 +441,7 @@ bbs.grid <- bbs2 %>%
   as.matrix()
 
 #get year infos to get year IDs for bbs 
-years <- c(2010:2022)
+years <- c(2010:2021)
 yearids <- as.data.frame(years) %>%
   mutate(yearnum = 1:n())
 
@@ -582,6 +593,7 @@ data_list <- list(#latent N loop:
                   n.grids = n.grids,
                   n.years = n.years,
                   n.lag = n.lag,
+                  n.clag = n.clag,
                   Cone = Cone,
                   Temp = Temp,
                   PPT = PPT,

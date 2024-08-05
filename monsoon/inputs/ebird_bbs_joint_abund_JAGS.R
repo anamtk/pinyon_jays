@@ -1,8 +1,39 @@
 model{
   
+  #Notes about this model:
+  #We are combining data from BBS and eBIRD with a joint likelihood
+  
   #loosely based off the joint-likelihood approach in this paper:
   #https://www.nature.com/articles/s41598-022-23603-0
-  #and could use this paper as a good reference for ebird cleaning
+  
+  #We cleaned ebird data following that paper and guidelines from
+  #the Cornell Lab Website
+  #https://cornelllabofornithology.github.io/ebird-best-practices/abundance.html
+  
+  #Components of model:
+  # Both eBIRD and BBS contribute equally to predictions of yearly latent population
+  ## sizes for pinyon jays
+  # Both of these observation components of the model have covariates to detection
+  # Latent abundance is modeled with two environmental covariates: cone masting
+  ## and VPD 
+  # The hypotheses of effects for these covariates and resulting covariate
+  ## structures in the SAM model are as follows: 
+  
+  ## Cone production: pinyon jays may "predict" cone years following good climate years
+  ## and/or years with production of other resources (cones come ~2 years after
+  ## good climate years; oak and juniper have a ~1 year lag)
+  ## pinyon jays may also have an immediate effect with cones if they predict this 
+  ## production year or they may have lagged effects if good resource years spur
+  ## reproduction
+  ## Structure of cone data: cone data have both 'lag' and 'lead' effects, with the 
+  ## middle value in the SAM being the current year, sandwiched by years before
+  ## and after that year
+  
+  ## VPD: pinyon jays may have a lagged effect of climate. a good or bad year
+  ## of climate can then trigger a population response
+  ## Structure of VPD data: this is more classic "SAM" structure. we have current
+  ## year and a set of previous years for this variable
+
   #-------------------------------------## 
   # Biological Process Model ###
   #-------------------------------------##
@@ -32,12 +63,17 @@ model{
     #the lag weight for each lag
     for(l in 1:n.lag){
       ConeTemp[i,t,l] <- Cone[i,t,l]*wA[l]
+      
+      #any missing data can be imputed
+      Cone[i,t,l] ~ dnorm(mu.cone, tau.cone)
+    }
+    
+    for(l in 1:n.clag){
       VPDTemp[i,t,l] <- VPD[i,t,l]*wB[l]
       # TempTemp[i,t,l] <- Temp[i,t,l]*wB[l]
       # PPTTemp[i,t,l] <- PPT[i,t,l]*wC[l]
       
       #any missing data can be imputed
-      Cone[i,t,l] ~ dnorm(mu.cone, tau.cone)
       VPD[i,t,l] ~ dnorm(mu.vpd, tau.vpd)
       # Temp[i,t,l] ~ dnorm(mu.temp, tau.temp)
       # PPT[i,t,l] ~ dnorm(mu.ppt, tau.ppt)
@@ -218,13 +254,17 @@ model{
     #derived quantity of cumulative weight
     cum.cone.wt[l] <- sum(wA[1:l])
     
+  }
+  
+  for(l in 1:n.clag){
+    
     #weights for vpd lags
     wB[l] <- deltaB[l]/sumB
     #relatively uninformative gamma prior
     deltaB[l] ~ dgamma(1,1)
     #derived quantity of cumulative weight
     cum.vpd.wt[l] <- sum(wB[1:l])
-
+    
     #weights for ppt lags
     # wC[l] <- deltaC[l]/sumC
     # #relatively uninformative gamma prior
@@ -233,6 +273,8 @@ model{
     # cum.ppt.wt[l] <- sum(wC[1:l])
     
   }
+  
+  
   
   
   #-------------------------------------## 

@@ -23,6 +23,7 @@ data <- readRDS("/scratch/atm234/pinyon_jays/inputs/bbs_ebird_joint_data_list.RD
 data_list <- list(n.grids = data$n.grids,
                   n.years = data$n.years,
                   n.lag = data$n.lag,
+                  n.clag = data$n.clag,
                   Cone = data$Cone,
                   Temp = data$Temp,
                   PPT = data$PPT,
