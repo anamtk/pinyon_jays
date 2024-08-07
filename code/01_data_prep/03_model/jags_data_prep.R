@@ -104,9 +104,10 @@ ebird2b <- ebird_yes %>%
 #their data
 ebird3 <- ebird2b %>%
   filter(year > 2009 & year < 2022)
-
-bbs2 <- bbs %>%
+#12874 total
+bbs2 <- bbs %>% 
   filter(Year > 2009 & Year < 2022)
+#760 total
 
 
 # Get cell IDs for subset -------------------------------------------------
@@ -128,8 +129,8 @@ all_cells <- ebird_cells %>%
   #ones we extracted, since this will be easier to index
   #in the model than random numbers taht aren't consecutive
   mutate(numID = 1:n())
-#2733 - that have ebird and/or bbs AND cone data
-#for all but last year: 2564 cells
+#3870 - that have ebird and/or bbs AND cone data
+
 
 # Data objects for jags ---------------------------------------------------
 
@@ -205,108 +206,9 @@ for(i in 1:dim(cones2)[1]){ #dim[1] = n.rows
   Cone[conegrid[i], coneyear[i], conelag[i]] <- as.numeric(cones2[i,4])
 }
 
-# Cone[i,t,l]
-# Temp[i,t,l]
-temp2 <- temp %>%
-  #get only cell IDs that overlap with bird data
-  filter(cellID %in% all_cells$cellID) %>%
-  dplyr::select(cellID, PRISM_tmean_stable_4kmM3_2005_bil:PRISM_tmean_stable_4kmM3_2023_bil) %>%
-  pivot_longer(PRISM_tmean_stable_4kmM3_2005_bil:PRISM_tmean_stable_4kmM3_2023_bil,
-               names_to = "year",
-               values_to = "tmean_l1") %>%
-  mutate(year = str_sub(year, 26, (nchar(year)-4))) %>%
-  mutate(year = as.numeric(year)) %>%
-  mutate(yearID = as.numeric(as.factor(year)) - 6) %>%
-  left_join(all_cells, by = c("cellID")) %>%
-  mutate(tmean_l1 = scale(tmean_l1)) %>%
-  group_by(cellID) %>% 
-  arrange(cellID, year) %>%
-  #this creates a column for every lag 5 years previous,
-  do(data.frame(., setNames(shift(.$tmean_l1, 1:6),
-                            c('tmean_l2', 'tmean_l3', 'tmean_l4',
-                              'tmean_l5', 'tmean_l6', 'tmean_l7')))) %>%
-  ungroup() %>%
-  filter(yearID >= 1) %>%
-  dplyr::select(yearID, numID, tmean_l1:tmean_l7) %>%
-  pivot_longer(tmean_l1:tmean_l7,
-               names_to = 'lag',
-               values_to = "tmean") %>%
-  mutate(lagID = str_sub(lag, 8, nchar(lag))) %>%
-  mutate(lagID = as.numeric(lagID)) %>%
-  dplyr::select(yearID, numID, lagID, tmean) %>%
-  filter(yearID < 13)
-
-n.clag <- max(temp2$lagID)
-#now, generate IDs for the for loop where
-# we will populate the array
-tempgrid <- temp2$numID
-tempyear <- temp2$yearID
-templag <- temp2$lagID
-
-#make a blank array
-Temp <- array(data = NA, dim = c(n.grids, n.years, n.clag))
-
-#fill taht array based on the values in those columns
-for(i in 1:dim(temp2)[1]){ #dim[1] = n.rows
-  #using info from the dataframe on the year, grid,
-  #and lag ID of row i 
-  # populate that space in the array with the column in
-  # the dataframe that corresponds to the cone data
-  # for that yearxgridxlag combo
-  Temp[tempgrid[i], tempyear[i], templag[i]] <- as.numeric(temp2[i,4])
-}
-
-# PPT[i,t,l]
-
-ppt2 <- ppt %>%
-  #get only cell IDs that overlap with bird data
-  filter(cellID %in% all_cells$cellID) %>%
-  dplyr::select(cellID, PRISM_ppt_stable_4kmM3_2005_bil:PRISM_ppt_stable_4kmM3_2023_bil) %>%
-  pivot_longer(PRISM_ppt_stable_4kmM3_2005_bil:PRISM_ppt_stable_4kmM3_2023_bil,
-               names_to = "year",
-               values_to = "ppt_l1") %>%
-  mutate(year = str_sub(year, 24, (nchar(year)-4))) %>%
-  mutate(year = as.numeric(year)) %>%
-  mutate(yearID = as.numeric(as.factor(year)) - 6) %>%
-  left_join(all_cells, by = c("cellID")) %>%
-  mutate(ppt_l1 = scale(ppt_l1)) %>%
-  group_by(cellID) %>% 
-  arrange(cellID, year) %>%
-  #this creates a column for every lag 5 years previous,
-  do(data.frame(., setNames(shift(.$ppt_l1, 1:7),
-                            c('ppt_l2', 'ppt_l3', 'ppt_l4',
-                              'ppt_l5', 'ppt_l6', 'ppt_l7')))) %>%
-  ungroup() %>%
-  filter(yearID >= 1) %>%
-  dplyr::select(yearID, numID, ppt_l1:ppt_l7) %>%
-  pivot_longer(ppt_l1:ppt_l7,
-               names_to = 'lag',
-               values_to = "ppt") %>%
-  mutate(lagID = str_sub(lag, 6, nchar(lag))) %>%
-  mutate(lagID = as.numeric(lagID)) %>%
-  dplyr::select(yearID, numID, lagID, ppt) %>%
-  filter(yearID < 13)
-
-#now, generate IDs for the for loop where
-# we will populate the array
-pptgrid <- ppt2$numID
-pptyear <- ppt2$yearID
-pptlag <- ppt2$lagID
-
-#make a blank array
-PPT <- array(data = NA, dim = c(n.grids, n.years, n.clag))
-
-#fill taht array based on the values in those columns
-for(i in 1:dim(ppt2)[1]){ #dim[1] = n.rows
-  #using info from the dataframe on the year, grid,
-  #and lag ID of row i 
-  # populate that space in the array with the column in
-  # the dataframe that corresponds to the cone data
-  # for that yearxgridxlag combo
-  PPT[pptgrid[i], pptyear[i], pptlag[i]] <- as.numeric(ppt2[i,4])
-}
-
 #VPD
+#these are now monthly - and we will need to break them up 
+#seasonally 
 
 vpd2 <- vpd %>%
   #get only cell IDs that overlap with bird data
@@ -336,6 +238,8 @@ vpd2 <- vpd %>%
   mutate(lagID = as.numeric(lagID)) %>%
   dplyr::select(yearID, numID, lagID, vpd) %>%
   filter(yearID < 13)
+
+n.clag <- max(vpd2$lagID)
 
 #now, generate IDs for the for loop where
 # we will populate the array
