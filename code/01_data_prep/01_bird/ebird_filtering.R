@@ -99,6 +99,90 @@ if (!file.exists(f_ebd_nm)) {
   auk_filter(ebd_filters, file = f_ebd_nm, file_sampling = f_sampling_nm)
 }
 
+
+# Arizona -----------------------------------------------------------------
+
+ebd_az <- auk_ebd(file = here('data',
+                              'ebird_data',
+                              'ebd_US-AZ_pinjay_smp_relJun-2024',
+                              'ebd_US-AZ_pinjay_smp_relJun-2024.txt'),
+                  file_sampling = here('data',
+                                       'ebird_data',
+                                       'ebd_US-AZ_pinjay_smp_relJun-2024',
+                                       'ebd_US-AZ_pinjay_smp_relJun-2024_sampling.txt'))
+
+#define the filters I will want
+ebd_filters <- ebd_az %>%
+  #filter just the months of interest, I think
+  #we will want june and july, but need to verify
+  auk_date(date = c("*-06-01", "*-07-31")) %>%
+  #restirct to the stationary and traveling protocols
+  auk_protocol(protocol = c("Stationary", "Traveling")) %>%
+  #less than 5 h
+  auk_duration(duration = c(0, 300)) %>%
+  # less than 5km distance traveled
+  auk_distance(distance = c(0, 5)) %>%
+  #less than 10 observers
+  #not sure how to do this one...
+  #only use complete checklists
+  auk_complete()
+
+f_ebd_az <- file.path(here('data',
+                           'ebird_data',
+                           'cleaned_data',
+                           'ebd_az_filtered.txt'))
+f_sampling_az <- file.path(here('data',
+                                'ebird_data',
+                                'cleaned_data',
+                                'ebd_az_checklists.txt'))
+
+# only run if the files don't already exist
+if (!file.exists(f_ebd_az)) {
+  auk_filter(ebd_filters, file = f_ebd_az, file_sampling = f_sampling_az)
+}
+
+
+# UTah --------------------------------------------------------------------
+
+ebd_ut <- auk_ebd(file = here('data',
+                              'ebird_data',
+                              'ebd_US-UT_pinjay_smp_relJun-2024',
+                              'ebd_US-UT_pinjay_smp_relJun-2024.txt'),
+                  file_sampling = here('data',
+                                       'ebird_data',
+                                       'ebd_US-UT_pinjay_smp_relJun-2024',
+                                       'ebd_US-UT_pinjay_smp_relJun-2024_sampling.txt'))
+
+#define the filters I will want
+ebd_filters <- ebd_ut %>%
+  #filter just the months of interest, I think
+  #we will want june and july, but need to verify
+  auk_date(date = c("*-06-01", "*-07-31")) %>%
+  #restirct to the stationary and traveling protocols
+  auk_protocol(protocol = c("Stationary", "Traveling")) %>%
+  #less than 5 h
+  auk_duration(duration = c(0, 300)) %>%
+  # less than 5km distance traveled
+  auk_distance(distance = c(0, 5)) %>%
+  #less than 10 observers
+  #not sure how to do this one...
+  #only use complete checklists
+  auk_complete()
+
+f_ebd_ut <- file.path(here('data',
+                           'ebird_data',
+                           'cleaned_data',
+                           'ebd_ut_filtered.txt'))
+f_sampling_ut <- file.path(here('data',
+                                'ebird_data',
+                                'cleaned_data',
+                                'ebd_ut_checklists.txt'))
+
+# only run if the files don't already exist
+if (!file.exists(f_ebd_ut)) {
+  auk_filter(ebd_filters, file = f_ebd_ut, file_sampling = f_sampling_ut)
+}
+
 # Combine and zero-fill ---------------------------------------------------
 
 # f_ebd_co <- read.delim(file = here('data',
@@ -112,9 +196,13 @@ if (!file.exists(f_ebd_nm)) {
 
 ebd_co_zf <- auk_zerofill(f_ebd_co, f_sampling_co, collapse = TRUE)
 ebd_nm_zf <- auk_zerofill(f_ebd_nm, f_sampling_nm, collapse = TRUE)
+ebd_az_zf <- auk_zerofill(f_ebd_az, f_sampling_az, collapse = TRUE)
+ebd_ut_zf <- auk_zerofill(f_ebd_ut, f_sampling_ut, collapse = TRUE)
 
 ebd_all <- ebd_co_zf %>%
-  rbind(ebd_nm_zf)
+  rbind(ebd_nm_zf,
+        ebd_az_zf,
+        ebd_ut_zf)
 
 
 # Extra filtering/cleaining -----------------------------------------------

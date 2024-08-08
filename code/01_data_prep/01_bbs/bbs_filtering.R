@@ -16,6 +16,7 @@ for(i in package.list){library(i, character.only = T)}
 #pinyon jay AOU: 04920
 #filter to only include colorado and new mexico
 #STate Nums: 17 (Colorado) and 60 (New Mexico)
+#Arizona: 06, Utah: 85
 
 # Load datasets -----------------------------------------------------------
 
@@ -25,6 +26,8 @@ for(i in package.list){library(i, character.only = T)}
 
 #colorado in fifty2.csv
 #new mexico in fifty6.csv
+#arizona in fifty1.csv
+#utah in fifty9.csv
 
 #get colorado data read in
 CO <- read.csv(here('data',
@@ -39,6 +42,20 @@ NM <- read.csv(here('data',
                     '2023Release_Nor',
                     '50-StopData',
                     'fifty6.csv'))
+
+#AZ data
+AZ <- read.csv(here('data',
+                    'bbs_data',
+                    '2023Release_Nor',
+                    '50-StopData',
+                    'fifty1.csv'))
+
+#UT data
+UT <- read.csv(here('data',
+                    'bbs_data',
+                    '2023Release_Nor',
+                    '50-StopData',
+                    'fifty9.csv'))
 
 #observer IDs for each dataset - for experience covariate
 obs <- read.csv(here('data',
@@ -95,10 +112,57 @@ NM_all <- NM_jay %>%
   mutate(State = "NM")
 
 
+# Filter AZ data ----------------------------------------------------------
+
+#get all the routes and years for colorado
+AZ_routes <- AZ %>%
+  filter(StateNum == 6) %>%
+  distinct(RouteDataID, CountryNum, StateNum, Route, RPID, Year)
+
+#get all the routes/years where jays were observed
+AZ_jay <- AZ %>%
+  filter(StateNum == 6) %>%
+  filter(AOU == 4920)
+
+#jays observed on 145/1129 route/years (13%)
+
+#blend together and fill all route/years without Jay observations with 0
+#across all stops on that route
+AZ_all <- AZ_jay %>%
+  full_join(AZ_routes, by = c("RouteDataID", "CountryNum", "StateNum",
+                              "Route", "RPID", "Year")) %>%
+  replace_na(list(AOU = 4940)) %>%
+  mutate(across(everything(), ~replace_na(.x, 0))) %>%
+  mutate(State = "AZ")
+
+
+# Filter UT data ----------------------------------------------------------
+
+#get all the routes and years for colorado
+UT_routes <- UT %>%
+  filter(StateNum == 85) %>%
+  distinct(RouteDataID, CountryNum, StateNum, Route, RPID, Year)
+
+#get all the routes/years where jays were observed
+UT_jay <- UT %>%
+  filter(StateNum == 85) %>%
+  filter(AOU == 4920)
+
+#jays observed on 623/1901 route/years (33%)
+
+#blend together and fill all route/years without Jay observations with 0
+#across all stops on that route
+UT_all <- UT_jay %>%
+  full_join(UT_routes, by = c("RouteDataID", "CountryNum", "StateNum",
+                              "Route", "RPID", "Year")) %>%
+  replace_na(list(AOU = 4940)) %>%
+  mutate(across(everything(), ~replace_na(.x, 0))) %>%
+  mutate(State = "UT")
+
 # Combine and export ------------------------------------------------------
 
 BBS_all <- CO_all %>%
-  rbind(NM_all)
+  rbind(NM_all, AZ_all, UT_all)
 
 
 # Get observer IDs and experience for each of these -----------------------

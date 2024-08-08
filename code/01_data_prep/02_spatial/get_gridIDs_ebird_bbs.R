@@ -82,7 +82,7 @@ temp_df <- terra::as.data.frame(temp_rast,
 #vpd 
 vpdrastlist <- list.files(path = here('data',
                                        'spatial_data',
-                                       'prism_vpd'), pattern='.bil$', 
+                                       'prism_monthly_vpd'), pattern='.bil$', 
                            recursive = T, all.files= T, full.names= T)
 
 vpd_rast <- terra::rast(vpdrastlist)
@@ -241,25 +241,25 @@ write.csv(vpd_df2, here('data',
 
 # Look at stats for bbs and ebird datasets --------------------------------
 
-#there are 10264 unique 4km cells
+#there are 17462 unique 4km cells
 ebird2 %>%
   distinct(cellID) %>%
   tally()
 
-#there are 1-3135 observations in each cell - will probs want
+#there are 1-7315 observations in each cell - will probs want
 #to subsample in these more populated cells
 ebird2 %>%
   group_by(cellID) %>%
   tally() %>%
   arrange(desc(n))
 
-#1-599 in a single cell in a given year - will want to subset these
+#1-945 in a single cell in a given year - will want to subset these
 ebird2 %>%
   group_by(year, cellID) %>%
   tally() %>%
   arrange(desc(n))
 
-#216 unique 4km cells
+#388 unique 4km cells
 bbs2 %>%
   distinct(cellID) %>%
   tally()

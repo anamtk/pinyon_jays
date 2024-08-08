@@ -210,28 +210,67 @@ for(i in 1:dim(cones2)[1]){ #dim[1] = n.rows
 #these are now monthly - and we will need to break them up 
 #seasonally 
 
+#figure out seasons WRT jays:
+## when are they nesting?
+## when are they doing other things??
+
+#from Wiggins (2005) report:
+#breeding: late Feb-early May
+#May-June: dependent young
+#August-Feb: fall and early winter: wander to find resources
+#what do they do in July??? 
+#thus, seasons would be months:
+#Season 1: 2-4: breeding
+#Season 2: 5-6: feeding dependent young
+#Season 3: 7: unknown, just chillin?
+#Season 4: 8-1: winter foraging, potentially seeking food elsewhere
+
+
+
 vpd2 <- vpd %>%
   #get only cell IDs that overlap with bird data
   filter(cellID %in% all_cells$cellID) %>%
-  dplyr::select(cellID, PRISM_vpdmax_stable_4kmM3_2005_bil:PRISM_vpdmax_stable_4kmM3_2023_bil) %>%
-  pivot_longer(PRISM_vpdmax_stable_4kmM3_2005_bil:PRISM_vpdmax_stable_4kmM3_2023_bil,
-               names_to = "year",
+  dplyr::select(cellID, PRISM_vpdmax_stable_4kmM3_200001_bil:PRISM_vpdmax_stable_4kmM3_202312_bil) %>%
+  pivot_longer(PRISM_vpdmax_stable_4kmM3_200001_bil:PRISM_vpdmax_stable_4kmM3_202312_bil,
+               names_to = "date",
                values_to = "vpd_l1") %>%
-  mutate(year = str_sub(year, 27, (nchar(year)-4))) %>%
-  mutate(year = as.numeric(year)) %>%
-  mutate(yearID = as.numeric(as.factor(year)) - 6) %>%
-  left_join(all_cells, by = c("cellID")) %>%
-  mutate(vpd_l1 = scale(vpd_l1)) %>%
-  group_by(cellID) %>% 
+  mutate(year = str_sub(date, 27, (nchar(date)-6)),
+         month = str_sub(date, 31, (nchar(date)-4))) %>%
+  mutate(year = as.numeric(year),
+         month = as.numeric(month)) %>%
+  dplyr::select(-date) %>%
+  pivot_wider(names_from = month,
+              values_from = vpd_l1) %>%
+  group_by(cellID) %>%
   arrange(cellID, year) %>%
-  #this creates a column for every lag 5 years previous,
-  do(data.frame(., setNames(shift(.$vpd_l1, 1:6),
+  #determine next year january value to compute vpd season 4 below
+  mutate(lead_1 = lead(`1`)) %>%
+  rowwise() %>%
+  #get each seasonal VPD
+  mutate(vpd_1 = max(`2`, `3`, `4`),
+         vpd_2 = max(`5`, `6`),
+         vpd_3 = `7`,
+         vpd_4 = max(`8`, `9`, `10`, `11`, `12`, lead_1, na.rm = T)) %>%
+  dplyr::select(cellID, year, vpd_1:vpd_4) %>%
+  pivot_longer(vpd_1:vpd_4,
+               names_to = "season",
+               values_to = "vpd_l1") %>%
+  mutate(season = str_sub(season, nchar(season))) %>%
+  mutate(season = as.numeric(season)) %>% 
+  mutate(vpd_l1 = scale(vpd_l1)) %>%
+  arrange(cellID, year, season) %>%
+  #this creates a column for every lag 12 seasons previous,
+  do(data.frame(., setNames(shift(.$vpd_l1, 1:12),
                             c('vpd_l2', 'vpd_l3', 'vpd_l4',
-                              'vpd_l5', 'vpd_l6', 'vpd_l7')))) %>%
+                              'vpd_l5', 'vpd_l6', 'vpd_l7',
+                              'vpd_l8', 'vpd_l9', 'vpd_l10',
+                              'vpd_l11', 'vpd_l12', 'vpd_l13')))) %>%
   ungroup() %>%
+  mutate(yearID = as.numeric(as.factor(year))-10) %>%
   filter(yearID >= 1) %>%
-  dplyr::select(yearID, numID, vpd_l1:vpd_l7) %>%
-  pivot_longer(vpd_l1:vpd_l7,
+  left_join(all_cells, by = "cellID") %>%
+  dplyr::select(yearID, numID, vpd_l1:vpd_l13) %>%
+  pivot_longer(vpd_l1:vpd_l13,
                names_to = 'lag',
                values_to = "vpd") %>%
   mutate(lagID = str_sub(lag, 6, nchar(lag))) %>%
@@ -260,6 +299,7 @@ for(i in 1:dim(vpd2)[1]){ #dim[1] = n.rows
   VPD[vpdgrid[i], vpdyear[i], vpdlag[i]] <- as.numeric(vpd2[i,4])
 }
 
+sum(is.na(VPD))
 # BBS data prep -----------------------------------------------------------
 
 #BBS:
@@ -499,8 +539,8 @@ data_list <- list(#latent N loop:
                   n.lag = n.lag,
                   n.clag = n.clag,
                   Cone = Cone,
-                  Temp = Temp,
-                  PPT = PPT,
+                  #Temp = Temp,
+                  #PPT = PPT,
                   VPD = VPD,
                   #BBS loop
                   n.bbs.years = n.bbs.years,
