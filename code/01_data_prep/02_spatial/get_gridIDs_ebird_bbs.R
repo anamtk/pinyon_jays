@@ -91,6 +91,15 @@ vpd_df <- terra::as.data.frame(vpd_rast,
                                 xy = TRUE,
                                 cells = TRUE)
 
+monsoon_rast <- terra::rast(here('data', 'spatial_data',
+                                 'monsoon', 'SWMON.tif'))
+
+#terra::plot(monsoon_rast)
+
+monsoon_df <- terra::as.data.frame(monsoon_rast,
+                                   xy= TRUE,
+                                   cells = TRUE)
+
 # Set the CRS for both bird datasets -------------------------------------------
 
 #these data are in WGS84, so I'll create this crs to call later
@@ -157,6 +166,17 @@ vpd_cellIDs <- terra::extract(cones, vect(vpd_spatial), cells = T)
 
 vpd_df$cellID <- vpd_cellIDs$cell
 
+#monsoon
+monsoon_points <- monsoon_df %>%
+  dplyr::select(x, y)
+
+monsoon_spatial <- st_as_sf(monsoon_points, coords = c("x", "y"),
+                        crs = st_crs(crs_wgs))
+
+monsoon_cellIDs <- terra::extract(cones, vect(monsoon_spatial), cells = T)
+
+monsoon_df$cellID <- monsoon_cellIDs$cell
+
 # Turn cone raster into df with cell IDs ---------------------------------------
 
 cone_df <- terra::as.data.frame(cones, 
@@ -184,6 +204,10 @@ temp_df2 <- temp_df %>%
   dplyr::select(-cell)
 
 vpd_df2 <- vpd_df %>%
+  filter(cellID %in% ids$cell) %>%
+  dplyr::select(-cell)
+
+monsoon_df2 <- monsoon_df %>%
   filter(cellID %in% ids$cell) %>%
   dplyr::select(-cell)
 
@@ -218,6 +242,11 @@ write.csv(vpd_df2, here('data',
                         'spatial_data',
                         'cleaned_data',
                         'vpd_data_df.csv'))
+
+write.csv(monsoon_df2, here('data',
+                        'spatial_data',
+                        'cleaned_data',
+                        'monsoon_data_df.csv'))
 
 #Get the unique cell IDs that have data - we will just
 #model these cells since it is MUCH smaller than the total 

@@ -56,11 +56,6 @@ vpd <- read.csv(here('data',
                      'cleaned_data',
                      'vpd_data_df.csv'))
 
-mons <- read.csv(here('data',
-                      'spatial_data',
-                      'cleaned_data',
-                      'monsoon_data_df.csv'))
-
 # Subset ebird data -------------------------------------------------------
 
 #this paper: 
@@ -169,9 +164,9 @@ cones2 <- cones %>%
   arrange(cell, year) %>%
   #this creates a column for every lag 3 years previous,
   #this year, and 3 years years into future
-  do(data.frame(., setNames(data.table::shift(.$cones_0, 1:3),
+  do(data.frame(., setNames(shift(.$cones_0, 1:3),
                             c('cones_l1', 'cones_l2', 'cones_l3')))) %>%
-  do(data.frame(., setNames(data.table::shift(.$cones_0, 1:3, type = "lead"),
+  do(data.frame(., setNames(shift(.$cones_0, 1:3, type = "lead"),
                             c('cones_n1', 'cones_n2', 'cones_n3')))) %>%
   ungroup() %>%
   filter(yearID >= 1) %>%
@@ -230,6 +225,8 @@ for(i in 1:dim(cones2)[1]){ #dim[1] = n.rows
 #Season 3: 7: unknown, just chillin?
 #Season 4: 8-1: winter foraging, potentially seeking food elsewhere
 
+
+
 vpd2 <- vpd %>%
   #get only cell IDs that overlap with bird data
   filter(cellID %in% all_cells$cellID) %>%
@@ -263,7 +260,7 @@ vpd2 <- vpd %>%
   mutate(vpd_l1 = scale(vpd_l1)) %>%
   arrange(cellID, year, season) %>%
   #this creates a column for every lag 12 seasons previous,
-  do(data.frame(., setNames(data.table::shift(.$vpd_l1, 1:12),
+  do(data.frame(., setNames(shift(.$vpd_l1, 1:12),
                             c('vpd_l2', 'vpd_l3', 'vpd_l4',
                               'vpd_l5', 'vpd_l6', 'vpd_l7',
                               'vpd_l8', 'vpd_l9', 'vpd_l10',
@@ -271,10 +268,6 @@ vpd2 <- vpd %>%
   ungroup() %>%
   mutate(yearID = as.numeric(as.factor(year))-10) %>%
   filter(yearID >= 1) %>%
-  #"current" season is season 2, the season when data started
-  #being collected
-  filter(season == 2) %>%
-  dplyr::select(-season) %>%
   left_join(all_cells, by = "cellID") %>%
   dplyr::select(yearID, numID, vpd_l1:vpd_l13) %>%
   pivot_longer(vpd_l1:vpd_l13,
@@ -307,22 +300,6 @@ for(i in 1:dim(vpd2)[1]){ #dim[1] = n.rows
 }
 
 sum(is.na(VPD))
-
-#monsoon
-#it seems there is more than one value per "cellID" for monsoonality?
-#I'm not really sure why?
-Monsoon <- mons %>%
-  group_by(cellID) %>%
-  summarise(monsoon = mean(PRISM_ppt_30yr_normal_800mM4_07_bil, na.rm = T)) %>%
-  ungroup() %>%
-  left_join(all_cells, by = "cellID") %>%
-  filter(!is.na(numID)) %>%
-  mutate(monsoon = scale(monsoon)) %>%
-  column_to_rownames(var = "numID") %>%
-  dplyr::select(monsoon) %>%
-  as_vector()
-
-
 # BBS data prep -----------------------------------------------------------
 
 #BBS:
@@ -565,7 +542,6 @@ data_list <- list(#latent N loop:
                   #Temp = Temp,
                   #PPT = PPT,
                   VPD = VPD,
-                  Monsoon = Monsoon,
                   #BBS loop
                   n.bbs.years = n.bbs.years,
                   n.bbs.trans = n.bbs.trans,
