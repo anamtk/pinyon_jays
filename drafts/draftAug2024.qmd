@@ -1,0 +1,60 @@
+---
+title: "**Title**: Linking pinyon jay population abundance to pinyon cone production and climate in the SW United States"
+format:
+  docx:
+    reference-doc: custom-reference-doc.docx
+editor: visual
+bibliography: references.bib
+csl: journal-of-animal-ecology.csl
+---
+
+**Author list**: Ana Miller-ter Kuile^1,2^, Andreas Wion^3^, Jamie S. Sanderlin^2^
+
+**Author affiliations**:
+
+1 Northern Arizona University School of Informatics, Computing, and Cyber Systems, Flagstaff, Arizona, USA
+
+2 USDA Forest Service Rocky Mountain Research Station, Flagstaff, Arizona, USA
+
+3 USGS Santa Fe, New Mexico, USA
+
+**Keywords**:
+
+# Data availability
+
+\newpage
+
+# Introduction
+
+Based on data from [@abadi2010]
+
+# Methods
+
+$$
+ldsjfsdlkj
+$$ {#eq-a}
+
+\begin{equation}\\tag{1}\\label{eq-a}
+a
+\end{equation}
+
+
+# Results
+
+# Discussion
+
+# References
+
+```{r}
+#| echo: false
+#| eval: false
+#| include: false
+
+#found info on adding reference styles here:
+#https://quarto.org/docs/authoring/citations.html
+#and list of csls here:
+#https://www.zotero.org/styles
+
+```
+
+# Tables and Figures
