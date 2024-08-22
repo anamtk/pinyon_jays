@@ -49,8 +49,8 @@ model{
       a[1]*AntCone[i,t] +
       a[2]*AntVPD[i,t] +
       a[3]*Monsoon[i] +
-      a[4]*AntCone[i,t]*Monsoon[i] +
-      a[5]*AntVPD[i,t]*Monsoon[i]
+      a[4]*AntCone[i,t]*AntVPD[i,t] +
+      a[5]*AntCone[i,t]*Monsoon[i]
       #a[2]*AntTemp[i,t] +
       #a[3]*AntPPT[i,t] #would PPT be highly correlated with cones??
     

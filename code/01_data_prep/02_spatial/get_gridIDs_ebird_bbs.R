@@ -30,7 +30,7 @@ ebird <- read.csv(here('data',
 bbs <- read.csv(here('data',
                      'bbs_data',
                      'cleaned_data',
-                     'pjay_data_co_nm.csv'))
+                     'pjay_data_co_nm_az_ut.csv'))
 
 bbs_locations <- read.csv(here('data',
                                'bbs_data',

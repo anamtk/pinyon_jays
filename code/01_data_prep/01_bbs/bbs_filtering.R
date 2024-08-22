@@ -188,7 +188,7 @@ BBS_all2 <- BBS_all %>%
 write.csv(BBS_all2, here('data',
                         'bbs_data',
                         'cleaned_data',
-                        'pjay_data_co_nm.csv'))
+                        'pjay_data_co_nm_az_ut.csv'))
 
 
 # Explore -----------------------------------------------------------------

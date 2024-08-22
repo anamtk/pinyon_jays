@@ -114,6 +114,27 @@ bbs2 <- bbs %>%
   filter(Year > 2009 & Year < 2022)
 #760 total
 
+#combine and plot quickly
+ebd4 <- ebird3 %>%
+  dplyr::select(latitude, longitude, year) %>%
+  mutate(datasource = 'ebird') %>%
+  rename(Latitude = latitude,
+         Longitude = longitude,
+         Year = year)
+
+bb3 <- bbs2 %>%
+  dplyr::select(Longitude, Latitude, Year) %>%
+  mutate(datasource = "bbs")
+
+both <- ebd4 %>%
+  rbind(bb3)
+
+ggplot(both) +
+  geom_point(aes(x = Longitude, y = Latitude, color = datasource)) +
+  facet_wrap(~Year) +
+  theme_bw() +
+  scale_color_manual(values = c('#d8b365','#5ab4ac'))
+  
 
 # Get cell IDs for subset -------------------------------------------------
 
