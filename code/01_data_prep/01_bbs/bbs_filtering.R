@@ -23,6 +23,8 @@ for(i in package.list){library(i, character.only = T)}
 #Dataset structure:
 #50 stops on each BBS route (0.5 miles apart, ~24.5 miles total on a route?)
 #start with the 50-stop data (only available for 1997-onward)
+#filter the first 10 stops so that the climate and cone
+#data are at the ~same scale
 
 #colorado in fifty2.csv
 #new mexico in fifty6.csv

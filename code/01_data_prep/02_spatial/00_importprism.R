@@ -6,16 +6,16 @@ library(tidyverse)
 prism_set_dl_dir(path =
                    here('data',
                         'spatial_data',
-                        'prism_temp'), create = TRUE)
+                        'prism_monthly_tmax'), create = TRUE)
 
-get_prism_annual(type = "tmean", year = 2000:2023, keepZip = FALSE)
+get_prism_monthlys(type = "tmax", year = 2000:2023, keepZip = FALSE)
 
 prism_set_dl_dir(path =
                    here('data',
                         'spatial_data',
-                        'prism_ppt'), create = TRUE)
+                        'prism_monthly_ppt'), create = TRUE)
 
-get_prism_annual(type = "ppt", year = 2000:2023, keepZip = FALSE)
+get_prism_monthlys(type = "ppt", year = 2000:2023, keepZip = FALSE)
 
 prism_set_dl_dir(path =
                    here('data',

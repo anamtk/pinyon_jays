@@ -52,13 +52,11 @@ cones <- terra::rast(here("data",
                           "full_pied_masting.tif"))
 plot(cones)
 
-
-
 # Load ppt and temp datasets ----------------------------------------------
 
 pptrastlist <- list.files(path = here('data',
                                       'spatial_data',
-                                      'prism_ppt'), pattern='.bil$', 
+                                      'prism_monthly_ppt'), pattern='.bil$', 
                           recursive = T, all.files= T, full.names= T)
 
 ppt_rast <- terra::rast(pptrastlist)
@@ -70,7 +68,7 @@ ppt_df <- terra::as.data.frame(ppt_rast,
 #temperature
 temprastlist <- list.files(path = here('data',
                                       'spatial_data',
-                                      'prism_temp'), pattern='.bil$', 
+                                      'prism_monthly_tmax'), pattern='.bil$', 
                           recursive = T, all.files= T, full.names= T)
 
 temp_rast <- terra::rast(temprastlist)
