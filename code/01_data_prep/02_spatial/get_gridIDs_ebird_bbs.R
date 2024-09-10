@@ -7,7 +7,9 @@
 package.list <- c("here", "tidyverse", 
                   "sf",  
                   "terra",
-                  'readxl')
+                  'readxl',
+                  'sf',
+                  'exactextractr')
 
 ## Installing them if they aren't already on the computer
 new.packages <- package.list[!(package.list %in% installed.packages()[,"Package"])]
@@ -50,80 +52,51 @@ cones <- terra::rast(here("data",
                           "spatial_data", 
                           "masting_data",
                           "full_pied_masting.tif"))
-plot(cones)
-
-# Load ppt and temp datasets ----------------------------------------------
-
-pptrastlist <- list.files(path = here('data',
-                                      'spatial_data',
-                                      'prism_monthly_ppt'), pattern='.bil$', 
-                          recursive = T, all.files= T, full.names= T)
-
-ppt_rast <- terra::rast(pptrastlist)
-
-ppt_df <- terra::as.data.frame(ppt_rast, 
-                               xy = TRUE,
-                               cells = TRUE)
-
-#temperature
-temprastlist <- list.files(path = here('data',
-                                      'spatial_data',
-                                      'prism_monthly_tmax'), pattern='.bil$', 
-                          recursive = T, all.files= T, full.names= T)
-
-temp_rast <- terra::rast(temprastlist)
-
-temp_df <- terra::as.data.frame(temp_rast, 
-                               xy = TRUE,
-                               cells = TRUE)
-
-#vpd 
-vpdrastlist <- list.files(path = here('data',
-                                       'spatial_data',
-                                       'prism_monthly_vpd'), pattern='.bil$', 
-                           recursive = T, all.files= T, full.names= T)
-
-vpd_rast <- terra::rast(vpdrastlist)
-
-vpd_df <- terra::as.data.frame(vpd_rast, 
-                                xy = TRUE,
-                                cells = TRUE)
-
-monsoon_rast <- terra::rast(here('data', 'spatial_data',
-                                 'monsoon', 'SWMON.tif'))
-
-#terra::plot(monsoon_rast)
-
-monsoon_df <- terra::as.data.frame(monsoon_rast,
-                                   xy= TRUE,
-                                   cells = TRUE)
+#plot(cones)
 
 # Set the CRS for both bird datasets -------------------------------------------
 
 #these data are in WGS84, so I'll create this crs to call later
 crs_wgs <- '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs'
 
+crs_wgs2 <- "+proj=utm +zone=42N +datum=WGS84 +units=km"
+
+crs_albers <- '+proj=longlat +datum=NAD83 +no_defs +type=crs'
+
+
 # Make spatial ------------------------------------------------------------
 
+#get m radius for buffer.
+#some are zero (stationary points)
+#so maybe set a value for these, maybe 500m??
+#get the others to be half the effort distance - assumption: walk to and
+#from a vehicle
+ebird2 <- ebird %>%
+  rowwise() %>%
+  mutate(buffer_m = (effort_distance_km*1000)/2) %>%
+  ungroup()%>%
+  mutate(buffer_m = case_when(buffer_m == 0 ~ 500,
+                              TRUE ~ buffer_m))
+
 #convert all ebird data to an sf object
-ebird_spatial <- st_as_sf(ebird, coords = c("longitude", "latitude"),
-                          crs = st_crs(crs_wgs))
+ebird_spatial <- st_as_sf(ebird2, coords = c("longitude", "latitude"),
+                          crs = st_crs(crs_albers))
 
 #convert all bbs data to an sf object
 bbs_spatial <- st_as_sf(bbs2, coords = c("Longitude", "Latitude"),
-                        crs = st_crs(crs_wgs))
+                        crs = st_crs(crs_albers))
 
-# Extract cell ID from raster ------------------------------------------------------------
+# Extract cell IDs from raster ------------------------------------------------------------
 
 ##EBIRD
 # Use template raster and ebird pts to get cell IDs
 ebird_cellIDs <- terra::extract(cones, vect(ebird_spatial), cells = T)
 
 # Add as column to ebird data
-ebird$cellID <- ebird_cellIDs$cell
+ebird2$cellID <- ebird_cellIDs$cell
 
 #some ebird observations don't have masting data cells, so I'll remove those
-ebird2 <- ebird %>%
+ebird3 <- ebird2 %>%
   filter(!is.na(cellID))
 
 ##BBS
@@ -131,177 +104,93 @@ bbs_cellIDs <- terra::extract(cones, vect(bbs_spatial), cells = T)
 
 bbs2$cellID <- bbs_cellIDs$cell
 
-##PPT and TEMP
-ppt_points <- ppt_df %>%
-  dplyr::select(x, y)
-
-ppt_spatial <- st_as_sf(ppt_points, coords = c("x", "y"),
-                        crs = st_crs(crs_wgs))
-
-ppt_cellIDs <- terra::extract(cones, vect(ppt_spatial), cells = T)
-
-ppt_df$cellID <- ppt_cellIDs$cell
-
-#temp
-temp_points <- temp_df %>%
-  dplyr::select(x, y)
-
-temp_spatial <- st_as_sf(temp_points, coords = c("x", "y"),
-                         crs = st_crs(crs_wgs))
-
-temp_cellIDs <- terra::extract(cones, vect(temp_spatial), cells = T)
-
-temp_df$cellID <- temp_cellIDs$cell
-
-#vpd
-vpd_points <- vpd_df %>%
-  dplyr::select(x, y)
-
-vpd_spatial <- st_as_sf(vpd_points, coords = c("x", "y"),
-                         crs = st_crs(crs_wgs))
-
-vpd_cellIDs <- terra::extract(cones, vect(vpd_spatial), cells = T)
-
-vpd_df$cellID <- vpd_cellIDs$cell
-
-#monsoon
-monsoon_points <- monsoon_df %>%
-  dplyr::select(x, y)
-
-monsoon_spatial <- st_as_sf(monsoon_points, coords = c("x", "y"),
-                        crs = st_crs(crs_wgs))
-
-monsoon_cellIDs <- terra::extract(cones, vect(monsoon_spatial), cells = T)
-
-monsoon_df$cellID <- monsoon_cellIDs$cell
-
 # Turn cone raster into df with cell IDs ---------------------------------------
 
 cone_df <- terra::as.data.frame(cones, 
                                 xy = TRUE,
                                 cells = TRUE)
 
-
 # Filter datasets for cells with cone data --------------------------------
 
 ids <- cone_df %>%
   distinct(cell)
 
-ebird3 <- ebird2 %>%
+ebird4 <- ebird3 %>%
   filter(cellID %in% ids$cell)
 
 bbs3 <- bbs2 %>%
   filter(cellID %in% ids$cell)
 
-ppt_df2 <- ppt_df %>%
-  filter(cellID %in% ids$cell) %>%
-  dplyr::select(-cell)
+# Subset ebird data -------------------------------------------------------
+#this paper: 
+#https://www.nature.com/articles/s41598-022-23603-0
+#subset one 1 and one zero dataset from each cell
+#the chapter from cornell lab subsets "10 per site", not specifying whether
+#they're 1 or 0 checklists
+#https://cornelllabofornithology.github.io/ebird-best-practices/occupancy.html#occupancy-intro
 
-temp_df2 <- temp_df %>%
-  filter(cellID %in% ids$cell) %>%
-  dplyr::select(-cell)
+#going the cornell lab route for now - can come back to revisit later
+#the method from the paper
+ebird_yes <- ebird4 %>%
+  filter(observation_count > 0) %>%
+  group_by(year, cellID) %>%
+  slice_sample(n = 1) %>%
+  ungroup()
 
-vpd_df2 <- vpd_df %>%
-  filter(cellID %in% ids$cell) %>%
-  dplyr::select(-cell)
+ebird_no <- ebird4 %>%
+  filter(observation_count == 0) %>%
+  group_by(year, cellID) %>%
+  slice_sample(n = 1) %>%
+  ungroup()
 
-monsoon_df2 <- monsoon_df %>%
-  filter(cellID %in% ids$cell) %>%
-  dplyr::select(-cell)
+ebird5 <- ebird_yes %>%
+  rbind(ebird_no)
+
+
+# Get polygons around each bird point -------------------------------------
+
+#convert all ebird data to an sf object
+ebird_spatial2 <- ebird_spatial %>%
+  filter(checklist_id %in% ebird5$checklist_id)
+
+#convert all bbs data to an sf object
+bbs_spatial2 <- bbs_spatial %>%
+  filter(RouteDataID %in% bbs3$RouteDataID)
+
+#give all bbs an 8km buffer, 8000m buffer
+#give all ebird a buffer equal to sampling distance
+
+#Create buffer zone:
+ebird_buffer <- st_buffer(ebird_spatial2, ebird_spatial2$buffer_m)
+bbs_buffer <- st_buffer(bbs_spatial2, 8000)#give all bbs an 8km buffer, 8000m buffer
+#give all ebird a buffer equal to sampling distance
 
 # Export ------------------------------------------------------------------
 
-write.csv(ebird3, here('data',
-                      'ebird_data',
-                      'cleaned_data',
-                      'all_ebird_data_cellIDs.csv'))
+st_write(ebird_buffer, here('data',
+                             'ebird_data',
+                             'cleaned_data',
+                             'all_ebird_data_buffercellIDs.shp'))
 
-write.csv(bbs3, here('data',
-                     'bbs_data',
-                     'cleaned_data',
-                     'pjay_data_co_nm_cellIDs.csv'))
 
-write.csv(cone_df, here('data',
-                        'spatial_data',
-                        'cleaned_data',
-                        'cone_masting_df.csv'))
+st_write(bbs_buffer, here('data',
+                           'bbs_data',
+                           'cleaned_data',
+                           'all_bbs_data_buffercellIDs.shp'))
 
-write.csv(temp_df2, here('data',
-                         'spatial_data',
-                         'cleaned_data',
-                         'temp_data_df.csv'))
-
-write.csv(ppt_df2, here('data',
-                         'spatial_data',
-                         'cleaned_data',
-                         'ppt_data_df.csv'))
-
-write.csv(vpd_df2, here('data',
-                        'spatial_data',
-                        'cleaned_data',
-                        'vpd_data_df.csv'))
-
-write.csv(monsoon_df2, here('data',
-                        'spatial_data',
-                        'cleaned_data',
-                        'monsoon_data_df.csv'))
-
-#Get the unique cell IDs that have data - we will just
-#model these cells since it is MUCH smaller than the total 
-#dataset
+#old code that takes one cell per observation
+# write.csv(ebird5, here('data',
+#                       'ebird_data',
+#                       'cleaned_data',
+#                       'all_ebird_data_cellIDs.csv'))
 # 
-# ebird_cells <- ebird %>%
-#   distinct(cellID)
-# 
-# bbs_cells <- bbs2 %>%
-#   distinct(cellID)
-# 
-# #all the cells in the dataset:
-# all_cells <- ebird_cells %>%
-#   full_join(bbs_cells, by = "cellID") 
-# #10342 - still a lot but much smaller than 300,000+!
-# 
-# write.csv(all_cells, here('data',
-#                           'spatial_data',
-#                           'cleaned_data',
-#                           'all_cellIDs.csv'))
+# write.csv(bbs3, here('data',
+#                      'bbs_data',
+#                      'cleaned_data',
+#                      'pjay_data_co_nm_cellIDs.csv'))
 
-# Look at stats for bbs and ebird datasets --------------------------------
 
-#there are 17462 unique 4km cells
-ebird2 %>%
-  distinct(cellID) %>%
-  tally()
 
-#there are 1-7315 observations in each cell - will probs want
-#to subsample in these more populated cells
-ebird2 %>%
-  group_by(cellID) %>%
-  tally() %>%
-  arrange(desc(n))
+# Extract 30m cells under 1km grid and find vlaues and weights
 
-#1-945 in a single cell in a given year - will want to subset these
-ebird2 %>%
-  group_by(year, cellID) %>%
-  tally() %>%
-  arrange(desc(n))
-
-#388 unique 4km cells
-bbs2 %>%
-  distinct(cellID) %>%
-  tally()
-
-#to get cell number for next model:
-#total min: 301078
-#total max: 627033
-#325955 total cells - EEK, this might take a LOOOONG time to model
-#if we use them all...
-
-bbs2 %>%
-  summarise(min = min(cellID),
-            max = max(cellID))
-
-ebird2 %>%
-  summarise(min = min(cellID),
-            max = max(cellID))
 

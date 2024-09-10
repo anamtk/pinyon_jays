@@ -61,37 +61,6 @@ mons <- read.csv(here('data',
                       'cleaned_data',
                       'monsoon_data_df.csv'))
 
-# Subset ebird data -------------------------------------------------------
-
-#this paper: 
-#https://www.nature.com/articles/s41598-022-23603-0
-#subset one 1 and one zero dataset from each cell
-#the chapter from cornell lab subsets "10 per site", not specifying whether
-#they're 1 or 0 checklists
-#https://cornelllabofornithology.github.io/ebird-best-practices/occupancy.html#occupancy-intro
-
-#going the cornell lab route for now - can come back to revisit later
-ebird2 <- ebird %>%
-  group_by(year, cellID) %>%
-  slice_sample(n = 10) %>%
-  ungroup()
-
-#the method from the paper
-ebird_yes <- ebird %>%
-  filter(observation_count > 0) %>%
-  group_by(year, cellID) %>%
-  slice_sample(n = 1) %>%
-  ungroup()
-
-ebird_no <- ebird %>%
-  filter(observation_count == 0) %>%
-  group_by(year, cellID) %>%
-  slice_sample(n = 1) %>%
-  ungroup()
-
-ebird2b <- ebird_yes %>%
-  rbind(ebird_no)
-
 # Some things about data --------------------------------------------------
 
 #start by subsetting 2010-onward, since these are good ebird years
@@ -107,7 +76,7 @@ ebird2b <- ebird_yes %>%
 #projectiosn for cones for all data. Insetad of the last lag having
 #~16.5% imputing, it now has ~10% and all the others have all
 #their data
-ebird3 <- ebird2b %>%
+ebird3 <- ebird %>%
   filter(year > 2009 & year < 2022)
 #12874 total
 bbs2 <- bbs %>% 
