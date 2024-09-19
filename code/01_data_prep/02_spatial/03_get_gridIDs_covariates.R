@@ -83,6 +83,7 @@ pinyonba_df <- terra::as.data.frame(pinyonba_rast,
                                     xy = TRUE,
                                     cells = TRUE)
 
+
 # Set the CRS for datasets -------------------------------------------
 
 #these data are in WGS84, so I'll create this crs to call later
@@ -202,13 +203,18 @@ write.csv(ppt_df2, here('data',
                         'cleaned_data',
                         'ppt_data_df.csv'))
 
-write.csv(vpd_df2, here('data',
-                        'spatial_data',
-                        'cleaned_data',
-                        'vpd_data_df.csv'))
+# write.csv(vpd_df2, here('data',
+#                         'spatial_data',
+#                         'cleaned_data',
+#                         'vpd_data_df.csv'))
 
 write.csv(monsoon_df2, here('data',
                             'spatial_data',
                             'cleaned_data',
                             'monsoon_data_df.csv'))
+
+write.csv(pinyonba_df2, here('data',
+                             'spatial_data',
+                             'cleaned_data',
+                             'pinyonba_data_df.csv'))
 

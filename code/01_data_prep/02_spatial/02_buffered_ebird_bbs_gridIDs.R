@@ -38,8 +38,22 @@ ebird_buffer <- read_sf(here('data',
                            'all_ebird_data_buffercellIDs.shp'))
 
 
-# Get grid IDs for BBS ----------------------------------------------------
 
+# Turn cones to df --------------------------------------------------------
+
+cone_df <- terra::as.data.frame(cones, 
+                                xy = TRUE,
+                                cells = TRUE)
+
+# Get grid IDs for BBS ----------------------------------------------------
+#the buffer I think gets cells outside what is
+#in the cones dataframe (which is what we're masking 
+#every dataset to)
+#so we can delete those cells outside the range
+#for now
+
+cone_cells <- cone_df %>%
+  distinct(cell)
 
 bbs_cells <- exact_extract(cones,
                        bbs_buffer,
@@ -68,7 +82,10 @@ bbs_df2 <- bbs_df %>%
   ungroup() %>%
   rowwise() %>%
   mutate(prop = area/total_area) %>%
-  ungroup()
+  ungroup() %>%
+  dplyr::select(StateNm, Route, Year, 
+                RPID, cell, prop) %>%
+  filter(cell %in% cone_cells$cell)
 
 
 # Get eBIRD grid IDs ------------------------------------------------------
@@ -78,6 +95,7 @@ ebird_cells <- exact_extract(cones,
                            ebird_buffer,
                            include_cell = T, 
                            include_cols = c("chckls_", "year", 
+                                            'pairID',
                                             "buffr_m"),
                            force_df = T)
 
@@ -85,7 +103,7 @@ ebird_cells <- exact_extract(cones,
 ebird_df <- bind_rows(ebird_cells)
 
 ebird_df2 <- ebird_df %>%
-  dplyr::select(chckls_, year, 
+  dplyr::select(chckls_, year, pairID,
                 buffr_m, cell, coverage_fraction) %>%
   rowwise() %>%
   mutate(area = 1.6e+07*coverage_fraction) %>%
@@ -95,7 +113,22 @@ ebird_df2 <- ebird_df %>%
   ungroup() %>%
   rowwise() %>%
   mutate(prop = area/total_area) %>%
-  ungroup()
+  ungroup() %>%
+  dplyr::select(chckls_, pairID, year, cell, prop) %>%
+  filter(cell %in% cone_cells$cell)
+
+
+# Get cell IDs to be able to filter covariates ----------------------------
+
+cell1 <- bbs_df2 %>%
+  distinct(cell)
+
+cell2 <- ebird_df2 %>%
+  distinct(cell)
+  
+cells <- cell1 %>%
+  bind_rows(cell2) %>%
+  distinct(cell) 
 
 # Explort -----------------------------------------------------------------
 
@@ -112,6 +145,11 @@ write.csv(ebird_df2,
                'ebird_cellIDlists.csv'))
 
 
+write.csv(cells, 
+          here('data',
+               'spatial_data',
+               'cleaned_data',
+               'cellIDs.csv'))
 
 
 
