@@ -155,8 +155,8 @@ model{
   #-------------------------------------##
   
   for(t in 1:n.years){ #could make this different for ebird than other loops if the data has more time
-    for(i in 1:n.ebird.grids[t]){ #number of grid cells with ebird data i year t
-      for(r in 1:n.ebird.check[t,i]){
+    for(i in 1:n.ebird.pairs[t]){ #number of pairs/single ebird observations in year t
+      for(r in 1:n.ebird.check[t,i]){#number of checklists in each pair - either 1 or 2
         
         #ebird raw data
         ebird.count[t,i,r] ~ dbin(p.ebird[t,i,r], N[ebird.grid[t,i], t])
@@ -184,8 +184,10 @@ model{
         #doesnt matter when only thinking about one species
         
         #GOODNESS-OF-FIT EVALUATION
+        # I think i need to code ebird grid by replicate as well
         ebird.count.rep[t,i,r] ~ dbin(p.ebird[t,i,r], N[ebird.grid[t,i], t])
-        
+      
+      
       } 
       
       #Spatial uncertainty in eBIRD locations for populating
@@ -197,8 +199,9 @@ model{
       #random index for the grid array - which background point to collect
       ebird.grid.index[t,i] ~ dcat(ebird.pi[t,i,])
       #pulling ut the grid ID for that one
-      ebird.grid[t,i] <- ebird.grid.array[t,i, ebird.grid.index[t,i]]
+      ebird.grid[t,i] <- ebird.grid.array[t,i,ebird.grid.index[t,i]]  
     } 
+    
   } 
   
 
@@ -237,12 +240,12 @@ model{
   
   for(l in 1:n.clag){
     
-    #weights for vpd lags
+    #weights for temp lags
     wB[l] <- deltaB[l]/sumB
     #relatively uninformative gamma prior
     deltaB[l] ~ dgamma(1,1)
     #derived quantity of cumulative weight
-    cum.vpd.wt[l] <- sum(wB[1:l])
+    cum.temp.wt[l] <- sum(wB[1:l])
     
     #weights for ppt lags
     wC[l] <- deltaC[l]/sumC

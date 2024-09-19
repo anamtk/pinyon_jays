@@ -27,7 +27,7 @@ data_list <- readRDS(here('data',
 
 model_file <- (here('code',
                'jags_models',
-               'ebird_bbs_joint_abund_JAGS_monsoon.R'))
+               'ebird_bbs_joint_abund_JAGS_spuncert.R'))
 
 
 # Parameters to save ------------------------------------------------------
