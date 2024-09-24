@@ -1,7 +1,4 @@
 #Ana Miller-ter Kuile
-#make ebird and bbs raster data
-#July 2, 2024
-
 # Load packages -----------------------------------------------------------
 
 package.list <- c("here", "tidyverse", 
@@ -11,7 +8,8 @@ package.list <- c("here", "tidyverse",
                   'sf',
                   'exactextractr',
                   'nngeo',
-                  'sp')
+                  'sp',
+                  'spatialEco')
 
 ## Installing them if they aren't already on the computer
 new.packages <- package.list[!(package.list %in% installed.packages()[,"Package"])]
@@ -56,6 +54,32 @@ cones <- terra::rast(here("data",
                           "full_pied_masting.tif"))
 #plot(cones)
 
+
+# get state boundaries ----------------------------------------------------
+#this gives an error if default TRUE
+sf_use_s2(FALSE)
+
+#get the states we care aboute
+states <- st_as_sf(maps::map("state", fill=TRUE, plot =FALSE)) %>%
+  filter(ID %in% c('arizona', 'colorado', 
+                   'utah', 'new mexico')) 
+  
+#make them "valid" (e.g. not overlapping)
+states <- st_make_valid(states)
+
+#get the total boundary geometry for these states,
+#rather than a boundary for each state
+sw <- states %>%
+summarise(geometry = sf::st_union(geom))
+#switch back - since everything else works
+sf_use_s2(TRUE)
+# Turn cone raster into df with cell IDs ---------------------------------------
+
+cone_df <- terra::as.data.frame(cones, 
+                                xy = TRUE,
+                                cells = TRUE)
+
+
 # Set the CRS for both bird datasets -------------------------------------------
 
 #these data are in WGS84, so I'll create this crs to call later
@@ -88,6 +112,9 @@ ebird_spatial <- st_as_sf(ebird2, coords = c("longitude", "latitude"),
 bbs_spatial <- st_as_sf(bbs2, coords = c("Longitude", "Latitude"),
                         crs = st_crs(crs_albers))
 
+sw2 <- sw %>%
+  st_transform(st_crs(crs_albers))
+
 # Extract cell IDs from raster ------------------------------------------------------------
 
 ##EBIRD
@@ -106,12 +133,6 @@ bbs_cellIDs <- terra::extract(cones, vect(bbs_spatial), cells = T)
 
 bbs_spatial$cellID <- bbs_cellIDs$cell
 
-# Turn cone raster into df with cell IDs ---------------------------------------
-
-cone_df <- terra::as.data.frame(cones, 
-                                xy = TRUE,
-                                cells = TRUE)
-
 # Filter datasets for cells with cone data --------------------------------
 
 ids <- cone_df %>%
@@ -122,6 +143,25 @@ ebird_spatial2 <- ebird_spatial %>%
 
 bbs_spatial2 <- bbs_spatial %>%
   filter(cellID %in% ids$cell)
+
+
+# Remove observations within a certain ------------------------------------
+
+#distance of state boundaries
+
+dist <-  st_distance(ebird_spatial2, st_cast(sw2,"MULTILINESTRING"))
+#Select grid points further than 10km from border:
+ebird_spatial3 <- ebird_spatial2 %>%
+  bind_cols(as.vector(dist[,1])) %>%
+  filter(`...22` > 800)
+#24 checklists removed
+
+dist2 <- st_distance(bbs_spatial2, st_cast(sw2,"MULTILINESTRING"))
+
+bbs_spatial3 <- bbs_spatial2 %>%
+  bind_cols(as.vector(dist2[,1])) %>%
+  filter(`...64` > 800)
+
 
 # Subset ebird data -------------------------------------------------------
 #this paper: 
@@ -154,12 +194,12 @@ bbs_spatial2 <- bbs_spatial %>%
 #   slice_sample(n = 1) %>%
 #   ungroup()
 
-ebird_yes <- ebird_spatial2 %>%
+ebird_yes <- ebird_spatial3 %>%
   filter(observation_count > 0) %>%
   filter(year > 2009) %>%
   ungroup()
 
-ebird_no <- ebird_spatial2 %>%
+ebird_no <- ebird_spatial3 %>%
   filter(observation_count == 0) %>%
   filter(year > 2009)
 
@@ -280,7 +320,7 @@ years <- 2010:2024
 t <- lapply(years, group_function)
 
 #make into one DF
-ebird_spatial3 <- bind_rows(t) %>%
+ebird_spatial4 <- bind_rows(t) %>%
   group_by(year) %>%
   #need to get "group IDs" for 
   #observations that are not in a group
@@ -298,8 +338,8 @@ ebird_spatial3 <- bind_rows(t) %>%
 #give all ebird a buffer equal to sampling distance
 
 #Create buffer zone:
-ebird_buffer <- st_buffer(ebird_spatial3, ebird_spatial3$buffer_m)
-bbs_buffer <- st_buffer(bbs_spatial2, 8000)#give all bbs an 8km buffer, 8000m buffer
+ebird_buffer <- st_buffer(ebird_spatial4, ebird_spatial4$buffer_m)
+bbs_buffer <- st_buffer(bbs_spatial3, 8000)#give all bbs an 8km buffer, 8000m buffer
 #give all ebird a buffer equal to sampling distance
 
 # Export ------------------------------------------------------------------
@@ -316,12 +356,12 @@ st_write(bbs_buffer, here('data',
                            'all_bbs_data_buffercellIDs.shp'))
 
 #old code that takes one cell per observation
-st_write(ebird_spatial3, here('data',
+st_write(ebird_spatial4, here('data',
                       'ebird_data',
                       'cleaned_data',
                       'all_ebird_data_conefiltered.shp'))
 
-st_write(bbs_spatial2, here('data',
+st_write(bbs_spatial3, here('data',
                      'bbs_data',
                      'cleaned_data',
                      'all_bbs_data_conefiltered.shp'))

@@ -712,10 +712,10 @@ n.ebird.check <- as.data.frame(ebird3) %>%
   group_by(year, pairID) %>%
   tally() %>%
   ungroup() %>%
-  left_join(ebird.trans.id.yr, by = c("year", "pairID")) %>%
-  dplyr::select(-pairID) %>%
-  arrange(yrtransID) %>%
-  pivot_wider(names_from = yrtransID,
+  #left_join(ebird.trans.id.yr, by = c("year", "pairID")) %>%
+  #dplyr::select(-pairID) %>%
+  arrange(pairID) %>%
+  pivot_wider(names_from = pairID,
               values_from = n) %>%
   column_to_rownames(var = 'year') %>%
   as.matrix()
