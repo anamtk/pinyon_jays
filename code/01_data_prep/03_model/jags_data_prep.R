@@ -500,8 +500,8 @@ Monsoon <- mons %>%
   dplyr::select(monsoon) %>%
   as_vector()
 
-numID <- as.data.frame(1:7104) %>%
-  rename(numID = `1:7104`)
+numID <- as.data.frame(1:6673) %>%
+  rename(numID = `1:6673`)
 
 #basal area
 PinyonBA <- ba %>%
@@ -514,31 +514,12 @@ PinyonBA <- ba %>%
   pivot_longer(PinyonBA_sqftPerAc_2010:PinyonBA_sqftPerAc_2021,
                names_to = 'year',
                values_to = 'ba') %>%
-  mutate(ba = case_when(ba == Inf ~ NA,
-                        TRUE ~ ba)) %>%
+  replace_na(list(ba = 0)) %>%
   mutate(ba = scale(ba)) %>%
   pivot_wider(names_from = year, 
               values_from = ba) %>%
   column_to_rownames(var = 'numID') %>%
   as.matrix()
-
-sum(is.na(PinyonBA))/(sum(is.na(PinyonBA)) + sum(!is.na(PinyonBA)))
-
-ba2 <- ba %>%
-  left_join(all_cells, by = c("cellID" = "cell")) %>%
-  filter(!is.na(numID)) %>%
-  right_join(numID, by = "numID") %>%
-  #filtering out 2022 for now
-  dplyr::select(numID, PinyonBA_sqftPerAc_2010:PinyonBA_sqftPerAc_2021) %>%
-  pivot_longer(PinyonBA_sqftPerAc_2010:PinyonBA_sqftPerAc_2021,
-               names_to = 'year',
-               values_to = 'ba') %>%
-  mutate(ba = case_when(ba == Inf ~ NA,
-                        TRUE ~ ba)) %>%
-  group_by(year) %>%
-  summarise(sum_na = sum(is.na(ba)),
-            sum_notna = sum(!is.na(ba)),
-            prop = sum_na/(sum_na + sum_notna))
 
 # BBS data prep -----------------------------------------------------------
 
