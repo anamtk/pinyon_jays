@@ -52,6 +52,7 @@ inits_list <- readRDS(here('data',
 
 # Run model ---------------------------------------------------------------
 
+start <- Sys.time()
 #this takes 5 minutes hahahahah
 model <- jagsUI::jags(data = data_list,
                       parameters.to.save = parameters,
@@ -62,4 +63,6 @@ model <- jagsUI::jags(data = data_list,
                       n.iter = 1,
                       DIC = TRUE)
 
+end <- Sys.time()
+end-start
 

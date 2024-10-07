@@ -634,7 +634,7 @@ for(i in 1:dim(bbs_grid_df)[1]){ #dim[1] = n.rows
 
 #set all values past the possible to 0 
 #so the model doesn't break? i think i need this??
-bbs.pi[is.na(bbs.pi)] <- 0
+#bbs.pi[is.na(bbs.pi)] <- 0
 
 bbs.grid.array <- array(NA, dim = c(n.bbs.years, max(bgridtra), max(bgridid)))
 
@@ -648,6 +648,14 @@ for(i in 1:dim(bbs_grid_df)[1]){ #dim[1] = n.rows
   bbs.grid.array[bgridyr[i], bgridtra[i], bgridid[i]] <- as.numeric(bbs_grid_df[i,8])
 }
 
+#matrix t,i
+n.bbs.cells <- bbs_grid_df %>%
+  group_by(yearID, yrtransID) %>%
+  tally() %>%
+  pivot_wider(names_from = yrtransID,
+              values_from = n) %>%
+  column_to_rownames(var = "yearID") %>%
+  as.matrix()
 
 #get year infos to get year IDs for bbs 
 years <- c(2010:2021)
@@ -825,7 +833,7 @@ for(i in 1:dim(ebird_grid_df)[1]){ #dim[1] = n.rows
 
 #set all values past the possible to 0 
 #so the model doesn't break? i think i need this??
-ebird.pi[is.na(ebird.pi)] <- 0
+#ebird.pi[is.na(ebird.pi)] <- 0
 
 
 ebird.grid.array <- array(NA, dim = c(n.years, max(egridpair), max(egridid)))
@@ -840,6 +848,15 @@ for(i in 1:dim(ebird_grid_df)[1]){ #dim[1] = n.rows
   ebird.grid.array[egridyr[i], egridpair[i], egridid[i]] <- as.numeric(ebird_grid_df[i,5])
 }
 
+#matrix t,i
+n.ebird.cells <- ebird_grid_df %>%
+  distinct(yearID, pairID, piID) %>%
+  group_by(yearID, pairID) %>%
+  tally() %>%
+  pivot_wider(names_from = pairID,
+              values_from = n) %>%
+  column_to_rownames(var = "yearID") %>%
+  as.matrix()
 # Values for initials -----------------------------------------------------
 
 #need a starting value for N[i,t]
@@ -870,6 +887,7 @@ data_list <- list(#latent N loop:
                   bbs.count = bbs.count,
                   bbs.pi = bbs.pi,
                   bbs.grid.array = bbs.grid.array,
+                  n.bbs.cells = n.bbs.cells,
                   bbs.year = bbs.year,
                   #ebird loop
                   n.ebird.pairs = n.ebird.pairs,
@@ -877,6 +895,7 @@ data_list <- list(#latent N loop:
                   ebird.count = ebird.count,
                   ebird.pi = ebird.pi,
                   ebird.grid.array = ebird.grid.array,
+                  n.ebird.cells = n.ebird.cells,
                   SurveyType = SurveyType,
                   StartTime = StartTime,
                   Duration = Duration,
