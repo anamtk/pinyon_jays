@@ -19,7 +19,7 @@ for(i in package.list){library(i, character.only = T)}
 
 data_list <- readRDS(here('data',
                           'jags_input_data',
-                          'bbs_ebird_joint_data_list.RDS'))
+                          'bbs_ebird_joint_data_list_nospuncert.RDS'))
 
 
 # Model path --------------------------------------------------------------
@@ -27,7 +27,7 @@ data_list <- readRDS(here('data',
 
 model_file <- (here('code',
                'jags_models',
-               'ebird_bbs_joint_abund_JAGS_spuncert.R'))
+               'ebird_bbs_joint_abund_JAGS_nospuncert.R'))
 
 
 # Parameters to save ------------------------------------------------------
@@ -48,7 +48,7 @@ parameters <- c('a0',
 
 inits_list <- readRDS(here('data',
                            'jags_input_data',
-                           'bbs_ebird_joint_init_list.RDS'))
+                           'bbs_ebird_joint_init_list_nospuncert.RDS'))
 
 # Run model ---------------------------------------------------------------
 
@@ -57,6 +57,7 @@ start <- Sys.time()
 model <- jagsUI::jags(data = data_list,
                       parameters.to.save = parameters,
                       inits = inits_list,
+                      #inits = NULL,
                       model.file = model_file,
                       parallel = TRUE,
                       n.chains = 3,

@@ -19,6 +19,11 @@ if(length(new.packages)) install.packages(new.packages)
 for(i in package.list){library(i, character.only = T)}
 
 set.seed(1)
+
+# Load CRS ----------------------------------------------------------------
+
+#crs_albers <- '+proj=longlat +datum=NAD83 +no_defs +type=crs'
+
 # Load data ---------------------------------------------------------------
 
 # load ebird --------------------------------------------------------------
@@ -51,7 +56,12 @@ bbs2 <- bbs %>%
 cones <- terra::rast(here("data",
                           "spatial_data", 
                           "masting_data",
-                          "full_pied_masting.tif"))
+                          "quantile_pied_predictions_scaled.tif"))
+
+names(cones) <- 1897:2024 ## Actual years of maturation are one year earlier, but adding one year to each to associate it with jay survey period
+
+# cones2 <- project(cones, 
+#                   crs(crs_albers))
 #plot(cones)
 
 
@@ -80,16 +90,6 @@ cone_df <- terra::as.data.frame(cones,
                                 cells = TRUE)
 
 
-# Set the CRS for both bird datasets -------------------------------------------
-
-#these data are in WGS84, so I'll create this crs to call later
-crs_wgs <- '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs'
-
-crs_wgs2 <- "+proj=utm +zone=42N +datum=WGS84 +units=km"
-
-crs_albers <- '+proj=longlat +datum=NAD83 +no_defs +type=crs'
-
-
 # Make spatial ------------------------------------------------------------
 
 #get m radius for buffer.
@@ -106,14 +106,14 @@ ebird2 <- ebird %>%
 
 #convert all ebird data to an sf object
 ebird_spatial <- st_as_sf(ebird2, coords = c("longitude", "latitude"),
-                          crs = st_crs(crs_albers))
+                          crs = st_crs(cones))
 
 #convert all bbs data to an sf object
 bbs_spatial <- st_as_sf(bbs2, coords = c("Longitude", "Latitude"),
-                        crs = st_crs(crs_albers))
+                        crs = st_crs(cones))
 
 sw2 <- sw %>%
-  st_transform(st_crs(crs_albers))
+  st_transform(st_crs(cones))
 
 # Extract cell IDs from raster ------------------------------------------------------------
 

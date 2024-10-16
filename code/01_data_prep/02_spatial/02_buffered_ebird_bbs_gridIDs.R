@@ -16,14 +16,19 @@ if(length(new.packages)) install.packages(new.packages)
 for(i in package.list){library(i, character.only = T)}
 
 
+# Load CRS ----------------------------------------------------------------
+
+#crs_albers <- '+proj=longlat +datum=NAD83 +no_defs +type=crs'
 
 # Load cone dataset -------------------------------------------------------
 
 cones <- terra::rast(here("data",
                           "spatial_data", 
                           "masting_data",
-                          "full_pied_masting.tif"))
-#plot(cones)
+                          "quantile_pied_predictions_scaled.tif"))
+
+names(cones) <- 1897:2024 ## Actual years of maturation are one year earlier, but adding one year to each to associate it with jay survey period
+
 
 
 bbs_buffer <- read_sf(here('data',
@@ -121,14 +126,15 @@ ebird_df2 <- ebird_df %>%
 # Get cell IDs to be able to filter covariates ----------------------------
 
 cell1 <- bbs_df2 %>%
-  distinct(cell)
+  distinct(cell, Year) %>%
+  rename(year = Year)
 
 cell2 <- ebird_df2 %>%
-  distinct(cell)
+  distinct(cell, year)
   
 cells <- cell1 %>%
   bind_rows(cell2) %>%
-  distinct(cell) 
+  distinct(cell, year) 
 
 # Explort -----------------------------------------------------------------
 

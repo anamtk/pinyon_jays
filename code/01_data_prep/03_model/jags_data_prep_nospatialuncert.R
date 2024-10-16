@@ -29,20 +29,20 @@ ebird <- read_sf(here('data',
                        'cleaned_data',
                        'all_ebird_data_conefiltered.shp'))
 
-ebird_gridIDs <- read.csv(here('data',
-                               'ebird_data',
-                               'cleaned_data',
-                               'ebird_cellIDlists.csv'))
+# ebird_gridIDs <- read.csv(here('data',
+#                                'ebird_data',
+#                                'cleaned_data',
+#                                'ebird_cellIDlists.csv'))
 
 bbs <- read_sf(here('data',
                      'bbs_data',
                      'cleaned_data',
                      'all_bbs_data_conefiltered.shp'))
 
-bbs_gridIDs <- read.csv(here('data',
-                             'bbs_data',
-                             'cleaned_data',
-                             'bbs_cellIDlists.csv'))
+# bbs_gridIDs <- read.csv(here('data',
+#                              'bbs_data',
+#                              'cleaned_data',
+#                              'bbs_cellIDlists.csv'))
 
 #Covariates
 cones <- read.csv(here('data',
@@ -131,21 +131,24 @@ ggplot(both) +
 # #model these cells since it is MUCH smaller than the total 
 # #dataset
 # 
-# ebird_cells <- ebird3 %>%
-#   distinct(cellID)
+ebird_cells <- ebird3 %>%
+  distinct(cellID, year)
+
+bbs_cells <- bbs2 %>%
+  distinct(cellID, Year)
+
+#all the cells in the dataset:
+all_cells <- ebird_cells %>%
+  full_join(bbs_cells, by = c("cellID", "year" = "Year")) %>%
+  group_by(year) %>%
+  #get a 1:n() ID for the cells instead of the random
+  #ones we extracted, since this will be easier to index
+  #in the model than random numbers taht aren't consecutive
+  mutate(numID = 1:n()) %>%
+  ungroup()
+# #3420 - that have ebird and/or bbs AND cone data
 # 
-# bbs_cells <- bbs2 %>%
-#   distinct(cellID)
-# 
-# #all the cells in the dataset:
-# all_cells <- ebird_cells %>%
-#   full_join(bbs_cells, by = "cellID") %>%
-#   #get a 1:n() ID for the cells instead of the random
-#   #ones we extracted, since this will be easier to index
-#   #in the model than random numbers taht aren't consecutive
-#   mutate(numID = 1:n())
-# #3870 - that have ebird and/or bbs AND cone data
-# 
+
 
 # Data objects for jags ---------------------------------------------------
 
@@ -156,7 +159,12 @@ ggplot(both) +
 #range - set to 0 instead of imputing in the model
 
 #Total latent N:
-n.grids <- nrow(all_cells)
+
+n.grids <- all_cells %>%
+  group_by(year) %>%
+  summarise(n.grids = max(numID)) %>%
+  dplyr::select(n.grids) %>%
+  as_vector()
 
 #NOTE: Reducing years to not include 2022 of data so that we 
 #can better represent the cone data - when i have the full
@@ -168,7 +176,7 @@ n.years <- length(2010:2021)
 #cones:
 cones2 <- cones %>%
   #get only cell IDs that overlap with bird data
-  filter(cell %in% all_cells$cell) %>%
+  filter(cell %in% all_cells$cellID) %>%
   dplyr::select(cell, X2000:X2023) %>%
   pivot_longer(X2000:X2023,
                names_to = "year",
@@ -176,7 +184,7 @@ cones2 <- cones %>%
   mutate(year = str_sub(year, 2, nchar(year))) %>%
   mutate(year = as.numeric(year)) %>%
   mutate(yearID = as.numeric(as.factor(year)) - 11) %>%
-  left_join(all_cells, by = c("cell")) %>%
+  left_join(all_cells, by = c('cell' = "cellID", 'year')) %>%
   mutate(cones_0 = scale(cones)) %>%
   group_by(cell) %>% 
   arrange(cell, year) %>%
@@ -194,7 +202,8 @@ cones2 <- cones %>%
                 cones_n1:cones_n3) %>%
   pivot_longer(cones_l1:cones_n3,
                names_to = 'lag',
-               values_to = "cones") %>%
+               values_to = "cones") %>%  
+  filter(!is.na(numID)) %>%
   mutate(lagID = case_when(lag == 'cones_l3' ~ 1,
                            lag == 'cones_l2' ~ 2,
                            lag == 'cones_l1' ~ 3,
@@ -213,7 +222,7 @@ coneyear <- cones2$yearID
 conelag <- cones2$lagID
 
 #make a blank array
-Cone <- array(data = NA, dim = c(n.grids, n.years, n.lag))
+Cone <- array(data = NA, dim = c(n.years, max(conegrid),  n.lag))
 
 #fill taht array based on the values in those columns
 for(i in 1:dim(cones2)[1]){ #dim[1] = n.rows
@@ -222,10 +231,12 @@ for(i in 1:dim(cones2)[1]){ #dim[1] = n.rows
   # populate that space in the array with the column in
   # the dataframe that corresponds to the cone data
   # for that yearxgridxlag combo
-  Cone[conegrid[i], coneyear[i], conelag[i]] <- as.numeric(cones2[i,4])
+  Cone[ coneyear[i], conegrid[i],conelag[i]] <- as.numeric(cones2[i,4])
 }
 
-sum(is.na(Cone))/(sum(is.na(Cone)) + sum(!is.na(Cone)))
+#this is meaningless now because there shouldn't be
+#cone data for a fair number of cells in specific years
+#sum(is.na(Cone))/(sum(is.na(Cone)) + sum(!is.na(Cone)))
 
 #VPD
 #these are now monthly - and we will need to break them up 
@@ -325,7 +336,7 @@ sum(is.na(Cone))/(sum(is.na(Cone)) + sum(!is.na(Cone)))
 #temperature
 temp2 <- temp %>%
   #get only cell IDs that overlap with bird data
-  filter(cellID %in% all_cells$cell) %>%
+  filter(cellID %in% all_cells$cellID) %>%
   dplyr::select(cellID, PRISM_tmax_stable_4kmM3_200001_bil:PRISM_tmax_stable_4kmM3_202312_bil) %>%
   pivot_longer(PRISM_tmax_stable_4kmM3_200001_bil:PRISM_tmax_stable_4kmM3_202312_bil,
                names_to = "date",
@@ -372,7 +383,7 @@ temp2 <- temp %>%
   #being collected
   filter(season == 2) %>%
   dplyr::select(-season) %>%
-  left_join(all_cells, by = c("cellID" = 'cell')) %>%
+  left_join(all_cells, by = c("cellID", 'year')) %>%
   dplyr::select(yearID, numID, temp_l1:temp_l13) %>%
   pivot_longer(temp_l1:temp_l13,
                names_to = 'lag',
@@ -380,7 +391,8 @@ temp2 <- temp %>%
   mutate(lagID = str_sub(lag, 7, nchar(lag))) %>%
   mutate(lagID = as.numeric(lagID)) %>%
   dplyr::select(yearID, numID, lagID, temp) %>%
-  filter(yearID < 13) 
+  filter(yearID < 13) %>%
+  filter(!is.na(numID))
 
 #lag index
 n.clag <- max(temp2$lagID)
@@ -392,7 +404,7 @@ tempyear <- temp2$yearID
 templag <- temp2$lagID
 
 #make a blank array
-Temp <- array(data = NA, dim = c(n.grids, n.years, n.clag))
+Temp <- array(data = NA, dim = c(n.years, max(tempgrid)+1, n.clag))
 
 #fill taht array based on the values in those columns
 for(i in 1:dim(temp2)[1]){ #dim[1] = n.rows
@@ -401,14 +413,15 @@ for(i in 1:dim(temp2)[1]){ #dim[1] = n.rows
   # populate that space in the array with the column in
   # the dataframe that corresponds to the data
   # for that yearxgridxlag combo
-  Temp[tempgrid[i], tempyear[i], templag[i]] <- as.numeric(temp2[i,4])
+  Temp[tempyear[i],tempgrid[i],  templag[i]] <- as.numeric(temp2[i,4])
 }
 
-sum(is.na(Temp))/(sum(is.na(Temp)) + sum(!is.na(Temp)))
+ 
+#sum(is.na(Temp))/(sum(is.na(Temp)) + sum(!is.na(Temp)))
 #PPT
 ppt2 <- ppt %>%
   #get only cell IDs that overlap with bird data
-  filter(cellID %in% all_cells$cell) %>%
+  filter(cellID %in% all_cells$cellID) %>%
   dplyr::select(cellID, PRISM_ppt_stable_4kmM3_200001_bil:PRISM_ppt_stable_4kmM3_202312_bil) %>%
   pivot_longer(PRISM_ppt_stable_4kmM3_200001_bil:PRISM_ppt_stable_4kmM3_202312_bil,
                names_to = "date",
@@ -456,7 +469,7 @@ ppt2 <- ppt %>%
   #being collected
   filter(season == 2) %>%
   dplyr::select(-season) %>%
-  left_join(all_cells, by = c("cellID" = "cell")) %>%
+  left_join(all_cells, by = c("cellID" , 'year')) %>%
   dplyr::select(yearID, numID, ppt_l1:ppt_l13) %>%
   pivot_longer(ppt_l1:ppt_l13,
                names_to = 'lag',
@@ -464,7 +477,8 @@ ppt2 <- ppt %>%
   mutate(lagID = str_sub(lag, 6, nchar(lag))) %>%
   mutate(lagID = as.numeric(lagID)) %>%
   dplyr::select(yearID, numID, lagID, ppt) %>%
-  filter(yearID < 13)
+  filter(yearID < 13) %>%
+  filter(!is.na(numID))
 
 #now, generate IDs for the for loop where
 # we will populate the array
@@ -473,7 +487,7 @@ pptyear <- ppt2$yearID
 pptlag <- ppt2$lagID
 
 #make a blank array
-PPT <- array(data = NA, dim = c(n.grids, n.years, n.clag))
+PPT <- array(data = NA, dim = c(n.years, max(pptgrid)+1,  n.clag))
 
 #fill taht array based on the values in those columns
 for(i in 1:dim(ppt2)[1]){ #dim[1] = n.rows
@@ -482,46 +496,59 @@ for(i in 1:dim(ppt2)[1]){ #dim[1] = n.rows
   # populate that space in the array with the column in
   # the dataframe that corresponds to the data
   # for that yearxgridxlag combo
-  PPT[pptgrid[i], pptyear[i], pptlag[i]] <- as.numeric(ppt2[i,4])
+  PPT[ pptyear[i],pptgrid[i], pptlag[i]] <- as.numeric(ppt2[i,4])
 }
 
-sum(is.na(PPT))/(sum(is.na(PPT)) + sum(!is.na(PPT)))
+#sum(is.na(PPT))/(sum(is.na(PPT)) + sum(!is.na(PPT)))
 
 #monsoon
-Monsoon <- mons %>%
+mons2 <- mons %>%
   group_by(cellID) %>%
   summarise(monsoon = mean(PRISM_ppt_30yr_normal_800mM4_07_bil, na.rm = T)) %>%
   ungroup() %>%
-  left_join(all_cells, by = c("cellID" = 'cell')) %>%
-  filter(!is.na(numID)) %>%
-  mutate(monsoon = scale(monsoon)) %>%
-  arrange(numID) %>%
-  column_to_rownames(var = "numID") %>%
-  dplyr::select(monsoon) %>%
-  as_vector()
+  mutate(monsoon = scale(monsoon)) 
 
-numID <- as.data.frame(1:6673) %>%
-  rename(numID = `1:6673`)
+#t,i
+Monsoon <- all_cells %>%
+  left_join(mons2, by = c("cellID")) %>%
+  dplyr::select(year, numID, monsoon) %>%
+  pivot_wider(names_from = numID, 
+              values_from = monsoon) %>%
+  column_to_rownames(var = 'year') %>%
+  as.matrix()
+
+numID <- as.data.frame(1:max(n.grids)) %>%
+  rename(numID = `1:max(n.grids)`)
 
 #basal area
 PinyonBA <- ba %>%
-  left_join(all_cells, by = c("cellID" = "cell")) %>%
-  filter(!is.na(numID)) %>%
-  arrange(numID) %>%
-  right_join(numID, by = "numID") %>%
-  #filtering out 2022 for now
-  dplyr::select(numID, PinyonBA_sqftPerAc_2010:PinyonBA_sqftPerAc_2021) %>%
+  dplyr::select(cellID, PinyonBA_sqftPerAc_2010:PinyonBA_sqftPerAc_2021) %>%
   pivot_longer(PinyonBA_sqftPerAc_2010:PinyonBA_sqftPerAc_2021,
                names_to = 'year',
                values_to = 'ba') %>%
- # replace_na(list(ba = 0)) %>%
+  mutate(year = str_sub(year, (nchar(year)-3), nchar(year))) %>%
+  mutate(year = as.numeric(year)) %>%
+  left_join(all_cells, by = c("cellID", 'year')) %>%
+  arrange(year, numID) %>%
+  #filtering out 2022 for now
+  replace_na(list(ba = 0)) %>%
   mutate(ba = scale(ba)) %>%
-  pivot_wider(names_from = year, 
-              values_from = ba) %>%
-  column_to_rownames(var = 'numID') %>%
+  dplyr::select(year, ba, numID) %>%
+  full_join(numID, by = "numID") %>%
+  arrange(numID) %>%
+  pivot_wider(names_from = numID, 
+              values_from = ba,
+              values_fn = mean,
+              values_fill = NA) %>%
+  dplyr::select(-'NA') %>%
+  arrange(year) %>%
+  filter(!is.na(year)) %>%
+  #replace_na(list(numID = 1370)) %>%
+  column_to_rownames(var = 'year') %>%
   as.matrix()
 
-sum(is.na(PinyonBA))/(sum(is.na(PinyonBA)) + sum(!is.na(PinyonBA)))
+#sum(is.na(PinyonBA))/(sum(is.na(PinyonBA)) + sum(!is.na(PinyonBA)))
+
 # BBS data prep -----------------------------------------------------------
 
 #BBS:
@@ -598,73 +625,24 @@ for(i in 1:dim(bbs_count_df)[1]){ #dim[1] = n.rows
   bbs.count[yr[i], trans[i], stop[i]] <- as.numeric(bbs_count_df[i,5])
 }
 
-#NEED TO UPDATE NEXT SECTION USING
-#GRID SAMPLER CODE AS A GUIDELINEEEE
-#I think i will need to make the matrix
-#to select form and for the proportions
-#and make sure that any values past the nubmer of 
-#grid cells from that year for pi are == 0
-
 #need
-bbs_grid_df <- bbs_gridIDs %>%
-  filter(Year >= 2010 &  Year < 2022) %>%
-  left_join(all_cells, by = "cell") %>%
-  mutate(yearID = as.numeric(as.factor(Year))) %>%
-  left_join(bbs.trans.id.yr, by = c("Year", "StateNm",
-                                    "Route")) %>%
-  group_by(yearID, yrtransID) %>%
-  mutate(piID = 1:n()) %>%
-  ungroup()
-  
 
-bgridyr <- bbs_grid_df$yearID
-bgridtra <- bbs_grid_df$yrtransID
-bgridid <- bbs_grid_df$piID
-
-bbs.pi <- array(NA, dim = c(n.bbs.years, max(bgridtra), max(bgridid)))
-
-#fill taht array based on the values in those columns
-for(i in 1:dim(bbs_grid_df)[1]){ #dim[1] = n.rows
-  #using info from the dataframe on the year, transect,
-  #and pi ID of row i
-  # populate that space in the array with the column in
-  # the dataframe that corresponds to the pi data
-  # for that yearxtransectxpi combo
-  bbs.pi[bgridyr[i], bgridtra[i], bgridid[i]] <- as.numeric(bbs_grid_df[i,7])
-}
-
-#set all values past the possible to 0 
-#so the model doesn't break? i think i need this??
-#bbs.pi[is.na(bbs.pi)] <- 0
-
-bbs.grid.array <- array(NA, dim = c(n.bbs.years, max(bgridtra), max(bgridid)))
-
-#fill taht array based on the values in those columns
-for(i in 1:dim(bbs_grid_df)[1]){ #dim[1] = n.rows
-  #using info from the dataframe on the year, transect,
-  #and pi ID of row i
-  # populate that space in the array with the column in
-  # the dataframe that corresponds to the pi data
-  # for that yearxtransectxpi combo
-  bbs.grid.array[bgridyr[i], bgridtra[i], bgridid[i]] <- as.numeric(bbs_grid_df[i,8])
-}
-
-#matrix t,i
-n.bbs.cells <- bbs_grid_df %>%
-  group_by(yearID, yrtransID) %>%
-  tally() %>%
-  pivot_wider(names_from = yrtransID,
-              values_from = n) %>%
-  column_to_rownames(var = "yearID") %>%
+bbs.grid <- as.data.frame(bbs2) %>%
+  dplyr::select(StateNm, Route, Year, cellID) %>%
+  #get the transect ID by year
+  left_join(bbs.trans.id.yr, by = c("Year", "StateNm", "Route")) %>%
+  mutate(YearID = as.numeric(as.factor(Year))) %>%
+    left_join(all_cells, by = c("cellID", "Year" = 'year')) %>%
+  dplyr::select(Year, yrtransID, numID) %>%
+  pivot_wider(names_from = 'yrtransID', 
+              values_from = 'numID') %>%
+  arrange(Year) %>%
+  column_to_rownames(var = "Year") %>%
   as.matrix()
 
-#get year infos to get year IDs for bbs 
 years <- c(2010:2021)
 yearids <- as.data.frame(years) %>%
   mutate(yearnum = 1:n())
-
-#to account for the lack of survey in 2020. but to 
-#link back to yearly numbers other than that year
 bbs.year <- bbs2 %>%
   left_join(yearids, by = c("Year" = "years")) %>%
   arrange(Year) %>%
@@ -798,66 +776,22 @@ for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
 
 ebird_index2 <- ebird_index_df %>%
   dplyr::select(chckls_, checkID, pairID)
-  
-#I need to link up metadata on the 
-#"replicate" each checklist represents for each
-#cell, and then the indexing will be [i,t,]
-ebird_grid_df <- ebird_gridIDs %>%
-  filter(year >= 2010 &  year < 2022) %>%
-  #get cell numIDs for coding for jags
-  left_join(all_cells, by = "cell") %>%
-  mutate(yearID = as.numeric(as.factor(year))) %>%
-  #get yrtransID index (which transect in year t are we )
-  left_join(ebird_index2, by = c("chckls_", 'pairID')) %>%
-  filter(!is.na(pairID)) %>%
-  group_by(yearID, pairID, checkID) %>%
-  mutate(piID = 1:n()) %>%
+
+ebird.grid <- as.data.frame(ebird3) %>%
   ungroup() %>%
-  dplyr::select(chckls_, year, cell, prop, numID,
-                yearID, pairID, checkID, piID)
-
-egridyr <- ebird_grid_df$yearID
-egridpair <- ebird_grid_df$pairID
-egridid <- ebird_grid_df$piID
-
-ebird.pi <- array(NA, dim = c(n.years, max(egridpair), max(egridid)))
-
-#fill taht array based on the values in those columns
-for(i in 1:dim(ebird_grid_df)[1]){ #dim[1] = n.rows
-  #using info from the dataframe on the year, transect,
-  #and pi ID of row i
-  # populate that space in the array with the column in
-  # the dataframe that corresponds to the pi data
-  # for that yearxtransectxpi combo
-  ebird.pi[egridyr[i], egridpair[i], egridid[i]] <- as.numeric(ebird_grid_df[i,4])
-}
-
-#set all values past the possible to 0 
-#so the model doesn't break? i think i need this??
-#ebird.pi[is.na(ebird.pi)] <- 0
-
-
-ebird.grid.array <- array(NA, dim = c(n.years, max(egridpair), max(egridid)))
-
-#fill taht array based on the values in those columns
-for(i in 1:dim(ebird_grid_df)[1]){ #dim[1] = n.rows
-  #using info from the dataframe on the year, transect,
-  #and pi ID of row i
-  # populate that space in the array with the column in
-  # the dataframe that corresponds to the pi data
-  # for that yearxtransectxpi combo
-  ebird.grid.array[egridyr[i], egridpair[i], egridid[i]] <- as.numeric(ebird_grid_df[i,5])
-}
-
-#matrix t,i
-n.ebird.cells <- ebird_grid_df %>%
-  distinct(yearID, pairID, piID) %>%
-  group_by(yearID, pairID) %>%
-  tally() %>%
-  pivot_wider(names_from = pairID,
-              values_from = n) %>%
-  column_to_rownames(var = "yearID") %>%
+  left_join(all_cells, by = c("cellID", 'year')) %>%
+  #left_join(ebird.trans.id.yr, by = c("pairID", "year")) %>%
+  mutate(yrID = as.numeric(as.factor(year))) %>%
+  distinct(pairID, yrID, numID) %>%
+  group_by(pairID, yrID) %>%
+  slice_sample(n = 1) %>%
+  ungroup() %>%
+  pivot_wider(names_from = 'pairID', 
+              values_from = 'numID') %>%
+  arrange(yrID) %>%
+  column_to_rownames(var = "yrID") %>%
   as.matrix()
+
 # Values for initials -----------------------------------------------------
 
 #need a starting value for N[i,t]
@@ -866,7 +800,17 @@ maxb <- max(bbs.count, na.rm = T)
 maxe <- max(ebird.count, na.rm=T)
 nmax <- max(c(maxb, maxe))
 
-N <- matrix(nmax, nrow =n.grids, ncol = n.years)
+ndf <- all_cells %>%
+  mutate(yearID = as.numeric(as.factor(year)))
+
+N <- matrix(NA, nrow = n.years, ncol =max(n.grids))
+
+nyr <- ndf$yearID
+nid <- ndf$numID
+
+for(i in 1:dim(ndf)[1]){ #dim[1] = n.rows
+  N[nyr[i], nid[i]] <- nmax
+}
 
 # Compile and export ------------------------------------------------------
 
@@ -886,17 +830,13 @@ data_list <- list(#latent N loop:
                   ObserverExp = ObserverExp,
                   n.bbs.points = n.bbs.points,
                   bbs.count = bbs.count,
-                  bbs.pi = bbs.pi,
-                  bbs.grid.array = bbs.grid.array,
-                  n.bbs.cells = n.bbs.cells,
+                  bbs.grid = bbs.grid,
                   bbs.year = bbs.year,
                   #ebird loop
                   n.ebird.pairs = n.ebird.pairs,
                   n.ebird.check = n.ebird.check,
                   ebird.count = ebird.count,
-                  ebird.pi = ebird.pi,
-                  ebird.grid.array = ebird.grid.array,
-                  n.ebird.cells = n.ebird.cells,
+                  ebird.grid = ebird.grid,
                   SurveyType = SurveyType,
                   StartTime = StartTime,
                   Duration = Duration,
@@ -905,7 +845,7 @@ data_list <- list(#latent N loop:
 
 saveRDS(data_list, here('data',
                         'jags_input_data',
-                        'bbs_ebird_joint_data_list.RDS'))
+                        'bbs_ebird_joint_data_list_nospuncert.RDS'))
 
 inits_list <- list(list(N = N),
                    list(N = N),
@@ -913,6 +853,6 @@ inits_list <- list(list(N = N),
 
 saveRDS(inits_list, here('data',
                         'jags_input_data',
-                        'bbs_ebird_joint_init_list.RDS'))
+                        'bbs_ebird_joint_init_list_nospuncert.RDS'))
 
 

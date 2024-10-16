@@ -18,6 +18,11 @@ if(length(new.packages)) install.packages(new.packages)
 ## And loading them
 for(i in package.list){library(i, character.only = T)}
 
+
+# Load CRS ----------------------------------------------------------------
+
+#crs_albers <- '+proj=longlat +datum=NAD83 +no_defs +type=crs'
+
 # Load data ---------------------------------------------------------------
 
 # Load cone dataset -------------------------------------------------------
@@ -25,8 +30,13 @@ for(i in package.list){library(i, character.only = T)}
 cones <- terra::rast(here("data",
                           "spatial_data", 
                           "masting_data",
-                          "full_pied_masting.tif"))
-#plot(cones)
+                          "quantile_pied_predictions_scaled.tif"))
+
+names(cones) <- 1897:2024 ## Actual years of maturation are one year earlier, but adding one year to each to associate it with jay survey period
+
+cone_df <- terra::as.data.frame(cones, 
+                                xy = TRUE,
+                                cells = TRUE)
 
 # Load ppt and temp datasets ----------------------------------------------
 
@@ -37,7 +47,13 @@ pptrastlist <- list.files(path = here('data',
 
 ppt_rast <- terra::rast(pptrastlist)
 
-ppt_df <- terra::as.data.frame(ppt_rast, 
+
+ppt_rast2 <- project(ppt_rast,
+                     crs(cones))
+
+all.equal(crs(cones), crs(ppt_rast2)) ## The same CRS for both layers
+
+ppt_df <- terra::as.data.frame(ppt_rast2, 
                                xy = TRUE,
                                cells = TRUE)
 
@@ -49,28 +65,22 @@ temprastlist <- list.files(path = here('data',
 
 temp_rast <- terra::rast(temprastlist)
 
-temp_df <- terra::as.data.frame(temp_rast, 
+temp_rast2 <- project(temp_rast,
+                     crs(cones))
+
+temp_df <- terra::as.data.frame(temp_rast2, 
                                 xy = TRUE,
                                 cells = TRUE)
 
-#vpd 
-# vpdrastlist <- list.files(path = here('data',
-#                                        'spatial_data',
-#                                        'prism_monthly_vpd'), pattern='.bil$', 
-#                            recursive = T, all.files= T, full.names= T)
-# 
-# vpd_rast <- terra::rast(vpdrastlist)
-# 
-# vpd_df <- terra::as.data.frame(vpd_rast, 
-#                                 xy = TRUE,
-#                                 cells = TRUE)
 
 monsoon_rast <- terra::rast(here('data', 'spatial_data',
                                  'monsoon', 'SWMON.tif'))
 
 #terra::plot(monsoon_rast)
+monsoon_rast2 <- project(monsoon_rast,
+                     crs(cones))
 
-monsoon_df <- terra::as.data.frame(monsoon_rast,
+monsoon_df <- terra::as.data.frame(monsoon_rast2,
                                    xy= TRUE,
                                    cells = TRUE)
 
@@ -79,20 +89,11 @@ pinyonba_rast <- terra::rast(here('data',
                                   'pinyonBA',
                                   'PinyonBA_4km_sqftPerAc.tif'))
 
+all.equal(crs(cones), crs(pinyonba_rast)) ## The same CRS for both layers
+
 pinyonba_df <- terra::as.data.frame(pinyonba_rast,
                                     xy = TRUE,
                                     cells = TRUE)
-
-
-# Set the CRS for datasets -------------------------------------------
-
-#these data are in WGS84, so I'll create this crs to call later
-crs_wgs <- '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs'
-
-crs_wgs2 <- "+proj=utm +zone=42N +datum=WGS84 +units=km"
-
-crs_albers <- '+proj=longlat +datum=NAD83 +no_defs +type=crs'
-
 
 # Extract cell IDs from raster ------------------------------------------------------------
 
@@ -101,7 +102,7 @@ ppt_points <- ppt_df %>%
   dplyr::select(x, y)
 
 ppt_spatial <- st_as_sf(ppt_points, coords = c("x", "y"),
-                        crs = st_crs(crs_albers))
+                        crs = st_crs(cones))
 
 ppt_cellIDs <- terra::extract(cones, vect(ppt_spatial), cells = T)
 
@@ -112,29 +113,18 @@ temp_points <- temp_df %>%
   dplyr::select(x, y)
 
 temp_spatial <- st_as_sf(temp_points, coords = c("x", "y"),
-                         crs = st_crs(crs_albers))
+                         crs = st_crs(cones))
 
 temp_cellIDs <- terra::extract(cones, vect(temp_spatial), cells = T)
 
 temp_df$cellID <- temp_cellIDs$cell
-
-#vpd
-# vpd_points <- vpd_df %>%
-#   dplyr::select(x, y)
-
-# vpd_spatial <- st_as_sf(vpd_points, coords = c("x", "y"),
-#                          crs = st_crs(crs_albers))
-# 
-# vpd_cellIDs <- terra::extract(cones, vect(vpd_spatial), cells = T)
-# 
-# vpd_df$cellID <- vpd_cellIDs$cell
 
 #monsoon
 monsoon_points <- monsoon_df %>%
   dplyr::select(x, y)
 
 monsoon_spatial <- st_as_sf(monsoon_points, coords = c("x", "y"),
-                            crs = st_crs(crs_albers))
+                            crs = st_crs(cones))
 
 monsoon_cellIDs <- terra::extract(cones, vect(monsoon_spatial), cells = T)
 
@@ -145,46 +135,31 @@ pinyonba_points <- pinyonba_df %>%
   dplyr::select(x, y)
 
 pinyonba_spatial <- st_as_sf(pinyonba_points, coords = c("x", "y"),
-                             crs = st_crs(crs_albers))
+                             crs = st_crs(cones))
 
 pinyonba_cellIDs <- terra::extract(cones, vect(pinyonba_spatial), cells = T)
 
 pinyonba_df$cellID <- pinyonba_cellIDs$cell
 
-# Turn cone raster into df with cell IDs ---------------------------------------
-
-cone_df <- terra::as.data.frame(cones, 
-                                xy = TRUE,
-                                cells = TRUE)
-
-
 # Filter datasets for cells with cone data --------------------------------
 
 ids <- cone_df %>%
   distinct(cell)
-
+# 
 ppt_df2 <- ppt_df %>%
   filter(cellID %in% ids$cell) %>%
   dplyr::select(-cell)
-
+# 
 temp_df2 <- temp_df %>%
   filter(cellID %in% ids$cell) %>%
   dplyr::select(-cell)
 
-# vpd_df2 <- vpd_df %>%
-#   filter(cellID %in% ids$cell) %>%
-#   dplyr::select(-cell)
-
 monsoon_df2 <- monsoon_df %>%
   filter(cellID %in% ids$cell) %>%
-  dplyr::select(-cell)
-
-pinyonba_df2 <- pinyonba_df %>%
-  filter(cellID %in% ids$cell) %>%
-  dplyr::select(-cell)
-
-
-
+  dplyr::select(-cell) %>%
+  group_by(cellID) %>%
+  summarise(PRISM_ppt_30yr_normal_800mM4_07_bil = mean(PRISM_ppt_30yr_normal_800mM4_07_bil, na.rm = T)) %>%
+  ungroup()
 
 # Export ------------------------------------------------------------------
 
@@ -192,6 +167,7 @@ write.csv(cone_df, here('data',
                         'spatial_data',
                         'cleaned_data',
                         'cone_masting_df.csv'))
+
 
 write.csv(temp_df2, here('data',
                          'spatial_data',
@@ -203,18 +179,18 @@ write.csv(ppt_df2, here('data',
                         'cleaned_data',
                         'ppt_data_df.csv'))
 
-# write.csv(vpd_df2, here('data',
-#                         'spatial_data',
-#                         'cleaned_data',
-#                         'vpd_data_df.csv'))
 
 write.csv(monsoon_df2, here('data',
                             'spatial_data',
                             'cleaned_data',
                             'monsoon_data_df.csv'))
 
-write.csv(pinyonba_df2, here('data',
+write.csv(pinyonba_df, here('data',
                              'spatial_data',
                              'cleaned_data',
                              'pinyonba_data_df.csv'))
+
+
+ 
+
 
