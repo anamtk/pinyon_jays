@@ -1,28 +1,25 @@
 model{
   
   #Notes about this model:
-  #We are combining data from BBS and eBIRD with a joint likelihood
+  #This is a model evaluating relationships between pinyon jay
+  #abundance and cone abundance, mediated by other covariates 
   
-  #loosely based off the joint-likelihood approach in this paper:
-  #https://www.nature.com/articles/s41598-022-23603-0
+  #we are using eBIRD data in this study because of its broad
+  #spatial and temporal coverage. We are using cone production 
+  #data from Andreas Wion (in review)
   
   #We cleaned ebird data following that paper and guidelines from
   #the Cornell Lab Website
   #https://cornelllabofornithology.github.io/ebird-best-practices/abundance.html
   
-  #We selected BBS data from only the first 10 points so that the 
-  #spatial scale would be more in line with the spatial scale of covariates
-  #(~5 miles; covariates have a 4km resolution)
-  
   #Components of model:
-  # - Both eBIRD and BBS contribute equally to predictions of yearly latent population
-  ## sizes for pinyon jays
-  # - Both of these observation components of the model have covariates to detection
-  # - We incorporate spatial uncertainty for both eBIRD and BBS observations using a 
+  # - eBIRD observed counts contribute to estimates of latent abundance
+  # - the observation component of the model has covariates to detection
+  # - We incorporate spatial uncertainty for eBIRD observations using a 
   ## sampler that selects a "gridID" for each observation in each year based on
   ## the relative coverage of the set of possible 4km grid cells that that observation 
-  ## lat-long plus a buffer around it (5 mile radius for BBS; radius of 1/2 the distance 
-  ## variable for eBIRD) could be in. So, for example, if an observation buffer
+  ## lat-long plus a buffer around it (radius of 1/2 the distance 
+  ## variable) could be in. So, for example, if an observation buffer
   ## has a 20% coverage with cell 1 and an 80% coverage with cell 2, the sampler will
   ## have probabilities of selecting grid cell 1 and 2 of .2 and .8 - likely selecting
   ## grid cell 2 most of the time for which to populate covariates for that iteration
@@ -107,91 +104,40 @@ model{
   } #years
   
   #-------------------------------------## 
-  # Observation Models ###
+  # Observation Model ###
   #-------------------------------------##
   
-  #-------------------------------------## 
-  # BBS Observation Model ###
-  #-------------------------------------##
-  
-  #to deal with the fact taht not all bbs transectts 
-  #are surveyed in all years... i think this should work
-  #also bbs didn't run in 2020 so...
-  # for(t in 1:n.bbs.years){
-  #   for(i in 1:n.bbs.trans[t]){
-  #     
-  #     #Detection probability is dependent on covariates
-  #     logit(p.bbs[t,i]) <- b0 + #could make this have random effects
-  #       #observer experience - make this a continous variable 
-  #       #based on observer ID from 1966-onward
-  #       b[1]*ObserverExp[t,i] #+
-  #     #b[2]*AreaSampled[t,i] #look at OG paper and figure out how much of grid was 
-  #     #sampled by each bbs survey - maybe don't include this, might always be the same...
-  #     
-  #     for(r in 1:n.bbs.points[t,i]){
-  #       
-  #       #bbs raw data:
-  #       bbs.count[t,i,r] ~ dbin(p.bbs[t,i], N[bbs.year[t], bbs.grid[t,i]])
-  #       
-  #       #GOODNESS-OF-FIT EVALUATION
-  #       bbs.count.rep[t,i,r] ~ dbin(p.bbs[t,i], N[bbs.year[t], bbs.grid[t,i]])
-  #       
-  #       
-  #     }
-  #     
-  #     #Spatial uncertainty in BBS locations for populating
-  #     #the covariates
-  #     #pi and grid.array are "data" 
-  #     #pi is the proportion of the likely survey in a given grid
-  #     #cell, grid.array is the gridIDs that correspond to each of those
-  #     #same probabilities and from which a sample grid ID is drawn
-  #     #random index for the grid array - which background point to collect
-  #     bbs.grid.index[t,i] ~ dcat(bbs.pi[t,i,1:n.bbs.cells[t,i]])
-  #     #pulling ut the grid ID for that one
-  #     bbs.grid[t,i] <- bbs.grid.array[t,i, bbs.grid.index[t,i]]
-  #   }
-  # }
-  # 
   #-------------------------------------## 
   # eBIRD Observation Model ###
   #-------------------------------------##
   
   for(t in 1:n.years){ #could make this different for ebird than other loops if the data has more time
-    for(i in 1:n.ebird.pairs[t]){ #number of pairs/single ebird observations in year t
-      for(r in 1:n.ebird.check[t,i]){#number of checklists in each pair - either 1 or 2
+    for(i in 1:n.ebird.check[t]){ #number of checklists in year t
+
+      #ebird raw data
+      ebird.count[t,i] ~ dbin(p.ebird[t,i], N[t,ebird.grid[t,i]])
         
-        #ebird raw data
-        ebird.count[t,i,r] ~ dbin(p.ebird[t,i,r], N[t,ebird.grid[t,i]])
+      #Detection probability is dependent on covariates
+      logit(p.ebird[t,i]) <- c0 + #could make this have random effects, maybe observer ID
+        c1[SurveyType[t,i]] +
+        c[2]*StartTime[t,i] +
+        c[3]*Duration[t,i] +
+        c[4]*Distance[t,i] +
+        c[5]*NumObservers[t,i] 
         
-        #Detection probability is dependent on covariates
-        logit(p.ebird[t,i,r]) <- c0 + #could make this have random effects, maybe observer ID
-          c1[SurveyType[t,i,r]] +
-          c[2]*StartTime[t,i,r] +
-          c[3]*Duration[t,i,r] +
-          c[4]*Distance[t,i,r] +
-          c[5]*NumObservers[t,i,r] 
+      #checklists from breeding season (late Feb - early May)
+      #only complete checklists
+      #<5 h duration, <5km distance traveled, <10observers
+      #start time, duration, distance, survey type 
+      #(only considered stationary and traveling), number of observers,
+      #observer ID number 
+      #in that paper, they also divided time in a weird way to capture morning
+      #and night - but look at htat and decide whether it's worth it, mayb3
+      #doesnt matter when only thinking about one species
         
-        #checklists from June and July only to match up with BBS
-        #only complete checklists
-        #<5 h duration, <5km distance traveled, <10observers
-        #may want to randomly sample one detection and one non-detection checklist
-        # of a 5km hexagonal grid 
-        #if imbalanced detection-non-detection per grid, subsample
-        #only one-non-detection checklist for each cell in each week. 
-        #start time, duration, distance, survey type 
-        #(only considered stationary and the other one), number of observers,
-        #observer ID number 
-        #in that paper, they also divided time in a weird way to capture morning
-        #and night - but look at htat and decide whether it's worth it, mayb3
-        #doesnt matter when only thinking about one species
-        
-        #GOODNESS-OF-FIT EVALUATION
-        # I think i need to code ebird grid by replicate as well
-        ebird.count.rep[t,i,r] ~ dbin(p.ebird[t,i,r], N[t,ebird.grid[t,i]])
-      
-      
-      } 
-      
+      #GOODNESS-OF-FIT EVALUATION
+      ebird.count.rep[t,i] ~ dbin(p.ebird[t,i], N[t,ebird.grid[t,i]])
+ 
       #Spatial uncertainty in eBIRD locations for populating
       #the covariates
       #pi and grid.array are "data" 
@@ -258,20 +204,6 @@ model{
     
   }
   
-  
-  
-  
-  #-------------------------------------## 
-  # Priors: BBS Observation model ###
-  #-------------------------------------##
-
-  # #intercept
-  # b0 ~ dnorm(0, 1E-2)
-  # #slopes
-  # for(i in 1:1){
-  #   b[i] ~ dnorm(0, 1E-2)
-  # }
-  # 
   #-------------------------------------## 
   # Priors: eBIRD Observation model ###
   #-------------------------------------##

@@ -32,7 +32,10 @@ ebd_co <- auk_ebd(file = here('data',
 ebd_filters <- ebd_co %>%
   #filter just the months of interest, I think
   #we will want june and july, but need to verify
-  auk_date(date = c("*-06-01", "*-07-31")) %>%
+  #auk_date(date = c("*-06-01", "*-07-31")) %>%
+  #filtering without bbs will be the nesting season
+  #"late Feb to early May"
+  auk_date(date = c("*-02-15", "*-05-15")) %>%
 #restirct to the stationary and traveling protocols
   auk_protocol(protocol = c("Stationary", "Traveling")) %>%
   #less than 5 h
@@ -73,7 +76,10 @@ ebd_nm <- auk_ebd(file = here('data',
 ebd_filters <- ebd_nm %>%
   #filter just the months of interest, I think
   #we will want june and july, but need to verify
-  auk_date(date = c("*-06-01", "*-07-31")) %>%
+  #auk_date(date = c("*-06-01", "*-07-31")) %>%
+  #filtering without bbs will be the nesting season
+  #"late Feb to early May"
+  auk_date(date = c("*-02-15", "*-05-15")) %>%
   #restirct to the stationary and traveling protocols
   auk_protocol(protocol = c("Stationary", "Traveling")) %>%
   #less than 5 h
@@ -115,7 +121,10 @@ ebd_az <- auk_ebd(file = here('data',
 ebd_filters <- ebd_az %>%
   #filter just the months of interest, I think
   #we will want june and july, but need to verify
-  auk_date(date = c("*-06-01", "*-07-31")) %>%
+  #auk_date(date = c("*-06-01", "*-07-31")) %>%
+  #filtering without bbs will be the nesting season
+  #"late Feb to early May"
+  auk_date(date = c("*-02-15", "*-05-15")) %>%
   #restirct to the stationary and traveling protocols
   auk_protocol(protocol = c("Stationary", "Traveling")) %>%
   #less than 5 h
@@ -157,7 +166,10 @@ ebd_ut <- auk_ebd(file = here('data',
 ebd_filters <- ebd_ut %>%
   #filter just the months of interest, I think
   #we will want june and july, but need to verify
-  auk_date(date = c("*-06-01", "*-07-31")) %>%
+  #auk_date(date = c("*-06-01", "*-07-31")) %>%
+  #filtering without bbs will be the nesting season
+  #"late Feb to early May"
+  auk_date(date = c("*-02-15", "*-05-15")) %>%
   #restirct to the stationary and traveling protocols
   auk_protocol(protocol = c("Stationary", "Traveling")) %>%
   #less than 5 h
@@ -257,3 +269,20 @@ write.csv(ebird, here('data',
                'ebird_data',
                'cleaned_data',
                'all_ebird_data.csv'))
+
+
+# Explore for ebird eyars -------------------------------------------------
+
+ebdyrs <- ebird %>%
+  filter(year > 2001) %>%
+  group_by(year, species_observed) %>%
+  tally() %>%
+  pivot_wider(names_from = species_observed,
+              values_from = n) %>%
+  rowwise() %>%
+  mutate(total = `TRUE` + `FALSE`) %>%
+  ungroup() 
+
+#looks like 2009 onward have more checklists
+#with pinyon jays observed - so this could be a
+#a good first year to filter based on??

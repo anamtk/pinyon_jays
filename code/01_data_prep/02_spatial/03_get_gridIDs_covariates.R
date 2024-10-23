@@ -19,10 +19,6 @@ if(length(new.packages)) install.packages(new.packages)
 for(i in package.list){library(i, character.only = T)}
 
 
-# Load CRS ----------------------------------------------------------------
-
-#crs_albers <- '+proj=longlat +datum=NAD83 +no_defs +type=crs'
-
 # Load data ---------------------------------------------------------------
 
 # Load cone dataset -------------------------------------------------------
@@ -30,9 +26,7 @@ for(i in package.list){library(i, character.only = T)}
 cones <- terra::rast(here("data",
                           "spatial_data", 
                           "masting_data",
-                          "quantile_pied_predictions_scaled.tif"))
-
-names(cones) <- 1897:2024 ## Actual years of maturation are one year earlier, but adding one year to each to associate it with jay survey period
+                          "ConePredictions_final.tif"))
 
 cone_df <- terra::as.data.frame(cones, 
                                 xy = TRUE,
@@ -87,7 +81,7 @@ monsoon_df <- terra::as.data.frame(monsoon_rast2,
 pinyonba_rast <- terra::rast(here('data',
                                   'spatial_data',
                                   'pinyonBA',
-                                  'PinyonBA_4km_sqftPerAc.tif'))
+                                  'PinyonBA_4km_sqmPerHa.tif'))
 
 all.equal(crs(cones), crs(pinyonba_rast)) ## The same CRS for both layers
 
@@ -104,7 +98,7 @@ ppt_points <- ppt_df %>%
 ppt_spatial <- st_as_sf(ppt_points, coords = c("x", "y"),
                         crs = st_crs(cones))
 
-ppt_cellIDs <- terra::extract(cones, vect(ppt_spatial), cells = T)
+ppt_cellIDs <- terra::extract(pinyonba_rast, vect(ppt_spatial), cells = T)
 
 ppt_df$cellID <- ppt_cellIDs$cell
 
@@ -115,7 +109,7 @@ temp_points <- temp_df %>%
 temp_spatial <- st_as_sf(temp_points, coords = c("x", "y"),
                          crs = st_crs(cones))
 
-temp_cellIDs <- terra::extract(cones, vect(temp_spatial), cells = T)
+temp_cellIDs <- terra::extract(pinyonba_rast, vect(temp_spatial), cells = T)
 
 temp_df$cellID <- temp_cellIDs$cell
 
@@ -126,7 +120,7 @@ monsoon_points <- monsoon_df %>%
 monsoon_spatial <- st_as_sf(monsoon_points, coords = c("x", "y"),
                             crs = st_crs(cones))
 
-monsoon_cellIDs <- terra::extract(cones, vect(monsoon_spatial), cells = T)
+monsoon_cellIDs <- terra::extract(pinyonba_rast, vect(monsoon_spatial), cells = T)
 
 monsoon_df$cellID <- monsoon_cellIDs$cell
 
@@ -137,13 +131,13 @@ pinyonba_points <- pinyonba_df %>%
 pinyonba_spatial <- st_as_sf(pinyonba_points, coords = c("x", "y"),
                              crs = st_crs(cones))
 
-pinyonba_cellIDs <- terra::extract(cones, vect(pinyonba_spatial), cells = T)
-
-pinyonba_df$cellID <- pinyonba_cellIDs$cell
+# pinyonba_cellIDs <- terra::extract(cones, vect(pinyonba_spatial), cells = T)
+# 
+# pinyonba_df$cellID <- pinyonba_cellIDs$cell
 
 # Filter datasets for cells with cone data --------------------------------
 
-ids <- cone_df %>%
+ids <- pinyonba_df %>%
   distinct(cell)
 # 
 ppt_df2 <- ppt_df %>%
