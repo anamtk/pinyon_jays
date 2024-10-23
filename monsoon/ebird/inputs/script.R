@@ -16,7 +16,7 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load data ---------------------------------------------------------------
 
-data <- readRDS("/scratch/atm234/pinyon_jays/ebird/inputs/bbs_ebird_joint_data_list.RDS")
+data <- readRDS("/scratch/atm234/pinyon_jays/ebird/inputs/ebird_data_list.RDS")
 
 # Define data list --------------------------------------------------------
 
@@ -30,18 +30,7 @@ data_list <- list(#latent N loop:
                   PPT = data$PPT,
                   Monsoon = data$Monsoon,
                   PinyonBA = data$PinyonBA,
-                  #BBS loop
-                  n.bbs.years = data$n.bbs.years,
-                  n.bbs.trans = data$n.bbs.trans,
-                  ObserverExp = data$ObserverExp,
-                  n.bbs.points = data$n.bbs.points,
-                  bbs.count = data$bbs.count,
-                  bbs.pi = data$bbs.pi,
-                  bbs.grid.array = data$bbs.grid.array,
-                  n.bbs.cells = data$n.bbs.cells,
-                  bbs.year = data$bbs.year,
                   #ebird loop
-                  n.ebird.pairs = data$n.ebird.pairs,
                   n.ebird.check = data$n.ebird.check,
                   ebird.count = data$ebird.count,
                   ebird.pi = data$ebird.pi,
@@ -68,7 +57,7 @@ parameters <- c('a0',
 
 # Initials ----------------------------------------------------------------
 
-inits_list <- readRDS('/scratch/atm234/pinyon_jays/ebird/inputs/bbs_ebird_joint_init_list.RDS')
+inits_list <- readRDS('/scratch/atm234/pinyon_jays/ebird/inputs/ebird_init_list.RDS')
 
 # Run model ---------------------------------------------------------------
 
