@@ -16,10 +16,12 @@ model{
   # - eBIRD observed counts contribute to estimates of latent abundance
   # - the observation component of the model has covariates to detection
   # - We incorporate spatial uncertainty for eBIRD observations using a 
-  ## sampler that selects a "gridID" for each observation in each year based on
-  ## the relative coverage of the set of possible 4km grid cells that that observation 
-  ## lat-long plus a buffer around it (radius of 1/2 the distance 
-  ## variable) could be in. So, for example, if an observation buffer
+  ## sampler that selects a "gridID" for each set of checklists in a year 
+  ## based on the relative coverage of the set of possible 4km grid cells
+  ## that those observations' lat-long plus a buffer around them
+  ## (a dissolved "blob" by cellxyear combo of each observation radius of
+  # 1/2 the distance variable) could be in. 
+  #So, for example, if an set of observations in a year have a buffer
   ## has a 20% coverage with cell 1 and an 80% coverage with cell 2, the sampler will
   ## have probabilities of selecting grid cell 1 and 2 of .2 and .8 - likely selecting
   ## grid cell 2 most of the time for which to populate covariates for that iteration
@@ -42,7 +44,9 @@ model{
   ## of climate can then trigger a population response
   ## Structure of data: this is more classic "SAM" structure. we have current
   ## year and a set of previous years for this variable
+  
 
+  
   #-------------------------------------## 
   # Biological Process Model ###
   #-------------------------------------##
@@ -59,11 +63,11 @@ model{
         a[2]*AntTmax[t,i] +
         a[3]*AntPPT[t,i] +
         a[4]*Monsoon[t,i] +
-        a[5]*PinyonBA[t,i] +
-        a[6]*AntCone[t,i]*AntTmax[t,i] + 
-        a[7]*AntCone[t,i]*AntPPT[t,i] + 
-        a[8]*AntCone[t,i]*Monsoon[t,i] + 
-        a[9]*AntCone[t,i]*PinyonBA[t,i]
+        a[5]*PinyonBA[t,i] #+
+       # a[6]*AntCone[t,i]*AntTmax[t,i] + 
+      #  a[7]*AntCone[t,i]*AntPPT[t,i] + 
+       # a[8]*AntCone[t,i]*Monsoon[t,i] + 
+        #a[9]*AntCone[t,i]*PinyonBA[t,i]
       
       #-------------------------------------## 
       # SAM summing ###
@@ -98,8 +102,7 @@ model{
       Monsoon[t,i] ~ dnorm(mu.mon, tau.mon)
       
     } #grids
-    
-    
+
     
   } #years
   
@@ -112,18 +115,19 @@ model{
   #-------------------------------------##
   
   for(t in 1:n.years){ #could make this different for ebird than other loops if the data has more time
-    for(i in 1:n.ebird.check[t]){ #number of checklists in year t
+    for(i in 1:n.ebird.grids[t]){ #number of grids in year t
+      for(r in 1:n.ebird.check[t,i]){ #number of checlists in that grid
 
       #ebird raw data
-      ebird.count[t,i] ~ dbin(p.ebird[t,i], N[t,ebird.grid[t,i]])
+      ebird.count[t,i,r] ~ dbin(p.ebird[t,i,r], N[t,ebird.grid[t,i]])
         
       #Detection probability is dependent on covariates
-      logit(p.ebird[t,i]) <- c0 + #could make this have random effects, maybe observer ID
-        c1[SurveyType[t,i]] +
-        c[2]*StartTime[t,i] +
-        c[3]*Duration[t,i] +
-        c[4]*Distance[t,i] +
-        c[5]*NumObservers[t,i] 
+      logit(p.ebird[t,i,r]) <- c0 + #could make this have random effects, maybe observer ID
+        c1[SurveyType[t,i,r]] +
+        c[2]*StartTime[t,i,r] +
+        c[3]*Duration[t,i,r] +
+        c[4]*Distance[t,i,r] +
+        c[5]*NumObservers[t,i,r] 
         
       #checklists from breeding season (late Feb - early May)
       #only complete checklists
@@ -136,20 +140,22 @@ model{
       #doesnt matter when only thinking about one species
         
       #GOODNESS-OF-FIT EVALUATION
-      ebird.count.rep[t,i] ~ dbin(p.ebird[t,i], N[t,ebird.grid[t,i]])
- 
+      ebird.count.rep[t,i,r] ~ dbin(p.ebird[t,i,r], N[t,ebird.grid[t,i]])
+      } 
+      
       #Spatial uncertainty in eBIRD locations for populating
       #the covariates
-      #pi and grid.array are "data" 
+      #pi and grid.array are "data"
       #pi is the proportion of the likely survey in a given grid
       #cell, grid.array is the gridIDs that correspond to each of those
       #same probabilities and from which a sample grid ID is drawn
       #random index for the grid array - which background point to collect
       ebird.grid.index[t,i] ~ dcat(ebird.pi[t,i,1:n.ebird.cells[t,i]])
       #pulling ut the grid ID for that one
-      ebird.grid[t,i] <- ebird.grid.array[t,i,ebird.grid.index[t,i]]  
-    } 
-    
+      ebird.grid[t,i] <- ebird.grid.array[t,i,ebird.grid.index[t,i]]
+      
+    }
+  
   } 
   
 
@@ -164,7 +170,7 @@ model{
   #intercept and slope parameters
   a0 ~ dnorm(0, 1E-2)
   
-  for(i in 1:9){
+  for(i in 1:5){
     a[i] ~ dnorm(0, 1E-2)
   }
 

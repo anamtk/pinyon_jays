@@ -31,6 +31,7 @@ data_list <- list(#latent N loop:
                   Monsoon = data$Monsoon,
                   PinyonBA = data$PinyonBA,
                   #ebird loop
+                  n.ebird.grids = data$n.ebird.grids,
                   n.ebird.check = data$n.ebird.check,
                   ebird.count = data$ebird.count,
                   ebird.pi = data$ebird.pi,

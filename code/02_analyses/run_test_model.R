@@ -19,7 +19,7 @@ for(i in package.list){library(i, character.only = T)}
 
 data_list <- readRDS(here('data',
                           'jags_input_data',
-                          'bbs_ebird_joint_data_list.RDS'))
+                          'test_ebird_data_list.RDS'))
 
 
 # Model path --------------------------------------------------------------
@@ -48,7 +48,7 @@ parameters <- c('a0',
 
 inits_list <- readRDS(here('data',
                            'jags_input_data',
-                           'bbs_ebird_joint_init_list_nospuncert.RDS'))
+                           'test_ebird_init_list.RDS'))
 
 # Run model ---------------------------------------------------------------
 

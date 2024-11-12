@@ -256,9 +256,16 @@ ebird_spatial4 <- ebird_spatial3 %>%
 ebird_buffer <- st_buffer(ebird_spatial4, ebird_spatial4$buffer_m)
 #give all ebird a buffer equal to sampling distance
 
+#dissolve the points within a cell to be one 
+#big buffer "blob"
+ebird_buffer2 <-  ebird_buffer %>%
+  dplyr::select(cellID, year, geometry) %>%
+  group_by(cellID, year) %>%
+  summarise(buffer = st_union(geometry))
+
 # Export ------------------------------------------------------------------
 
-st_write(ebird_buffer, here('data',
+st_write(ebird_buffer2, here('data',
                              'ebird_data',
                              'cleaned_data',
                              'all_ebird_data_buffercellIDs.shp'))

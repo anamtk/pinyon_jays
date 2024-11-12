@@ -33,6 +33,9 @@ ebird_buffer <- read_sf(here('data',
                            'cleaned_data',
                            'all_ebird_data_buffercellIDs.shp'))
 
+sf_use_s2(FALSE)
+ebird_buffer$area <- st_area(ebird_buffer)
+sf_use_s2(TRUE)
 
 # Get eBIRD grid IDs ------------------------------------------------------
 ba_cells <- pinyonba_df %>%
@@ -41,26 +44,22 @@ ba_cells <- pinyonba_df %>%
 ebird_cells <- exact_extract(pinyonba_rast,
                            ebird_buffer,
                            include_cell = T, 
-                           include_cols = c("chckls_", "year", 
-                                            "buffr_m"),
+                           include_cols = c("cellID", "year"),
                            force_df = T)
 
+area <- as.data.frame(ebird_buffer) %>%
+  dplyr::select(cellID, year, area)
 
-ebird_df <- bind_rows(ebird_cells)
+ebird_df <- bind_rows(ebird_cells) %>%
+  left_join(area, by = c("cellID", "year"))
 
 ebird_df2 <- ebird_df %>%
-  dplyr::select(chckls_, year,
-                buffr_m, cell, coverage_fraction) %>%
+  dplyr::select(cellID, year, cell, coverage_fraction, area) %>%
   rowwise() %>%
-  mutate(area = 1.6e+07*coverage_fraction) %>%
+  mutate(cell_area = area*coverage_fraction) %>%
+  mutate(prop = cell_area/area) %>%
   ungroup() %>%
-  group_by(chckls_, year) %>%
-  mutate(total_area = sum(area)) %>%
-  ungroup() %>%
-  rowwise() %>%
-  mutate(prop = area/total_area) %>%
-  ungroup() %>%
-  dplyr::select(chckls_, year, cell, prop) %>%
+  dplyr::select(cellID, year, cell, prop) %>%
   filter(cell %in% ba_cells$cell)
 
 

@@ -59,11 +59,11 @@ model{
         a[2]*AntTmax[t,i] +
         a[3]*AntPPT[t,i] +
         a[4]*Monsoon[t,i] +
-        a[5]*PinyonBA[t,i] +
-        a[6]*AntCone[t,i]*AntTmax[t,i] + 
-        a[7]*AntCone[t,i]*AntPPT[t,i] + 
-        a[8]*AntCone[t,i]*Monsoon[t,i] + 
-        a[9]*AntCone[t,i]*PinyonBA[t,i]
+        a[5]*PinyonBA[t,i] #+
+       # a[6]*AntCone[t,i]*AntTmax[t,i] + 
+      #  a[7]*AntCone[t,i]*AntPPT[t,i] + 
+       # a[8]*AntCone[t,i]*Monsoon[t,i] + 
+        #a[9]*AntCone[t,i]*PinyonBA[t,i]
       
       #-------------------------------------## 
       # SAM summing ###
@@ -164,7 +164,7 @@ model{
   #intercept and slope parameters
   a0 ~ dnorm(0, 1E-2)
   
-  for(i in 1:9){
+  for(i in 1:5){
     a[i] ~ dnorm(0, 1E-2)
   }
 

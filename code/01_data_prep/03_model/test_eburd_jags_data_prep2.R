@@ -1,8 +1,3 @@
-#Prep data for model
-#Ana Miller-ter Kuile
-#July 3, 2024
-
-#prep all datasets for the model
 
 
 # Load packages -----------------------------------------------------------
@@ -38,10 +33,21 @@ ebird <- read_sf(here('data',
                 nmbr_bs, #number observers
                 geometry)
 
+ebird <- ebird %>% 
+  group_by(year) %>%
+  slice_sample(n = 50) %>%
+  ungroup()
+
+subgrids <- ebird %>%
+  distinct(cellID, year)
+
 ebird_gridIDs <- read.csv(here('data',
                                'ebird_data',
                                'cleaned_data',
                                'ebird_cellIDlists.csv'))
+
+ebird_gridIDs <- subgrids %>%
+  left_join(ebird_gridIDs, by = c("cellID", "year"))
 
 #Covariates
 cones <- read.csv(here('data',
@@ -660,6 +666,7 @@ ndf <- all_cells %>%
 
 N <- matrix(NA, nrow = n.years, ncol =max(n.grids))
 
+
 nyr <- ndf$yearID
 nid <- ndf$numID
 
@@ -692,9 +699,15 @@ data_list <- list(#latent N loop:
                   Distance = Distance,
                   NumObservers = NumObservers)
 
+
+# Export ------------------------------------------------------------------
+
+
+
+
 saveRDS(data_list, here('data',
                         'jags_input_data',
-                        'ebird_data_list.RDS'))
+                        'test_ebird_data_list.RDS'))
 
 inits_list <- list(list(N = N),
                    list(N = N),
@@ -702,6 +715,6 @@ inits_list <- list(list(N = N),
 
 saveRDS(inits_list, here('data',
                         'jags_input_data',
-                        'ebird_init_list.RDS'))
+                        'test_ebird_init_list.RDS'))
 
 
