@@ -19,7 +19,7 @@ for(i in package.list){library(i, character.only = T)}
 
 data_list <- readRDS(here('data',
                           'jags_input_data',
-                          'test_ebird_data_list.RDS'))
+                          'ebird_data_list_nospuncert.RDS'))
 
 
 # Model path --------------------------------------------------------------
@@ -27,7 +27,7 @@ data_list <- readRDS(here('data',
 
 model_file <- (here('code',
                'jags_models',
-               'ebird_abund_JAGS_spuncert2.R'))
+               'ebird_abund_JAGS_nospuncert2.R'))
 
 
 # Parameters to save ------------------------------------------------------
@@ -48,7 +48,7 @@ parameters <- c('a0',
 
 inits_list <- readRDS(here('data',
                            'jags_input_data',
-                           'test_ebird_init_list.RDS'))
+                           'ebird_init_list_nospuncert.RDS'))
 
 # Run model ---------------------------------------------------------------
 

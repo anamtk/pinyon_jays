@@ -33,10 +33,6 @@ ebird_buffer <- read_sf(here('data',
                            'cleaned_data',
                            'all_ebird_data_buffercellIDs.shp'))
 
-sf_use_s2(FALSE)
-ebird_buffer$area <- st_area(ebird_buffer)
-sf_use_s2(TRUE)
-
 # Get eBIRD grid IDs ------------------------------------------------------
 ba_cells <- pinyonba_df %>%
   distinct(cell)
@@ -47,20 +43,17 @@ ebird_cells <- exact_extract(pinyonba_rast,
                            include_cols = c("cellID", "year"),
                            force_df = T)
 
-area <- as.data.frame(ebird_buffer) %>%
-  dplyr::select(cellID, year, area)
-
-ebird_df <- bind_rows(ebird_cells) %>%
-  left_join(area, by = c("cellID", "year"))
+ebird_df <- bind_rows(ebird_cells)
 
 ebird_df2 <- ebird_df %>%
-  dplyr::select(cellID, year, cell, coverage_fraction, area) %>%
+  dplyr::select(cellID, year, cell, coverage_fraction) %>%
   rowwise() %>%
-  mutate(cell_area = area*coverage_fraction) %>%
-  mutate(prop = cell_area/area) %>%
   ungroup() %>%
-  dplyr::select(cellID, year, cell, prop) %>%
-  filter(cell %in% ba_cells$cell)
+  dplyr::select(cellID, year, cell, coverage_fraction) %>%
+  filter(cell %in% ba_cells$cell) %>%
+  group_by(cellID, year) %>%
+  mutate(blobnum = cur_group_id()) %>%
+  ungroup() 
 
 
 # Get cell IDs to be able to filter covariates ----------------------------
