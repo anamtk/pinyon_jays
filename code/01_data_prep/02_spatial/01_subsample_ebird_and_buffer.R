@@ -54,7 +54,10 @@ ebird <- read.csv(here('data',
                        'cleaned_data',
                        'all_ebird_data.csv'))
 
-
+ebird %>%
+  summarise(obs = sum(observation_count > 0, na.rm = T),
+            total = n(),
+            prop  = obs/total)
 # Load spatial dataset ----------------------------------------------------
 
 #for masking to
