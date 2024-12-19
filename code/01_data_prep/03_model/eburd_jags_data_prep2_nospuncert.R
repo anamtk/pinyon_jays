@@ -204,7 +204,10 @@ for(i in 1:dim(cones2)[1]){ #dim[1] = n.rows
 
 temp2 <- temp %>%
   filter(blobnum %in% all_blobs$blobnum) %>%
+  #trying scaling by season
+  group_by(season) %>%
   mutate(temp = scale(temp)) %>%
+  ungroup() %>%
   mutate(yearID = as.numeric(as.factor(year))) %>%
   left_join(all_blobs, by = c("year", "blobnum"))
 
@@ -237,7 +240,10 @@ for(i in 1:dim(temp2)[1]){ #dim[1] = n.rows
 
 ppt2 <- ppt %>%
   filter(blobnum %in% all_blobs$blobnum) %>%
+  #trying scaling by season
+  group_by(season) %>%
   mutate(ppt = scale(ppt )) %>%
+  ungroup() %>%
   mutate(yearID = as.numeric(as.factor(year))) %>%
   left_join(all_blobs, by = c("year", "blobnum"))
 
