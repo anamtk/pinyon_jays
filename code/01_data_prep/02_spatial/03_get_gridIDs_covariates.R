@@ -66,6 +66,21 @@ temp_df <- terra::as.data.frame(temp_rast2,
                                 xy = TRUE,
                                 cells = TRUE)
 
+#tmean
+tmeanrastlist <- list.files(path = here('data',
+                                       'spatial_data',
+                                       'prism_monthly_tmean'), pattern='.bil$', 
+                           recursive = T, all.files= T, full.names= T)
+
+tmean_rast <- terra::rast(tmeanrastlist)
+
+tmean_rast2 <- project(tmean_rast,
+                      crs(cones))
+
+tmean_df <- terra::as.data.frame(tmean_rast2, 
+                                xy = TRUE,
+                                cells = TRUE)
+
 
 monsoon_rast <- terra::rast(here('data', 'spatial_data',
                                  'monsoon', 'SWMON.tif'))
@@ -113,6 +128,17 @@ temp_cellIDs <- terra::extract(pinyonba_rast, vect(temp_spatial), cells = T)
 
 temp_df$cellID <- temp_cellIDs$cell
 
+#tmean
+tmean_points <- tmean_df %>%
+  dplyr::select(x, y)
+
+tmean_spatial <- st_as_sf(tmean_points, coords = c("x", "y"),
+                         crs = st_crs(cones))
+
+tmean_cellIDs <- terra::extract(pinyonba_rast, vect(tmean_spatial), cells = T)
+
+tmean_df$cellID <- tmean_cellIDs$cell
+
 #monsoon
 monsoon_points <- monsoon_df %>%
   dplyr::select(x, y)
@@ -148,6 +174,10 @@ temp_df2 <- temp_df %>%
   filter(cellID %in% ids$cell) %>%
   dplyr::select(-cell)
 
+tmean_df2 <- tmean_df %>%
+  filter(cellID %in% ids$cell) %>%
+  dplyr::select(-cell)
+
 monsoon_df2 <- monsoon_df %>%
   filter(cellID %in% ids$cell) %>%
   dplyr::select(-cell) %>%
@@ -167,6 +197,11 @@ write.csv(temp_df2, here('data',
                          'spatial_data',
                          'cleaned_data',
                          'temp_data_df.csv'))
+
+write.csv(tmean_df2, here('data',
+                         'spatial_data',
+                         'cleaned_data',
+                         'tmean_data_df.csv'))
 
 write.csv(ppt_df2, here('data',
                         'spatial_data',

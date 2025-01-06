@@ -57,6 +57,11 @@ temp <- read.csv(here('data',
                       'cleaned_data',
                       'temp_weighted_mean_blob.csv'))
 
+tmean <- read.csv(here('data',
+                      'spatial_data',
+                      'cleaned_data',
+                      'tmean_weighted_mean_blob.csv'))
+
 ppt <- read.csv(here('data',
                      'spatial_data',
                      'cleaned_data',
@@ -236,6 +241,42 @@ for(i in 1:dim(temp2)[1]){ #dim[1] = n.rows
   # the dataframe that corresponds to the data
   # for that yearxgridxlag combo
   Temp[tempyear[i],tempblob[i],  templag[i]] <- as.numeric(temp2[i,5])
+}
+
+tmean2 <- tmean %>%
+  filter(blobnum %in% all_blobs$blobnum) %>%
+  #trying scaling by season
+  group_by(season) %>%
+  mutate(temp = scale(temp)) %>%
+  ungroup() %>%
+  mutate(yearID = as.numeric(as.factor(year))) %>%
+  left_join(all_blobs, by = c("year", "blobnum"))
+
+tmean2 %>%
+  summarise(na = sum(is.na(temp)),
+            notna = sum(!is.na(temp)),
+            prop = na/(na+notna)) 
+
+#lag index
+n.clag <- max(tmean2$lag)
+
+#now, generate IDs for the for loop where
+# we will populate the array
+tmeanblob <- tmean2$numID
+tmeanyear <- tmean2$yearID
+tmeanlag <- tmean2$lag
+
+#make a blank array
+Tmean <- array(data = NA, dim = c(n.years,max(n.blobs), n.clag))
+
+#fill taht array based on the values in those columns
+for(i in 1:dim(tmean2)[1]){ #dim[1] = n.rows
+  #using info from the dataframe on the year, grid,
+  #and lag ID of row i 
+  # populate that space in the array with the column in
+  # the dataframe that corresponds to the data
+  # for that yearxgridxlag combo
+  Tmean[tmeanyear[i],tmeanblob[i],  tmeanlag[i]] <- as.numeric(tmean2[i,5])
 }
 
 ppt2 <- ppt %>%
@@ -454,6 +495,7 @@ data_list <- list(#latent N loop:
                   n.clag = n.clag,
                   Cone = Cone,
                   Temp = Temp,
+                  Tmean = Tmean,
                   PPT = PPT,
                   Monsoon = Monsoon,
                   PinyonBA = PinyonBA,

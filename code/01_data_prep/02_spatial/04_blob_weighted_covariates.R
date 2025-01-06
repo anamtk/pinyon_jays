@@ -55,6 +55,14 @@ temp <- read.csv(here('data',
                 PRISM_tmax_stable_4kmM3_200001_bil:PRISM_tmax_stable_4kmM3_202312_bil) %>%
   filter(cellID %in% cells$cellID)
 
+tmean <- read.csv(here('data',
+                       'spatial_data',
+                       'cleaned_data',
+                       'tmean_data_df.csv')) %>%
+  dplyr::select(cellID, 
+                PRISM_tmean_stable_4kmM3_200001_bil:PRISM_tmean_stable_4kmM3_202312_bil) %>%
+  filter(cellID %in% cells$cellID)
+
 
 ppt <- read.csv(here('data',
                         'spatial_data',
@@ -180,6 +188,69 @@ write.csv(temp2, here('data',
                        'spatial_data',
                        'cleaned_data',
                        'temp_weighted_mean_blob.csv'))
+
+# tmean --------------------------------------------------------------------
+
+#seasons for climate variables::
+#from Wiggins (2005) report:
+#breeding: late Feb-early May
+#May-June: dependent young
+#August-Feb: fall and early winter: wander to find resources
+#what do they do in July??? 
+#thus, seasons would be months:
+#Season 1: 2-4: breeding
+#Season 2: 5-6: feeding dependent young
+#Season 3: 7: unknown, just chillin?
+#Season 4: 8-1: winter foraging, potentially seeking food elsewhere
+
+#months 2-5 is when we're sampling ebird, so maybe months
+#starting in the 
+tmean2 <- ebird %>%
+  left_join(tmean, by = c("cellID")) %>%
+  pivot_longer(PRISM_tmean_stable_4kmM3_200001_bil:PRISM_tmean_stable_4kmM3_202312_bil,
+               names_to = 'temp_yrmonth',
+               values_to = "temp") %>%
+  mutate(temp_yr = str_sub(temp_yrmonth, 26, (nchar(temp_yrmonth))-6),
+         temp_month = str_sub(temp_yrmonth, 30, (nchar(temp_yrmonth))-4),
+         temp_yr = as.numeric(temp_yr),
+         temp_month = as.numeric(temp_month)) %>%
+  group_by(blobnum) %>%
+  filter(temp_yr %in% c((year-3), (year-2), (year-1), year, (year+1))) %>%
+  dplyr::select(-temp_yrmonth) %>%
+  pivot_wider(names_from = temp_month,
+              values_from = temp) %>%
+  arrange(blobnum, temp_yr) %>%
+  #determine next year january value to compute temp season 4 below
+  mutate(lead_1 = lead(`1`)) %>%
+  filter(temp_yr %in% c((year-3), (year-2), (year-1), year)) %>%
+  rowwise() %>%
+  #get each seasonal VPD
+  mutate(temp_1 = mean(`2`, `3`, `4`),
+         temp_2 = mean(`5`, `6`),
+         temp_3 = `7`,
+         temp_4 = mean(`8`, `9`, `10`, `11`, `12`, lead_1, na.rm = T)) %>%
+  dplyr::select(-c(`1`:`12`), -lead_1) %>%
+  ungroup() %>%
+  pivot_longer(temp_1:temp_4,
+               names_to = "season",
+               values_to = "temp") %>%
+  mutate(season =str_sub(season, 6, nchar(season)),
+         season = as.numeric(season)) %>%
+  group_by(blobnum,year, temp_yr,season) %>%
+  summarise(wt = stats::weighted.mean(temp, coverage_fraction, na.rm = T)) %>%
+  ungroup() %>%
+  group_by(blobnum) %>%
+  filter((!(season %in% c(2,3,4) & temp_yr == year))) %>%
+  arrange(blobnum, -temp_yr, -season) %>%
+  mutate(lag = 1:n()) %>%
+  ungroup() %>%
+  dplyr::select(blobnum, year, season, wt, lag) %>%
+  rename(temp = wt)
+
+write.csv(tmean2, here('data',
+                      'spatial_data',
+                      'cleaned_data',
+                      'tmean_weighted_mean_blob.csv'))
 
 # PPT ---------------------------------------------------------------------
 

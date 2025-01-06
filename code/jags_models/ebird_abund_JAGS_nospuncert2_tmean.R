@@ -81,11 +81,11 @@ model{
       }
       
       for(l in 1:n.clag){
-        TmaxTemp[t,i,l] <- Temp[t,i,l]*wB[l]
+        TmaxTemp[t,i,l] <- Tmean[t,i,l]*wB[l]
         PPTTemp[t,i,l] <- PPT[t,i,l]*wC[l]
         
         #any missing data can be imputed
-        Temp[t,i,l] ~ dnorm(mu.temp, tau.temp)
+        Tmean[t,i,l] ~ dnorm(mu.temp, tau.temp)
         PPT[t,i,l] ~ dnorm(mu.ppt, tau.ppt)
       }
       
