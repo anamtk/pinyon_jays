@@ -50,7 +50,8 @@ model{
     for(i in 1:n.blobs[t]){ #"blobs" of buffered points with averaged covariates
       
       #latent "true" abundance is N, with rate parameter lambda
-      N[t,i] ~ dpois(lambda[t,i])
+      #multiplied by the varaible "effort" size of the blob
+      N[t,i] ~ dpois(lambda[t,i]*blobArea[t,i])
       
       #lambda is based on a likelihood with SAM components
       log(lambda[t,i]) <- a0 + #could make this have random effects
@@ -152,10 +153,10 @@ model{
   #-------------------------------------##
   
   #intercept and slope parameters
-  a0 ~ dnorm(0, 1E-2)
+  a0 ~ dnorm(0, 1E-4)
   
   for(i in 1:9){
-    a[i] ~ dnorm(0, 1E-2)
+    a[i] ~ dnorm(0, 1E-4)
   }
 
   #Antecedent variable priors
@@ -199,11 +200,11 @@ model{
   #-------------------------------------##
   
   #intercept
-  c0 ~ dnorm(0, 1E-2)
+  c0 ~ dnorm(0, 1E-4)
   
   #categorical covariate
   for(i in 2:2){
-    c1[i] ~ dnorm(0, 1E-2)
+    c1[i] ~ dnorm(0, 1E-4)
   }
   
   #cell-referenced by setting baseline level to 0
@@ -211,7 +212,7 @@ model{
   
   #continuous covariate slope paramters
   for(i in 2:5){
-    c[i] ~ dnorm(0, 1E-2)
+    c[i] ~ dnorm(0, 1E-4)
   }
   
   #-------------------------------------## 

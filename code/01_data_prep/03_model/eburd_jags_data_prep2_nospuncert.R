@@ -4,6 +4,20 @@
 
 #prep all datasets for the model
 
+#NEED TO ADD:
+#blobArea[t,i] - multiplies by lambda
+
+#ALSO - NEED TO CHECK DATA DISTRIBUTIONS FOR:
+#- are the presence checklists clustered in space/covariate values? or
+## are they variable in covariate values? 
+#- check priors - do they mesh with data?
+#- are presence records geographically distributed narrowly? Could 
+## I run a model with only those areas and use that as initials?
+#- check distribution of covariates. 
+
+#POTENTIALLY:
+#- fix c0 at a reasonable value of ~3% presence and see if it helps
+
 
 # Load packages -----------------------------------------------------------
 
@@ -81,7 +95,7 @@ pinyon <- read.csv(here('data',
 #all blobs in blob lists to be able to get
 #indexing
 all_blobs <- ebird_blobIDs %>%
-  distinct(year, blobnum) %>%
+  distinct(year, blobnum, area) %>%
   group_by(year) %>%
   mutate(numID = 1:n()) %>%
   ungroup() %>%
@@ -101,6 +115,23 @@ all_blobs <- ebird_blobIDs %>%
 ebird3 <- ebird %>%
   filter(year > 2009 & year < 2022)
 
+
+# Plot quickly ------------------------------------------------------------
+
+ba <- read.csv(here('data',
+                    'spatial_data',
+                    'cleaned_data',
+                    'pinyonba_data_df.csv'))
+
+cone_map <- read.csv(here('data',
+                          'spatial_data',
+                          'cleaned_data',
+                          'cone_masting_df.csv'))
+
+states <- st_as_sf(maps::map("state", fill=TRUE, plot =FALSE)) %>%
+  filter(ID %in% c('arizona', 'colorado', 
+                   'utah', 'new mexico')) 
+
 #combine and plot quickly
 ebd4 <- ebird3 %>%
   dplyr::select(geometry, year) %>%
@@ -118,10 +149,28 @@ eb_2020 <- ebd4 %>%
 ba_20 <- ba %>%
   filter(PinyonBA_sqftPerAc_2020 != 0)
 
+cone_20 <- cone_map %>%
+  filter(X2020 != 0)
+
+ggplot() +
+  geom_sf(data = states, fill = "white") +
+  geom_tile(data = cone_20, aes(x = x, y = y, fill = X2020))+
+  geom_sf(data = eb_2020, color = "grey", shape = 2) +
+  scale_fill_viridis_c() +
+  theme_bw()
+
+ggplot() +
+  geom_sf(data = states, fill = "white") +
+  geom_tile(data = ba_20, aes(x = x, y = y, fill = PinyonBA_sqftPerAc_2020))+
+  geom_sf(data = eb_2020,alpha = 0.6, color = "grey", shape = 2) +
+  scale_fill_viridis_c()+
+  theme_bw()
+
+
 ggplot() +
   geom_tile(data = ba_20, aes(x = x, y = y, fill = PinyonBA_sqftPerAc_2020))+
-  geom_sf(data = eb_2020, color = "white", alpha = 0.6, shape = 2) +
-  scale_fill_viridis_c()
+  scale_fill_viridis_c() +
+  theme_bw()
 
 ebird_blobIDs %>%
   group_by(blobnum) %>%
@@ -159,6 +208,16 @@ n.blobs <- all_blobs %>%
 #dataset, ~16.5% of the final lag are being imputed for cone data
 #and i'm wondering if that's why estimates have been weird.
 n.years <- length(2010:2021)
+
+#area to multiply lambda by [year, blob]
+blobArea <- all_blobs %>%
+  dplyr::select(numID, area,year) %>%
+  pivot_wider(names_from = numID,
+              values_from = area) %>%
+  arrange(year) %>%
+  column_to_rownames(var = "year") %>%
+  as.matrix()
+  
 
 #Evnrionmental covariates
 #cones:
@@ -491,6 +550,7 @@ for(i in 1:dim(ndf)[1]){ #dim[1] = n.rows
 data_list <- list(#latent N loop:
                   n.blobs = n.blobs,
                   n.years = n.years,
+                  blobArea = blobArea,
                   n.lag = n.lag,
                   n.clag = n.clag,
                   Cone = Cone,

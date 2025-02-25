@@ -21,23 +21,26 @@ data <- readRDS("/scratch/atm234/pinyon_jays/ebird/nospuncert/inputs/ebird_data_
 # Define data list --------------------------------------------------------
 
 data_list <- list(#latent N loop:
-                  n.blobs = data$n.blobs,
-                  n.years = data$n.years,
-                  n.lag = data$n.lag,
-                  n.clag = data$n.clag,
-                  Cone = data$Cone,
-                  Temp = data$Temp,
-                  PPT = data$PPT,
-                  Monsoon = data$Monsoon,
-                  PinyonBA = data$PinyonBA,
-                  #ebird loop
-                  n.ebird.check = data$n.ebird.check,
-                  ebird.count = data$ebird.count,
-                  SurveyType = data$SurveyType,
-                  StartTime = data$StartTime,
-                  Duration = data$Duration,
-                  Distance = data$Distance,
-                  NumObservers = data$NumObservers)
+  n.blobs = data$n.blobs,
+  n.years = data$n.years,
+  n.lag = data$n.lag,
+  n.clag = data$n.clag,
+  Cone = data$Cone,
+  Temp = data$Temp,
+  PPT = data$PPT,
+  Monsoon = data$Monsoon,
+  PinyonBA = data$PinyonBA,
+  #ebird loop
+  n.ebird.check = data$n.ebird.check,
+  ebird.count = data$ebird.count,
+  SurveyType = data$SurveyType,
+  StartTime = data$StartTime,
+  Duration = data$Duration,
+  Distance = data$Distance,
+  NumObservers = data$NumObservers,
+  deltaA = rep(1, data$n.lag),
+  deltaB = rep(1, data$n.clag),
+  deltaC = rep(1, data$n.clag))
 
 # Parameters to save ------------------------------------------------------
 
@@ -64,8 +67,9 @@ model <- jagsUI::jags(data = data_list,
                       model.file = '/scratch/atm234/pinyon_jays/ebird/nospuncert/inputs/ebird_abund_JAGS_nospuncert2.R',
                       parallel = TRUE,
                       n.chains = 3,
-                      n.iter = 1,
-                      #n.burnin = 5000,
+                      n.iter = 25000,
+                      n.burnin = 5000,
+                      n.thin = 10,
                       DIC = TRUE)
 
 #save as an R data object

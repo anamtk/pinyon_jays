@@ -31,7 +31,12 @@ pinyonba_df <- terra::as.data.frame(pinyonba_rast,
 ebird_buffer <- read_sf(here('data',
                            'ebird_data',
                            'cleaned_data',
-                           'all_ebird_data_buffercellIDs.shp'))
+                           'all_ebird_data_buffercellIDs.shp')) %>%
+  st_make_valid() %>% 
+  rowwise() %>%
+  mutate(area = st_area(geometry)) %>%
+  ungroup()
+
 
 # Get eBIRD grid IDs ------------------------------------------------------
 ba_cells <- pinyonba_df %>%
@@ -40,16 +45,16 @@ ba_cells <- pinyonba_df %>%
 ebird_cells <- exact_extract(pinyonba_rast,
                            ebird_buffer,
                            include_cell = T, 
-                           include_cols = c("cellID", "year"),
+                           include_cols = c("cellID", "year", "area"),
                            force_df = T)
 
 ebird_df <- bind_rows(ebird_cells)
 
 ebird_df2 <- ebird_df %>%
-  dplyr::select(cellID, year, cell, coverage_fraction) %>%
+  dplyr::select(cellID, year, cell,area, coverage_fraction) %>%
   rowwise() %>%
   ungroup() %>%
-  dplyr::select(cellID, year, cell, coverage_fraction) %>%
+  dplyr::select(cellID, year, cell,area, coverage_fraction) %>%
   filter(cell %in% ba_cells$cell) %>%
   group_by(cellID, year) %>%
   mutate(blobnum = cur_group_id()) %>%
