@@ -17,7 +17,7 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load data ---------------------------------------------------------------
 
-mod <- readRDS("/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model.RDS")
+mod <- readRDS("/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model_blobN.RDS")
 
 # Get initials from previous model ----------------------------------------
 
@@ -99,6 +99,7 @@ data_list <- list(#latent N loop:
   PPT = data$PPT,
   Monsoon = data$Monsoon,
   PinyonBA = data$PinyonBA,
+  blobArea = data$blobArea,
   #ebird loop
   n.ebird.check = data$n.ebird.check,
   ebird.count = data$ebird.count,
@@ -106,7 +107,8 @@ data_list <- list(#latent N loop:
   StartTime = data$StartTime,
   Duration = data$Duration,
   Distance = data$Distance,
-  NumObservers = data$NumObservers)
+  NumObservers = data$NumObservers,
+  listArea = data$listArea)
 
 # Parameters to save ------------------------------------------------------
 
@@ -150,7 +152,7 @@ inits_list2 <- list(list(N = N,
 model <- jagsUI::jags(data = data_list,
                       parameters.to.save = parameters,
                       inits = inits_list2,
-                      model.file = '/scratch/atm234/pinyon_jays/ebird/nospuncert/inputs/ebird_abund_JAGS_nospuncert2.R',
+                      model.file = '/scratch/atm234/pinyon_jays/ebird/nospuncert/inputs/ebird_abund_JAGS_blobN_KO.R',
                       parallel = TRUE,
                       n.chains = 3,
                       n.iter = 25000,
@@ -160,7 +162,7 @@ model <- jagsUI::jags(data = data_list,
 
 #save as an R data object
 saveRDS(model, 
-        file ="/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model2.RDS")
+        file ="/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model2_blobN.RDS")
 
 (end.time <- Sys.time())
 
@@ -169,53 +171,6 @@ saveRDS(model,
 # Diagnose model ----------------------------------------------------------
 
 mcmcplot(model$samples,
-         dir = "/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/mcmcplots/run2")
-
-# Raftery -----------------------------------------------------------------
-
-
-raf <- raftery.diag(model$samples)
-
-raf
-names <- rownames(raf[[1]]$resmatrix)
-ch1 <- raf[[1]]$resmatrix[,2]
-ch2 <- raf[[2]]$resmatrix[,2]
-ch3 <- raf[[3]]$resmatrix[,2]
-
-raf_all <- as.data.frame(cbind(names, 
-                               ch1, ch2, ch3)) %>%
-  mutate(ch1 = as.numeric(ch1),
-         ch2 = as.numeric(ch2),
-         ch3 = as.numeric(ch3)) %>%
-  pivot_longer(ch1:ch3,
-               names_to = "chain",
-               values_to = 'iterations') 
-
-raf_all %>%
-  summarise(iterations_90 = quantile(iterations, 
-                                     probs = 0.9, 
-                                     na.rm = T)/3,
-            iterations_95 = quantile(iterations,
-                                     probs = 0.95,
-                                     na.rm = T)/3,
-            max = max(iterations, 
-                      na.rm = T)/3)
-
-bu1 <- raf[[1]]$resmatrix[,1]
-bu2 <- raf[[2]]$resmatrix[,1]
-bu3 <- raf[[3]]$resmatrix[,1]
-
-burn <- as.data.frame(cbind(names, bu1, bu2, bu3)) %>%
-  mutate(bu1 = as.numeric(bu1),
-         bu2 = as.numeric(bu2),
-         bu3 = as.numeric(bu3)) %>%
-  filter(!str_detect(names, "z")) %>%
-  pivot_longer(bu1:bu3,
-               names_to = "chain",
-               values_to = 'iterations') 
-
-burn %>%
-  summarise(max(iterations, na.rm = T))
-
+         dir = "/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/mcmcplots/blobN_run2")
 
 

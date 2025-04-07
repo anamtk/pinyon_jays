@@ -17,7 +17,7 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load data ---------------------------------------------------------------
 
-mod <- readRDS("/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model.RDS")
+mod <- readRDS("/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model_conelagonly.RDS")
 
 # Get initials from previous model ----------------------------------------
 
@@ -85,7 +85,7 @@ c <- c(NA, c)
 
 # Get data ----------------------------------------------------------------
 
-data <- readRDS("/scratch/atm234/pinyon_jays/ebird/nospuncert/inputs/ebird_data_list_nospuncert.RDS")
+data <- readRDS("/scratch/atm234/pinyon_jays/ebird/nospuncert/inputs/ebird_data_list_nospuncert_conelagonly.RDS")
 
 # Define data list --------------------------------------------------------
 
@@ -99,6 +99,7 @@ data_list <- list(#latent N loop:
   PPT = data$PPT,
   Monsoon = data$Monsoon,
   PinyonBA = data$PinyonBA,
+  blobArea = data$blobArea,
   #ebird loop
   n.ebird.check = data$n.ebird.check,
   ebird.count = data$ebird.count,
@@ -160,7 +161,7 @@ model <- jagsUI::jags(data = data_list,
 
 #save as an R data object
 saveRDS(model, 
-        file ="/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model2.RDS")
+        file ="/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model2_conelagonly.RDS")
 
 (end.time <- Sys.time())
 
@@ -169,7 +170,7 @@ saveRDS(model,
 # Diagnose model ----------------------------------------------------------
 
 mcmcplot(model$samples,
-         dir = "/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/mcmcplots/run2")
+         dir = "/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/mcmcplots/run2_conelagonly")
 
 # Raftery -----------------------------------------------------------------
 
