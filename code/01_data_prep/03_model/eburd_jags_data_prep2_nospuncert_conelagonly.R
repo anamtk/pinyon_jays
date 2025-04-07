@@ -52,7 +52,6 @@ ebird <- read_sf(here('data',
                 drtn_mn, #duration_minutes
                 effrt__, #effort distance km
                 nmbr_bs, #number observers
-                buffr_m, #size of individual checklist buffer
                 geometry) %>%
   rename(blobID = cellID)
 
@@ -227,6 +226,11 @@ blobArea <- all_blobs %>%
 #cones:
 cones2 <- cones %>%
   filter(blobnum %in% all_blobs$blobnum) %>%
+  filter(lag %in% c(4:7)) %>%
+  mutate(lag = case_when(lag == 4 ~ 1,
+                         lag == 5 ~ 2,
+                         lag == 6 ~ 3,
+                         lag == 7 ~ 4)) %>%
   mutate(cones = scale(cones)) %>%
   mutate(yearID = as.numeric(as.factor(year))) %>%
   left_join(all_blobs, by = c("year", "blobnum"))
@@ -444,7 +448,6 @@ ebird_index_df <- as.data.frame(ebird3) %>%
                 drtn_mn, #duration_minutes
                 effrt__, #effort distance km
                 nmbr_bs, #number observers
-                buffr_m,
                 geometry) %>%
   group_by(yrID, blobnum) %>%
   mutate(checkID = 1:n()) %>%
@@ -491,7 +494,7 @@ SurveyType  <- array(data = NA, dim = c(n.years,
 
 #fill taht array based on the values in those columns
 for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
-  SurveyType[yr2[i], blob[i], check[i]] <- as.numeric(ebird_index_df[i,15])
+  SurveyType[yr2[i], blob[i], check[i]] <- as.numeric(ebird_index_df[i,14])
 }
 
 StartTime   <- array(data = NA, dim = c(n.years, 
@@ -500,7 +503,7 @@ StartTime   <- array(data = NA, dim = c(n.years,
 
 #fill taht array based on the values in those columns
 for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
-  StartTime[yr2[i], blob[i], check[i]] <- as.numeric(ebird_index_df[i,16])
+  StartTime[yr2[i], blob[i], check[i]] <- as.numeric(ebird_index_df[i,15])
 }
 
 Duration <- array(data = NA, dim = c(n.years, 
@@ -509,7 +512,7 @@ Duration <- array(data = NA, dim = c(n.years,
 
 #fill taht array based on the values in those columns
 for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
-  Duration[yr2[i], blob[i], check[i]] <- as.numeric(ebird_index_df[i,17])
+  Duration[yr2[i], blob[i], check[i]] <- as.numeric(ebird_index_df[i,16])
 }
 
 Distance <- array(data = NA, dim = c(n.years, 
@@ -518,7 +521,7 @@ Distance <- array(data = NA, dim = c(n.years,
 
 #fill taht array based on the values in those columns
 for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
-  Distance[yr2[i],blob[i], check[i]] <- as.numeric(ebird_index_df[i,18])
+  Distance[yr2[i],blob[i], check[i]] <- as.numeric(ebird_index_df[i,17])
 }
 
 NumObservers <- array(data = NA, dim = c(n.years, 
@@ -527,18 +530,7 @@ NumObservers <- array(data = NA, dim = c(n.years,
 
 #fill taht array based on the values in those columns
 for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
-  NumObservers[yr2[i],blob[i],check[i]] <- as.numeric(ebird_index_df[i,19])
-}
-
-#area for each checklist: listArea[t,i,r]
-
-listArea <- array(data = NA, dim = c(n.years, 
-                                     max(n.blobs),
-                                     max(n.ebird.check, na.rm = T)))
-
-#fill taht array based on the values in those columns
-for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
-  listArea[yr2[i],blob[i],check[i]] <- as.numeric(pi*((ebird_index_df[i,12]))^2)
+  NumObservers[yr2[i],blob[i],check[i]] <- as.numeric(ebird_index_df[i,18])
 }
 
 # Values for initials -----------------------------------------------------
@@ -548,7 +540,6 @@ for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
 #maxb <- max(bbs.count, na.rm = T)
 nmax <- max(ebird.count, na.rm=T)
 #nmax <- max(c(maxb, maxe))
-nmax2 <- nmax*25
 
 ndf <- all_blobs %>%
   mutate(yearID = as.numeric(as.factor(year)))
@@ -559,18 +550,8 @@ nyr <- ndf$yearID
 nid <- ndf$numID
 
 for(i in 1:dim(ndf)[1]){ #dim[1] = n.rows
-  N[nyr[i], nid[i]] <- nmax2
+  N[nyr[i], nid[i]] <- nmax
 }
-
-N_check <- array(NA, dim = c(n.years, 
-                              max(n.blobs),
-                              max(n.ebird.check, na.rm = T)))
-
-#fill taht array based on the values in those columns
-for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
-  N_check[yr2[i],blob[i],check[i]] <- nmax2
-}
-
 
 # Compile and export ------------------------------------------------------
 
@@ -593,33 +574,18 @@ data_list <- list(#latent N loop:
                   StartTime = StartTime,
                   Duration = Duration,
                   Distance = Distance,
-                  NumObservers = NumObservers,
-                  listArea = listArea)
+                  NumObservers = NumObservers)
 
 saveRDS(data_list, here('data',
                         'jags_input_data',
-                        'ebird_data_list_nospuncert.RDS'))
+                        'ebird_data_list_nospuncert_conelagonly.RDS'))
 
-inits_list <- list(list(N = N),
-                   list(N = N),
-                   list(N = N))
-
-saveRDS(inits_list, here('data',
-                        'jags_input_data',
-                        'ebird_init_list_nospuncert.RDS'))
-
-inits_list_check <- list(list(N = N_check),
-                         list(N = N_check),
-                         list(N = N_check))
-
-saveRDS(inits_list_check, here('data',
-                         'jags_input_data',
-                         'ebird_init_list_checkN.RDS'))
-
-saveRDS(ebird_index_df, 
-        here('data',
-             'ebird_data',
-             'cleaned_data',
-             'ebird_check_blob_yr_ids.RDS'))
+# inits_list <- list(list(N = N),
+#                    list(N = N),
+#                    list(N = N))
+# 
+# saveRDS(inits_list, here('data',
+#                         'jags_input_data',
+#                         'ebird_init_list_nospuncert.RDS'))
 
 

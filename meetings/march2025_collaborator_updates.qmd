@@ -1,0 +1,160 @@
+---
+title: "Model update for: Linking pinyon jay population abundance to pinyon cone production and climate in the SW United States"
+format: html
+editor: visual
+bibliography: references.bib
+toc: true
+embed-resources: true
+---
+
+```{r}
+#| echo: false
+#| include: false
+#| warning: false
+#| message: false
+
+
+package.list <- c("here", "tidyverse")
+
+## Installing them if they aren't already on the computer
+new.packages <- package.list[!(package.list %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+## And loading them
+for(i in package.list){library(i, character.only = T)}
+
+source(here('code',
+       '03_visualization',
+       'model_betas_lags.R'))
+
+```
+
+## Project collaborators
+
+Ana Miller-ter Kuile, Andreas Wion, Kyle Rodman, Kiona Ogle, Jamie Sanderlin
+
+## Project goal
+
+This project links data on modeled cone availability in the Southwest USA [@wion2025] to abundance of pinyon jays from eBIRD. Our aim is to explore the relationship between cone and bird abundance, including interactions with other mediating variables and also look at the temporal signal of cone-bird relationships.
+
+I am aiming for a general framing around co-evolution and conservation given changes in cone availability over the last century. I'm currently looking at Journal of Animal Ecology as a potential outlet (short format - 8500 words inclusive of all text, including references).
+
+### Covariates in the model
+
+The covariates we're considering include:
+
+-   cone abundance (with yearly lead, immediate, and lag effects)
+
+-   maximum temperature (with seasonal lag effects)
+
+-   precipitation (with seasonal lag effects)
+
+-   monsoonality (percent of 30-year average precipitation occurring July & August)
+
+-   pinyon basal area (yearly)
+
+We also considered the interactions with all covariates and cone availability, since we were interested in how these variables influenced the relationship with cone availability.
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: "Figure 1: Temporal hypotheses for cone-jay abundance relationship. Birds could respond in a combination of time periods, including before, concurrent with, or after mature cones are available."
+
+knitr::include_graphics(here('pictures',
+                             'time_conceptual.jpg'))
+```
+
+### Structure of the model
+
+This model incorporates observed data from eBIRD and accounts for detection error in observations. Thus, we are modeling true latent abundance, *N*, based on partially observed data from eBIRD with detection error and survey covariates.
+
+We spatially and temporally stratified checklists in our analyses based on an adaption of the [best practices](https://cornelllabofornithology.github.io/ebird-best-practices/abundance.html) outlined by Cornell Labs for using eBIRD data for science. We spatially sub-sampled based on a 4x4 km grid (since this was the scale of all our covariates). We incorporated spatial uncertainty by then buffering each checklist within that grid by 1/2 of its sampling distance from eBIRD and then merging all checklists in a 4x4 km grid into a "blob" that represented the spatial unit for estimating jay abundance (checklists = repeat observations within a site/year). Within the blob, we determined the amount of the blob overlapping the original 4x4 km grid cell and all surrounding cells and used covariates calculated as the weighted average of covariate values in each cell times the amount of overlap of the blob with that cell. Further, we multiplied the rate parameter, $\lambda$, in the Poisson distribution estimating latent *N* by the area of the blob (since blobs represented different sampling areas).
+
+You can examine the model code [here](https://github.com/anamtk/pinyon_jays/blob/main/code/jags_models/ebird_abund_JAGS_nospuncert2.R).
+
+## Results
+
+Here are the overall results for covariate effects, with all covariates scaled so relative importance is comparable.
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: "Figure 2: Covariate effects for the pinyon jay abundance model with eBIRD data. These include overall effects of covariates as well as their interactions with cone abundance."
+
+covariate_betas
+
+```
+
+In a nutshell:
+
+-   More birds with more cones (yearly lags)
+
+-   A stronger positive effect of cones with more precipitation (seasonal lags)
+
+-   A stronger positive effect of cones with higher maximum temperatures (seasonal lags)
+
+-   More birds in areas with more monsoon moisture
+
+-   More birds at higher pinyon basal area
+
+-   (Weak) Stronger positive relationship with cones when pinyon basal area is higher
+
+-   A weaker positive relationship with cones as monsoonality increases
+
+-   Fewer birds at higher maximum temperatures (seasonal lags)
+
+-   Fewer birds at higher precipitation (seasonal lags)
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: "Figure 3: Temporal effect of cone abundance effect on pinyon jays. Jays respond in abundance the same year as cone initiation (year -2) and also in the year following cone maturation and three years following cone maturation."
+
+cone_weight_plot
+
+```
+
+In a nutshell:
+
+-   Birds increase in abundance the same year that cones initiate. Something about cone climate triggers also seem to help birds?
+
+-   Birds increase the year following cones, suggesting a caching effect
+
+-   Birds increase three years following cones - could this be some kind of delayed maturation effect? So - fledglings from the big cache year mature two years later and enter breeding population?
+
+To note: will have to think about these temporal signals and make sure we're on the right track. Cones are available in the late summer of all the years; all eBIRD data is coming from the nesting season of that year (February - April).
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: "Figure 4: Temporal effect of maximum temperature and precipitation (both have negative effects on jay abundance). Seasons are based on bird biology: Br = breeding (February-April); Fl = adults with dependent young (May-June), Su = summer (unknown behavior; July); SW = summer/winter dispersed foraging (this is when they travel all over the place; August-January)"
+
+clim_weights_plot
+
+```
+
+In a nutshell:
+
+-   It does seem like precipitation is most important during breeding and raising dependent young (generally). All three previous periods with dependent young are important (wetter during those periods = fewer birds); two and three year ago breeding seasons also important; second mystery time summer also important. **In all these periods, when they are wetter, there are fewer birds.**
+
+-   Temperature seems most important \~2 years ago. Two years ago winter is important, as is the breeding and dependent young period two years ago. (need to read about this!) **Again, these indicate that when these periods are warmer, there are fewer birds.**
+
+-   Again, I'm wondering if this two to three year lag in birds is related to when recently-fledged individuals become breeding adults?
+
+## Next steps
+
+Take a gander at these results, think about them in the context of your knowledge areas.
+
+General thoughts/feedback:
+
+-   I'm keen to keep this covariate and interaction set since we're really interested in cone effect mediation. If you feel very strongly that this is not sufficient, happy to hear the case for adding something.
+
+-   Is there anything glaringly wrong/missing from the model? (Jamie and Kiona)
+
+-   What are your hot takes on the relationships with covariates and their biological reasons?
+
+I will aim to schedule a collaborator meeting on this project in the weeks after spring break (after next week) and look forward to chatting with folks and moving this project towards the door!
