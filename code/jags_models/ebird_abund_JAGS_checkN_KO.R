@@ -49,10 +49,7 @@ model{
   for(t in 1:n.years){
     for(i in 1:n.blobs[t]){ #"blobs" of buffered points with averaged covariates
       
-      #latent "true" abundance is N, with rate parameter lambda
-      #multiplied by the varaible "effort" size of the blob
-      N[t,i] ~ dpois(lambda[t,i]*blobArea[t,i])
-      
+
       #lambda is based on a likelihood with SAM components
       log(lambda[t,i]) <- a0 + #could make this have random effects
         a[1]*AntCone[t,i] +
@@ -64,6 +61,7 @@ model{
         a[7]*AntCone[t,i]*AntPPT[t,i] + 
         a[8]*AntCone[t,i]*Monsoon[t,i] + 
         a[9]*AntCone[t,i]*PinyonBA[t,i]
+      #maybe include a year RE and other covariate interactions??
       
       #-------------------------------------## 
       # SAM summing ###
@@ -115,15 +113,24 @@ model{
       for(r in 1:n.ebird.check[t,i]){ #number of checklists in that blob
 
       #ebird raw data
-      ebird.count[t,i,r] ~ dbin(p.ebird[t,i,r], N[t,i])
+      ebird.count[t,i,r] ~ dbin(p.ebird[t,i,r], N[t,i,r])
+        #need to generate list area in the data list
+        #listArea[t,i,r] = 3.141593*pow(Distance[t,i,r]/2,2)
+        #or code this way:
+        #latent "true" abundance is N, with rate parameter lambda
+        #multiplied by the varaible "effort" size of the list
+        N[t,i,r] ~ dpois(lambda[t,i]*listArea[t,i,r])
         
       #Detection probability is dependent on covariates
       logit(p.ebird[t,i,r]) <- c0 + #could make this have random effects, maybe observer ID
         c1[SurveyType[t,i,r]] +
         c[2]*StartTime[t,i,r] +
         c[3]*Duration[t,i,r] +
-        c[4]*Distance[t,i,r] +
+        c[4]*(Distance[t,i,r]/Duration[t,i,r]) +
         c[5]*NumObservers[t,i,r] 
+      
+      #include a distance/duration effect and remove distance effect
+      # Duration x Distance interaction? Or Distance/Duration effect?
         
       #checklists from breeding season (late Feb - early May)
       #only complete checklists
@@ -138,11 +145,11 @@ model{
       #GOODNESS-OF-FIT EVALUATION
       #get replicate data under the model to evaluate
       #how much variance explained by model
-      ebird.count.rep[t,i,r] ~ dbin(p.ebird[t,i,r], N[t,i])
+      ebird.count.rep[t,i,r] ~ dbin(p.ebird[t,i,r], N[t,i,r])
       
       #get residuals to check for spatial/temporal
       #correlation structures
-      resid[t,i,r] <- ebird.count[t,i,r] - p.ebird[t,i,r]*N[t,i]
+      resid[t,i,r] <- ebird.count[t,i,r] - p.ebird[t,i,r]*N[t,i,r]
       } 
       
     }

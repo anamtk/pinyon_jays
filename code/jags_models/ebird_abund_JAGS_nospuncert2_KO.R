@@ -50,7 +50,9 @@ model{
     for(i in 1:n.blobs[t]){ #"blobs" of buffered points with averaged covariates
       
       #latent "true" abundance is N, with rate parameter lambda
-      N[t,i] ~ dpois(lambda[t,i])
+      #multiplied by the varaible "effort" size of the blob
+      #can either code this way:
+      #N[t,i] ~ dpois(lambda[t,i]*blobArea[t,i])
       
       #lambda is based on a likelihood with SAM components
       log(lambda[t,i]) <- a0 + #could make this have random effects
@@ -59,10 +61,11 @@ model{
         a[3]*AntPPT[t,i] +
         a[4]*Monsoon[t,i] +
         a[5]*PinyonBA[t,i] +
-        #a[6]*AntCone[t,i]*AntTmax[t,i] + 
-        #a[7]*AntCone[t,i]*AntPPT[t,i] + 
-        a[6]*AntCone[t,i]*Monsoon[t,i] + 
-        a[7]*AntCone[t,i]*PinyonBA[t,i]
+        a[6]*AntCone[t,i]*AntTmax[t,i] + 
+        a[7]*AntCone[t,i]*AntPPT[t,i] + 
+        a[8]*AntCone[t,i]*Monsoon[t,i] + 
+        a[9]*AntCone[t,i]*PinyonBA[t,i]
+      #maybe include a year RE and other covariate interactions??
       
       #-------------------------------------## 
       # SAM summing ###
@@ -81,11 +84,11 @@ model{
       }
       
       for(l in 1:n.clag){
-        TmaxTemp[t,i,l] <- Tmax[t,i,l]*wB[l]
+        TmaxTemp[t,i,l] <- Temp[t,i,l]*wB[l]
         PPTTemp[t,i,l] <- PPT[t,i,l]*wC[l]
         
         #any missing data can be imputed
-        Tmax[t,i,l] ~ dnorm(mu.temp, tau.temp)
+        Temp[t,i,l] ~ dnorm(mu.temp, tau.temp)
         PPT[t,i,l] ~ dnorm(mu.ppt, tau.ppt)
       }
       
@@ -114,7 +117,13 @@ model{
       for(r in 1:n.ebird.check[t,i]){ #number of checklists in that blob
 
       #ebird raw data
-      ebird.count[t,i,r] ~ dbin(p.ebird[t,i,r], N[t,i])
+        #if coded the first way, then have to account for the 
+        #amount of the "blob area" that the particular checklist
+        #included
+      ebird.count[t,i,r] ~ dbin(p.ebird[t,i,r], round(N[t,i]*listArea[t,i,r]/blobArea[t,i]))
+        #listArea[t,i,r] = 3.141593*pow(Distance[t,i,r]/2,2)
+        #or code this way:
+        N[t,i,r] ~ dpois(lambda[t,i]*listArea[t,i,r])
         
       #Detection probability is dependent on covariates
       logit(p.ebird[t,i,r]) <- c0 + #could make this have random effects, maybe observer ID
@@ -123,6 +132,9 @@ model{
         c[3]*Duration[t,i,r] +
         c[4]*Distance[t,i,r] +
         c[5]*NumObservers[t,i,r] 
+      
+      #include a distance/duration effect and remove distance effect
+      # Duration x Distance interaction? Or Distance/Duration effect?
         
       #checklists from breeding season (late Feb - early May)
       #only complete checklists
@@ -135,7 +147,13 @@ model{
       #doesnt matter when only thinking about one species
         
       #GOODNESS-OF-FIT EVALUATION
+      #get replicate data under the model to evaluate
+      #how much variance explained by model
       ebird.count.rep[t,i,r] ~ dbin(p.ebird[t,i,r], N[t,i])
+      
+      #get residuals to check for spatial/temporal
+      #correlation structures
+      resid[t,i,r] <- ebird.count[t,i,r] - p.ebird[t,i,r]*N[t,i]
       } 
       
     }
@@ -152,10 +170,10 @@ model{
   #-------------------------------------##
   
   #intercept and slope parameters
-  a0 ~ dnorm(0, 1E-2)
+  a0 ~ dnorm(0, 1E-4)
   
-  for(i in 1:7){
-    a[i] ~ dnorm(0, 1E-2)
+  for(i in 1:9){
+    a[i] ~ dnorm(0, 1E-4)
   }
 
   #Antecedent variable priors
@@ -199,11 +217,11 @@ model{
   #-------------------------------------##
   
   #intercept
-  c0 ~ dnorm(0, 1E-2)
+  c0 ~ dnorm(0, 1E-4)
   
   #categorical covariate
   for(i in 2:2){
-    c1[i] ~ dnorm(0, 1E-2)
+    c1[i] ~ dnorm(0, 1E-4)
   }
   
   #cell-referenced by setting baseline level to 0
@@ -211,7 +229,7 @@ model{
   
   #continuous covariate slope paramters
   for(i in 2:5){
-    c[i] ~ dnorm(0, 1E-2)
+    c[i] ~ dnorm(0, 1E-4)
   }
   
   #-------------------------------------## 
