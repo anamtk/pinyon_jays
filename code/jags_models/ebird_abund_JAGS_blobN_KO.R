@@ -131,7 +131,7 @@ model{
           c1[SurveyType[t,i,r]] +
           c[2]*StartTime[t,i,r] +
           c[3]*Duration[t,i,r] +
-          c[4]*(Distance[t,i,r]/Duration[t,i,r]) +
+          c[4]*Speed[t,i,r] +
           c[5]*NumObservers[t,i,r] 
           
       

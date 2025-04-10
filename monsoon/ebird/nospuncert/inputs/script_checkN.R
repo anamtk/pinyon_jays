@@ -38,6 +38,7 @@ data_list <- list(#latent N loop:
   StartTime = data$StartTime,
   Duration = data$Duration,
   Distance = data$Distance,
+  Speed = data$Speed,
   NumObservers = data$NumObservers,
   listArea = data$listArea,
   deltaA = rep(1, data$n.lag),

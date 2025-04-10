@@ -455,7 +455,8 @@ ebird_index_df <- as.data.frame(ebird3) %>%
   #distance
   #NumObservers
   #time started (hours since midnight)
-  mutate(StartTime = scale(tm_bsr_),
+  mutate(Speed = scale(effrt__/drtn_mn),
+         StartTime = scale(tm_bsr_),
          Duration = scale(drtn_mn),
          Distance = scale(effrt__),
          NumObservers = scale(nmbr_bs)) 
@@ -521,6 +522,15 @@ for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
   Distance[yr2[i],blob[i], check[i]] <- as.numeric(ebird_index_df[i,18])
 }
 
+Speed <- array(data = NA, dim = c(n.years, 
+                                     max(n.blobs),
+                                     max(n.ebird.check, na.rm = T)))
+
+#fill taht array based on the values in those columns
+for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
+  Speed[yr2[i],blob[i], check[i]] <- as.numeric(ebird_index_df[i,18])
+}
+
 NumObservers <- array(data = NA, dim = c(n.years, 
                                          max(n.blobs),
                                          max(n.ebird.check, na.rm = T)))
@@ -582,6 +592,7 @@ data_list <- list(#latent N loop:
                   StartTime = StartTime,
                   Duration = Duration,
                   Distance = Distance,
+                  Speed = Speed,
                   NumObservers = NumObservers,
                   listArea = listArea)
 
