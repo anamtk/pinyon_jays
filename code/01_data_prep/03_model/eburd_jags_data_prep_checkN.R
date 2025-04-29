@@ -463,6 +463,8 @@ ebird_index_df <- as.data.frame(ebird3) %>%
   #might need to get a random effect of observer, but let's wait on that 
   #for now and see how it goes with just what we have currently
 
+#for RMSE
+n.checklists <- nrow(ebird_index_df)
 #now, generate IDs for the for loop where
 # we will populate the array
 yr2 <- ebird_index_df$yrID #get a yearID for each iteration of the loop
@@ -594,7 +596,9 @@ data_list <- list(#latent N loop:
                   Distance = Distance,
                   Speed = Speed,
                   NumObservers = NumObservers,
-                  listArea = listArea)
+                  listArea = listArea,
+                  #RMSE
+                  n.checklists = n.checklists)
 
 saveRDS(data_list, here('data',
                         'jags_input_data',

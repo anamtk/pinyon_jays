@@ -156,6 +156,9 @@ model{
       #get residuals to check for spatial/temporal
       #correlation structures
       resid[t,i,r] <- ebird.count[t,i,r] - p.ebird[t,i,r]*N_check[t,i,r]
+      
+
+      rmse[t,i,r] <- ((p.ebird[t,i,r]*N_check[t,i,r] - ebird.count[t,i,r])^2)/n.checklists
       } 
       
     }

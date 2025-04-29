@@ -41,6 +41,7 @@ data_list <- list(#latent N loop:
   Speed = data$Speed,
   NumObservers = data$NumObservers,
   listArea = data$listArea,
+  n.checklists = data$n.checklists,
   deltaA = rep(1, data$n.lag),
   deltaB = rep(1, data$n.clag),
   deltaC = rep(1, data$n.clag))

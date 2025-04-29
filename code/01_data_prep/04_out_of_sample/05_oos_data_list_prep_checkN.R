@@ -40,9 +40,10 @@ theme_set(theme_bw())
 
 
 ebird <- read_sf(here('data',
-                       'ebird_data',
-                       'cleaned_data',
-                       'all_ebird_data_conefiltered.shp')) %>%
+                      'ebird_data',
+                      'cleaned_data',
+                      "oos",
+                      'all_oos_ebird_data_conefiltered.shp')) %>%
   dplyr::select(cellID,
                 chckls_, #checklist ID
                 obsrvtn_c, #observation count
@@ -57,9 +58,10 @@ ebird <- read_sf(here('data',
   rename(blobID = cellID)
 
 ebird_blobIDs <- read.csv(here('data',
-                       'ebird_data',
-                       'cleaned_data',
-                       'ebird_cellIDlists.csv')) %>%
+                               'ebird_data',
+                               'cleaned_data',
+                               'oos',
+                               'ebird_oos_cellIDlists.csv')) %>%
   dplyr::select(-X) %>%
   rename(blobID = cellID) %>%
   rename(cellID = cell)
@@ -67,32 +69,38 @@ ebird_blobIDs <- read.csv(here('data',
 cones <- read.csv(here('data',
                        'spatial_data',
                        'cleaned_data',
-                       'cones_weighted_mean_blob.csv'))
+                       'oos',
+                       'oos_cones_weighted_mean_blob.csv'))
 
 temp <- read.csv(here('data',
                       'spatial_data',
                       'cleaned_data',
-                      'temp_weighted_mean_blob.csv'))
+                      'oos',
+                      'oos_temp_weighted_mean_blob.csv'))
 
 tmean <- read.csv(here('data',
-                      'spatial_data',
-                      'cleaned_data',
-                      'tmean_weighted_mean_blob.csv'))
+                       'spatial_data',
+                       'cleaned_data',
+                       'oos',
+                       'oos,tmean_weighted_mean_blob.csv'))
 
 ppt <- read.csv(here('data',
                      'spatial_data',
                      'cleaned_data',
-                     'ppt_weighted_mean_blob.csv'))
+                     'oos',
+                     'oos_ppt_weighted_mean_blob.csv'))
 
 monsoon <- read.csv(here('data',
                          'spatial_data',
                          'cleaned_data',
-                         'monsoon_weighted_mean_blob.csv'))
+                         'oos',
+                         'oos_monsoon_weighted_mean_blob.csv'))
 
 pinyon <- read.csv(here('data',
                         'spatial_data',
                         'cleaned_data',
-                        'pinyonBA_weighted_mean_blob.csv'))
+                        'oos',
+                        'oos_pinyonBA_weighted_mean_blob.csv'))
 
 
 #all blobs in blob lists to be able to get
@@ -117,80 +125,6 @@ all_blobs <- ebird_blobIDs %>%
 #their data
 ebird3 <- ebird %>%
   filter(year > 2009 & year < 2022)
-
-
-# Plot quickly ------------------------------------------------------------
-
-ba <- read.csv(here('data',
-                    'spatial_data',
-                    'cleaned_data',
-                    'pinyonba_data_df.csv'))
-
-cone_map <- read.csv(here('data',
-                          'spatial_data',
-                          'cleaned_data',
-                          'cone_masting_df.csv'))
-
-states <- st_as_sf(maps::map("state", fill=TRUE, plot =FALSE)) %>%
-  filter(ID %in% c('arizona', 'colorado', 
-                   'utah', 'new mexico')) 
-
-#combine and plot quickly
-ebd4 <- ebird3 %>%
-  dplyr::select(geometry, year) %>%
-  mutate(datasource = 'ebird') %>%
-  rename(Year = year)
-
-ggplot(ebd4) +
-  geom_sf(color = '#d8b365') +
-  facet_wrap(~Year) +
-  theme_bw() 
-
-eb_2020 <- ebd4 %>%
-  filter(Year == 2020)
-
-ba_20 <- ba %>%
-  filter(PinyonBA_sqftPerAc_2020 != 0)
-
-cone_20 <- cone_map %>%
-  filter(X2020 != 0)
-
-ggplot() +
-  geom_sf(data = states, fill = "white") +
-  geom_tile(data = cone_20, aes(x = x, y = y, fill = X2020))+
-  geom_sf(data = eb_2020, color = "grey", shape = 2) +
-  scale_fill_viridis_c() +
-  theme_bw()
-
-ggplot() +
-  geom_sf(data = states, fill = "white") +
-  geom_tile(data = ba_20, aes(x = x, y = y, fill = PinyonBA_sqftPerAc_2020))+
-  geom_sf(data = eb_2020,alpha = 0.6, color = "grey", shape = 2) +
-  scale_fill_viridis_c()+
-  theme_bw()
-
-
-ggplot() +
-  geom_tile(data = ba_20, aes(x = x, y = y, fill = PinyonBA_sqftPerAc_2020))+
-  scale_fill_viridis_c() +
-  theme_bw()
-
-ebird_blobIDs %>%
-  group_by(blobnum) %>%
-  tally() %>%
-  ggplot() +
-  geom_histogram(aes(x = n)) +
-  labs(title = "Number of grids per blob",
-       x = "Number of grids",
-       y = "Number of blobs") +
-  scale_x_continuous(breaks = c(1,2,3,4,5,6,7,8,9))
-
-ebird_blobIDs %>%
-  group_by(blobnum) %>%
-  tally() %>%
-  summarise(mean = mean(n),
-            min = min(n),
-            max = max(n))
 
 # Data objects for jags ---------------------------------------------------
 
@@ -463,6 +397,7 @@ ebird_index_df <- as.data.frame(ebird3) %>%
   #might need to get a random effect of observer, but let's wait on that 
   #for now and see how it goes with just what we have currently
 
+n.checklists <- nrow(ebird_index_df)
 #now, generate IDs for the for loop where
 # we will populate the array
 yr2 <- ebird_index_df$yrID #get a yearID for each iteration of the loop
@@ -501,7 +436,7 @@ StartTime   <- array(data = NA, dim = c(n.years,
 
 #fill taht array based on the values in those columns
 for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
-  StartTime[yr2[i], blob[i], check[i]] <- as.numeric(ebird_index_df[i,17])
+  StartTime[yr2[i], blob[i], check[i]] <- as.numeric(ebird_index_df[i,16])
 }
 
 Duration <- array(data = NA, dim = c(n.years, 
@@ -510,7 +445,7 @@ Duration <- array(data = NA, dim = c(n.years,
 
 #fill taht array based on the values in those columns
 for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
-  Duration[yr2[i], blob[i], check[i]] <- as.numeric(ebird_index_df[i,18])
+  Duration[yr2[i], blob[i], check[i]] <- as.numeric(ebird_index_df[i,17])
 }
 
 Distance <- array(data = NA, dim = c(n.years, 
@@ -519,16 +454,16 @@ Distance <- array(data = NA, dim = c(n.years,
 
 #fill taht array based on the values in those columns
 for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
-  Distance[yr2[i],blob[i], check[i]] <- as.numeric(ebird_index_df[i,19])
+  Distance[yr2[i],blob[i], check[i]] <- as.numeric(ebird_index_df[i,18])
 }
 
 Speed <- array(data = NA, dim = c(n.years, 
-                                  max(n.blobs),
-                                  max(n.ebird.check, na.rm = T)))
+                                     max(n.blobs),
+                                     max(n.ebird.check, na.rm = T)))
 
 #fill taht array based on the values in those columns
 for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
-  Speed[yr2[i],blob[i], check[i]] <- as.numeric(ebird_index_df[i,16])
+  Speed[yr2[i],blob[i], check[i]] <- as.numeric(ebird_index_df[i,18])
 }
 
 NumObservers <- array(data = NA, dim = c(n.years, 
@@ -537,7 +472,7 @@ NumObservers <- array(data = NA, dim = c(n.years,
 
 #fill taht array based on the values in those columns
 for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
-  NumObservers[yr2[i],blob[i],check[i]] <- as.numeric(ebird_index_df[i,20])
+  NumObservers[yr2[i],blob[i],check[i]] <- as.numeric(ebird_index_df[i,19])
 }
 
 #area for each checklist: listArea[t,i,r]
@@ -551,9 +486,6 @@ for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
   listArea[yr2[i],blob[i],check[i]] <- as.numeric(pi*((ebird_index_df[i,12]))^2)
 }
 
-#total number of checklists for RMSE calculation
-n.checklists <- nrow(ebird_index_df)
-
 # Values for initials -----------------------------------------------------
 
 #need a starting value for N[i,t]
@@ -561,7 +493,6 @@ n.checklists <- nrow(ebird_index_df)
 #maxb <- max(bbs.count, na.rm = T)
 nmax <- max(ebird.count, na.rm=T)
 #nmax <- max(c(maxb, maxe))
-nmax2 <- nmax*25
 
 ndf <- all_blobs %>%
   mutate(yearID = as.numeric(as.factor(year)))
@@ -572,18 +503,8 @@ nyr <- ndf$yearID
 nid <- ndf$numID
 
 for(i in 1:dim(ndf)[1]){ #dim[1] = n.rows
-  N[nyr[i], nid[i]] <- nmax2
+  N[nyr[i], nid[i]] <- nmax
 }
-
-N_check <- array(NA, dim = c(n.years, 
-                              max(n.blobs),
-                              max(n.ebird.check, na.rm = T)))
-
-#fill taht array based on the values in those columns
-for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
-  N_check[yr2[i],blob[i],check[i]] <- nmax2
-}
-
 
 # Compile and export ------------------------------------------------------
 
@@ -609,33 +530,27 @@ data_list <- list(#latent N loop:
                   Speed = Speed,
                   NumObservers = NumObservers,
                   listArea = listArea,
-                  #for RMSE calculation
+                  #RMSE
                   n.checklists = n.checklists)
 
 saveRDS(data_list, here('data',
                         'jags_input_data',
-                        'ebird_data_list_nospuncert.RDS'))
+                        'oos',
+                        'oos_ebird_data_list_nospuncert.RDS'))
 
-inits_list <- list(list(N = N),
-                   list(N = N),
-                   list(N = N))
-
-saveRDS(inits_list, here('data',
-                        'jags_input_data',
-                        'ebird_init_list_nospuncert.RDS'))
-
-inits_list_check <- list(list(N = N_check),
-                         list(N = N_check),
-                         list(N = N_check))
-
-saveRDS(inits_list_check, here('data',
-                         'jags_input_data',
-                         'ebird_init_list_checkN.RDS'))
+# inits_list <- list(list(N = N),
+#                    list(N = N),
+#                    list(N = N))
+# 
+# saveRDS(inits_list, here('data',
+#                         'jags_input_data',
+#                         'ebird_init_list_nospuncert.RDS'))
 
 saveRDS(ebird_index_df, 
         here('data',
              'ebird_data',
              'cleaned_data',
-             'ebird_check_blob_yr_ids.RDS'))
+             'oos',
+             'oos_ebird_check_blob_yr_ids.RDS'))
 
 

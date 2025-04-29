@@ -123,11 +123,14 @@ model{
         
       #Detection probability is dependent on covariates
       logit(p.ebird[t,i,r]) <- c0 + #could make this have random effects, maybe observer ID
-        c1[SurveyType[t,i,r]] +
-        c[2]*StartTime[t,i,r] +
-        c[3]*Duration[t,i,r] +
-        c[4]*Speed[t,i,r] +
-        c[5]*NumObservers[t,i,r] 
+        #c1[SurveyType[t,i,r]] +
+        c[1]*StartTime[t,i,r] +
+        c[2]*Duration[t,i,r] +
+        #Speed: takes into account duration and distance, 
+        #also covaries with survey type since stationary will always 
+        #be speed = 0, so took the categorical out of the model
+        c[3]*Speed[t,i,r] +
+        c[4]*NumObservers[t,i,r] 
       
       #include a distance/duration effect and remove distance effect
       # Duration x Distance interaction? Or Distance/Duration effect?
@@ -150,11 +153,27 @@ model{
       #get residuals to check for spatial/temporal
       #correlation structures
       resid[t,i,r] <- ebird.count[t,i,r] - p.ebird[t,i,r]*N[t,i,r]
+    
+      #to get rmse
+      sqr[t,i,r] <- (ebird.count[t,i,r] - p.ebird[t,i,r]*N[t,i,r])^2
       } 
       
+      #get the sum of all non-NA values for year and
+      #blob
+      sqrsum1[t,i] <- sum(sqr[t,i,1:n.ebird.check[t,i]])
+      
     }
+    
+    #get the sum of all values for 
+    sqrsum2[t] <- sum(sqrsum1[t,1:n.blobs[t]])
   
   } 
+  
+  #-------------------------------------## 
+  # RMSE ###
+  #-------------------------------------##
+  
+  RMSE <- sqrt(sum(sqrsum2[], na.rm = T)/n.checklists)
   
 
   #-------------------------------------## 
@@ -216,15 +235,15 @@ model{
   c0 ~ dnorm(0, 1E-4)
   
   #categorical covariate
-  for(i in 2:2){
-    c1[i] ~ dnorm(0, 1E-4)
-  }
-  
-  #cell-referenced by setting baseline level to 0
-  c1[1] <- 0
-  
+  # for(i in 2:2){
+  #   c1[i] ~ dnorm(0, 1E-4)
+  # }
+  # 
+  # #cell-referenced by setting baseline level to 0
+  # c1[1] <- 0
+  # 
   #continuous covariate slope paramters
-  for(i in 2:5){
+  for(i in 1:4){
     c[i] ~ dnorm(0, 1E-4)
   }
   

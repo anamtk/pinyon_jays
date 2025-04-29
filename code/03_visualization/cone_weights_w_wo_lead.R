@@ -25,138 +25,49 @@ betas <- readRDS(here('monsoon',
                       'outputs',
                       'ebird_abund_model2_summary.RDS'))
 
-data_list <- readRDS(here('data',
-                          'jags_input_data',
-                          'ebird_data_list_nospuncert.RDS'))
-
-ebird_blobIDs <- read.csv(here('data',
-                               'ebird_data',
-                               'cleaned_data',
-                               'ebird_cellIDlists.csv')) %>%
-  dplyr::select(-X) %>%
-  rename(blobID = cellID) %>%
-  rename(cellID = cell)
-#all blobs in blob lists to be able to get
-#indexing
-all_blobs <- ebird_blobIDs %>%
-  distinct(year, blobnum, area) %>%
-  group_by(year) %>%
-  mutate(numID = 1:n()) %>%
-  ungroup() %>%
-  filter(year > 2009 & year < 2022)
-
-cones <- read.csv(here('data',
-                       'spatial_data',
-                       'cleaned_data',
-                       'cones_weighted_mean_blob.csv')) 
-
-temp <- read.csv(here('data',
-                      'spatial_data',
-                      'cleaned_data',
-                      'temp_weighted_mean_blob.csv'))
-
-ppt <- read.csv(here('data',
-                     'spatial_data',
-                     'cleaned_data',
-                     'ppt_weighted_mean_blob.csv'))
-
-# Get weighted values for lagged terms ------------------------------------
-
-#cone median weights
-conewt <- as.data.frame(betas$quantiles) %>%
-  rownames_to_column(var = "parm") %>%
-  filter(str_detect(parm, "wA")) %>%
-  dplyr::select(`50%`) %>%
-  as_vector()
-
-cones2 <- cones %>%
-  filter(blobnum %in% all_blobs$blobnum) %>%
-  mutate(cones = scale(cones)) %>%
-  mutate(yearID = as.numeric(as.factor(year))) %>%
-  left_join(all_blobs, by = c("year", "blobnum")) %>%
-  dplyr::select(blobnum, cones, lag) %>%
-  arrange(lag) %>%
-  pivot_wider(names_from = "lag",
-              values_from = "cones") %>%
-  column_to_rownames(var= "blobnum") %>%
-  as.matrix()
-
-coneVals <- apply(cones2, MARGIN = 1, FUN = function(x){sum(x*conewt, na.rm = T)})
-
-#tmax
-tmxwt <- as.data.frame(betas$quantiles) %>%
-  rownames_to_column(var = "parm") %>%
-  filter(str_detect(parm, "wB")) %>%
-  dplyr::select(`50%`) %>%
-  as_vector()
-
-temp2 <- temp %>%
-  filter(blobnum %in% all_blobs$blobnum) %>%
-  #trying scaling by season
-  group_by(season) %>%
-  mutate(temp = scale(temp)) %>%
-  ungroup() %>%
-  mutate(yearID = as.numeric(as.factor(year))) %>%
-  left_join(all_blobs, by = c("year", "blobnum"))%>%
-  dplyr::select(blobnum, temp, lag) %>%
-  arrange(lag) %>%
-  pivot_wider(names_from = "lag",
-              values_from = "temp") %>%
-  column_to_rownames(var= "blobnum") %>%
-  as.matrix()
-
-tempVals <- apply(temp2, MARGIN = 1, FUN = function(x){sum(x*tmxwt, na.rm = T)})
-
-
-#ppt
-pptwt <- as.data.frame(betas$quantiles) %>%
-  rownames_to_column(var = "parm") %>%
-  filter(str_detect(parm, "wC")) %>%
-  dplyr::select(`50%`) %>%
-  as_vector()
-
-ppt2 <- ppt %>%
-  filter(blobnum %in% all_blobs$blobnum) %>%
-  #trying scaling by season
-  group_by(season) %>%
-  mutate(ppt = scale(ppt)) %>%
-  ungroup() %>%
-  mutate(yearID = as.numeric(as.factor(year))) %>%
-  left_join(all_blobs, by = c("year", "blobnum"))%>%
-  dplyr::select(blobnum, ppt, lag) %>%
-  arrange(lag) %>%
-  pivot_wider(names_from = "lag",
-              values_from = "ppt") %>%
-  column_to_rownames(var= "blobnum") %>%
-  as.matrix()
-
-pptVals <- apply(ppt2, MARGIN = 1, FUN = function(x){sum(x*pptwt, na.rm = T)})
-
-
+betas2 <- readRDS(here('monsoon',
+                       'ebird',
+                       'nospuncert',
+                       'outputs',
+                       'ebird_abund_model2conelagonly_summary.RDS'))
 
 # Pull out beta DF --------------------------------------------------------
 
 covariates <- c('a0', "Cones", "Tmax", "PPT", "Monsoon",
                 "PinyonBA", "ConexTmax", "ConexPPT",
                 'ConexMonsoon', "ConexBA")
+
 beta_df <- as.data.frame(betas$quantiles) %>%
   rownames_to_column(var = "parm") %>%
   filter(str_detect(parm, "a")) %>%
   filter(!parm %in% c("deviance")) %>%
   bind_cols(covariates) %>%
-  rename(covariate = `...7`)
+  rename(covariate = `...7`) %>%
+  mutate(model = "lead_and_lag")
 
-covariate_betas <- beta_df %>%
+beta2_df <- as.data.frame(betas2$quantiles) %>%
+  rownames_to_column(var = "parm") %>%
+  filter(str_detect(parm, "a")) %>%
+  filter(!parm %in% c("deviance")) %>%
+  bind_cols(covariates) %>%
+  rename(covariate = `...7`) %>%
+  mutate(model = "lag")
+
+all_beta <- beta_df %>%
+  bind_rows(beta2_df)
+
+(covariate_betas <- all_beta %>%
   filter(parm != 'a0') %>%
   ggplot(aes(x = `50%`,
-                    y = reorder(covariate, `50%`))) +
+                    y = reorder(covariate, `50%`),
+             color = model)) +
   geom_vline(xintercept = 0, linetype = 2) +
   geom_point() +
   geom_errorbar(aes(xmin = `2.5%`,
                     xmax = `97.5%`),
                 width = 0.2) +
   labs(x = "Covariate effect\n(median and 95% BCI)",
-       y = "Covariate")
+       y = "Covariate"))
 
 # Weights -----------------------------------------------------------------
 
@@ -167,8 +78,26 @@ weights_df <- as.data.frame(betas$quantiles) %>%
                                str_detect(parm, "wB") ~ "Temperature",
                                str_detect(parm, 'wC') ~ "Precipitation")) %>%
   mutate(lag = str_sub(parm, 4, (nchar(parm)-1)),
-         lag = as.numeric(lag))
+         lag = as.numeric(lag)) %>%
+  mutate(model = "lead_and_lag")
 
+weights2_df <- as.data.frame(betas2$quantiles) %>%
+  rownames_to_column(var = "parm") %>%
+  filter(str_detect(parm, "w")) %>%
+  mutate(covariate = case_when(str_detect(parm, "wA") ~ "Cones",
+                               str_detect(parm, "wB") ~ "Temperature",
+                               str_detect(parm, 'wC') ~ "Precipitation")) %>%
+  mutate(lag = str_sub(parm, 4, (nchar(parm)-1)),
+         lag = as.numeric(lag))%>%
+  mutate(model = "lag") %>%
+  mutate(lag = case_when((covariate == "Cones" & lag == 4) ~ 7,
+                         (covariate == "Cones" & lag == 3) ~ 6,
+                         (covariate == "Cones" & lag == 2) ~ 5,
+                         (covariate == "Cones" & lag == 1) ~ 4,
+                         TRUE ~ lag))
+
+all_weights <- weights_df %>%
+  bind_rows(weights2_df)
 
 start <- c(0.5,4.5)
 end <- c(4.5, 7.5)
@@ -178,7 +107,7 @@ box_df <- as.data.frame(start) %>%
   bind_cols(end = end, times = times) %>%
   mutate(times = factor(times, levels = c("predict", "lag")))
 
-cone_weight_plot <- weights_df %>%
+(cone_weight_plot <- all_weights %>%
   filter(covariate == "Cones") %>%
 ggplot(aes(x = lag, y = `50%`)) +
   geom_rect(data = box_df, aes(xmin = start,
@@ -188,19 +117,23 @@ ggplot(aes(x = lag, y = `50%`)) +
                                ymax = 1,
                                fill = times),
             inherit.aes = F, alpha = 0.6) +
-  scale_fill_manual(values = c('#b3cde3',
-                               '#ccebc5')) +
-  geom_hline(yintercept = 1/7, linetype = 2) +
-  geom_point() +
+  scale_fill_manual(values = c('#d9d9d9',
+                               '#bdbdbd')) +
+    scale_color_manual(values = c("#7bccc4", '#0868ac')) +
+ # geom_hline(yintercept = 1/7, linetype = 2, color = "#7bccc4") +
+#    geom_hline(yintercept = 1/4, linetype = 2, color = "#0868ac") +
+  geom_point(aes(color = model)) +
   geom_errorbar(aes(ymin = `2.5%`,
-                    ymax = `97.5%`),
+                    ymax = `97.5%`,
+                    color = model),
                 width = 0.2) +
   facet_wrap(~covariate, scales = "free_x") +
   scale_x_continuous(breaks = c(1:7),
                      labels = c("-3", "-2", "-1", "0", "+1", 
                                 "+2", "+3")) +
   labs(x = "Years until/since cone maturation",
-       y = "Importance weight \n (median and 95% BCI)") 
+       y = "Importance weight \n (median and 95% BCI)") +
+    facet_grid(model~.))
 
 # ggsave(here('pictures',
 #             'cone_weights.pdf'),

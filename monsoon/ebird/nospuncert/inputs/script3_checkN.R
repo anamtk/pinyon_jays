@@ -17,7 +17,7 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load data ---------------------------------------------------------------
 
-mod <- readRDS("/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model_blobN.RDS")
+mod <- readRDS("/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model2_checkN.RDS")
 
 # Get initials from previous model ----------------------------------------
 
@@ -67,21 +67,21 @@ a <- samp_df2 %>%
 #cs
 c0 <- as.vector(samp_df2$c0)
 
-c1 <- samp_df2 %>%
-  dplyr::select("c1[2]") %>%
-  as_vector()
-
-c1 <- c(NA, c1)
+# c1 <- samp_df2 %>%
+#   dplyr::select("c1[2]") %>%
+#   as_vector()
+# 
+# c1 <- c(NA, c1)
 
 c <- samp_df2 %>%
-  dplyr::select('c[2]':'c[5]') %>%
-  pivot_longer('c[2]':'c[5]',
+  dplyr::select('c[1]':'c[4]') %>%
+  pivot_longer('c[1]':'c[4]',
                names_to = 'c',
                values_to = "value") %>%
   dplyr::select(value) %>%
   as_vector()
 
-c <- c(NA, c)
+#c <- c(NA, c)
 
 # Get data ----------------------------------------------------------------
 
@@ -127,7 +127,7 @@ parameters <- c('a0',
 
 # Initials ----------------------------------------------------------------
 
-inits_list <- readRDS('/scratch/atm234/pinyon_jays/ebird/nospuncert/inputs/ebird_init_list_nospuncert.RDS')
+inits_list <- readRDS('/scratch/atm234/pinyon_jays/ebird/nospuncert/inputs/ebird_init_list_checkN.RDS')
 
 N <- inits_list[[1]]$N
 
@@ -135,36 +135,37 @@ inits_list2 <- list(list(N = N,
                          a0 = a0,
                          a = a,
                          c0 = c0,
-                         c1 = c1,
+                         #c1 = c1,
                          c = c),
                     list(N = N,
                          a0 = a0 + 0.5,
                          a = a+ 0.25,
                          c0 = c0 +0.05 ,
-                         c1 = c1 + 0.05,
+                        # c1 = c1 + 0.05,
                          c = c + 0.05),
                     list(N = N,
                          a0 = a0 - 0.5,
                          a = a- 0.25,
                          c0 = c0 -0.05 ,
-                         c1 = c1 - 0.05,
+                         #c1 = c1 - 0.05,
                          c = c - 0.05))
 # Run model ---------------------------------------------------------------
 
-model <- jagsUI::jags(data = data_list,
+model <- jagsUI::autojags(data = data_list,
                       parameters.to.save = parameters,
                       inits = inits_list2,
-                      model.file = '/scratch/atm234/pinyon_jays/ebird/nospuncert/inputs/ebird_abund_JAGS_blobN_KO.R',
+                      model.file = '/scratch/atm234/pinyon_jays/ebird/nospuncert/inputs/ebird_abund_JAGS_checkN_KO.R',
                       parallel = TRUE,
                       n.chains = 3,
-                      n.iter = 25000,
+                      iter.increment = 25000,
                       n.burnin = 5000,
                       n.thin = 10,
+                      Rhat.limit = 1.2,
                       DIC = TRUE)
 
 #save as an R data object
 saveRDS(model, 
-        file ="/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model2_blobN.RDS")
+        file ="/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model3_checkN.RDS")
 
 (end.time <- Sys.time())
 
@@ -173,6 +174,6 @@ saveRDS(model,
 # Diagnose model ----------------------------------------------------------
 
 mcmcplot(model$samples,
-         dir = "/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/mcmcplots/blobN_run2")
+         dir = "/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/mcmcplots/checkN_run3")
 
 

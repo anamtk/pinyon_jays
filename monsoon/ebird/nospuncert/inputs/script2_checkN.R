@@ -67,21 +67,21 @@ a <- samp_df2 %>%
 #cs
 c0 <- as.vector(samp_df2$c0)
 
-c1 <- samp_df2 %>%
-  dplyr::select("c1[2]") %>%
-  as_vector()
-
-c1 <- c(NA, c1)
+# c1 <- samp_df2 %>%
+#   dplyr::select("c1[2]") %>%
+#   as_vector()
+# 
+# c1 <- c(NA, c1)
 
 c <- samp_df2 %>%
-  dplyr::select('c[2]':'c[5]') %>%
-  pivot_longer('c[2]':'c[5]',
+  dplyr::select('c[1]':'c[4]') %>%
+  pivot_longer('c[1]':'c[4]',
                names_to = 'c',
                values_to = "value") %>%
   dplyr::select(value) %>%
   as_vector()
 
-c <- c(NA, c)
+#c <- c(NA, c)
 
 # Get data ----------------------------------------------------------------
 
@@ -109,7 +109,8 @@ data_list <- list(#latent N loop:
   Distance = data$Distance,
   Speed = data$Speed,
   NumObservers = data$NumObservers,
-  listArea = data$listArea)
+  listArea = data$listArea,
+  n.checklists = data$n.checklists)
 
 # Parameters to save ------------------------------------------------------
 
@@ -134,19 +135,19 @@ inits_list2 <- list(list(N = N,
                          a0 = a0,
                          a = a,
                          c0 = c0,
-                         c1 = c1,
+                         #c1 = c1,
                          c = c),
                     list(N = N,
                          a0 = a0 + 0.5,
                          a = a+ 0.25,
                          c0 = c0 +0.05 ,
-                         c1 = c1 + 0.05,
+                         #c1 = c1 + 0.05,
                          c = c + 0.05),
                     list(N = N,
                          a0 = a0 - 0.5,
                          a = a- 0.25,
                          c0 = c0 -0.05 ,
-                         c1 = c1 - 0.05,
+                         #c1 = c1 - 0.05,
                          c = c - 0.05))
 # Run model ---------------------------------------------------------------
 

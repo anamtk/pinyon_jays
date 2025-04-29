@@ -17,17 +17,19 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load model --------------------------------------------------------------
 
-mod <- readRDS("/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model2.RDS")
+mod <- readRDS("/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model2_conelagonly.RDS")
 
-# Replicated data ---------------------------------------------------------
 
-parms2 <- c('ebird.count.rep')
 
-mod3 <- update(mod,
-               parameters.to.save = parms2,
-               n.iter = 350)
+# Check Rhat --------------------------------------------------------------
 
-saveRDS(mod3$samples, file ="/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model2_yrepsamples.RDS")
+# Rhat <- mod$Rhat
+# 
+# saveRDS(Rhat, file ="/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model2_Rhat.RDS")
 
-(end.time <- Sys.time())
 
+# Get summary -------------------------------------------------------------
+
+sum <- summary(mod$samples)
+
+saveRDS(sum, "/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model2conelagonly_summary.RDS")
