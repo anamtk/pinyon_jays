@@ -173,7 +173,7 @@ model{
   # RMSE ###
   #-------------------------------------##
   
-  RMSE <- sqrt(sum(sqrsum2[], na.rm = T)/n.checklists)
+  RMSE <- sqrt(sum(sqrsum2[])/n.checklists)
   
 
   #-------------------------------------## 

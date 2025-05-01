@@ -61,7 +61,7 @@ parameters <- c('a0',
 
 # Initials ----------------------------------------------------------------
 
-inits_list <- readRDS('/scratch/atm234/pinyon_jays/ebird/nospuncert/inputs/ebird_init_list_checkN.RDS')
+inits_list <- readRDS('/scratch/atm234/pinyon_jays/ebird/nospuncert/inputs/ebird_init_list_nospuncert.RDS')
 
 # Run model ---------------------------------------------------------------
 

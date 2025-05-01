@@ -97,12 +97,13 @@ pinyon <- read.csv(here('data',
 
 #all blobs in blob lists to be able to get
 #indexing
+#keeping up to year 2023 now
 all_blobs <- ebird_blobIDs %>%
   distinct(year, blobnum, area) %>%
   group_by(year) %>%
   mutate(numID = 1:n()) %>%
   ungroup() %>%
-  filter(year > 2009 & year < 2022)
+  filter(year > 2009 & year < 2023)
 
 # Some things about data --------------------------------------------------
 
@@ -116,7 +117,7 @@ all_blobs <- ebird_blobIDs %>%
 #~16.5% imputing, it now has ~10% and all the others have all
 #their data
 ebird3 <- ebird %>%
-  filter(year > 2009 & year < 2022)
+  filter(year > 2009 & year < 2023)
 
 
 # Plot quickly ------------------------------------------------------------
@@ -207,11 +208,11 @@ n.blobs <- all_blobs %>%
   dplyr::select(n.blobs) %>%
   as_vector()
 
-#NOTE: Reducing years to not include 2022 of data so that we 
+#NOTE: Reducing years to not include 2024 of data so that we 
 #can better represent the cone data - when i have the full
 #dataset, ~16.5% of the final lag are being imputed for cone data
 #and i'm wondering if that's why estimates have been weird.
-n.years <- length(2010:2021)
+n.years <- length(2010:2022)
 
 #area to multiply lambda by [year, blob]
 blobArea <- all_blobs %>%
@@ -555,22 +556,23 @@ for(i in 1:dim(ebird_index_df)[1]){ #dim[1] = n.rows
 
 # Values for initials -----------------------------------------------------
 
-#need a starting value for N[i,t]
+#need a starting value for N[t,i,r]
 
 #maxb <- max(bbs.count, na.rm = T)
 nmax <- max(ebird.count, na.rm=T)
 #nmax <- max(c(maxb, maxe))
 
-ndf <- all_blobs %>%
-  mutate(yearID = as.numeric(as.factor(year)))
+ndf <- ebird_index_df 
 
-N <- matrix(NA, nrow = n.years, ncol =max(n.blobs))
+N <- array(NA, dim = c(n.years, max(n.blobs), max(n.ebird.check,na.rm = T)))
 
-nyr <- ndf$yearID
+nyr <- ndf$yrID
 nid <- ndf$numID
+nchk <- ndf$checkID
+
 
 for(i in 1:dim(ndf)[1]){ #dim[1] = n.rows
-  N[nyr[i], nid[i]] <- nmax
+  N[nyr[i], nid[i], nchk[i]] <- nmax
 }
 
 # Compile and export ------------------------------------------------------

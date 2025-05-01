@@ -110,15 +110,13 @@ cones2 <- ebird %>%
   rowwise() %>%
   mutate(lagnum = year - cone_yr) %>%
   ungroup() %>%
-  filter(lagnum %in% c(-3:3)) %>%
+  filter(lagnum %in% c(-1:3)) %>%
   #fix lag indexing - 4 is current time
-  mutate(lag = case_when(lagnum == -3 ~ 1,
-                         lagnum == -2 ~ 2,
-                         lagnum == -1 ~ 3,
-                         lagnum == 0 ~ 4,
-                         lagnum == 1 ~ 5,
-                         lagnum == 2 ~ 6,
-                         lagnum == 3 ~ 7)) %>%
+  mutate(lag = case_when(lagnum == -1 ~ 1,
+                         lagnum == -0 ~ 2,
+                         lagnum == 1 ~ 3,
+                         lagnum == 2 ~ 4,
+                         lagnum == 3 ~ 5)) %>%
   dplyr::select(blobnum, year, wt, lag) %>%
   rename(cones = wt)
 

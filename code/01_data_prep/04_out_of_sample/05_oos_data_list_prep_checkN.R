@@ -110,7 +110,7 @@ all_blobs <- ebird_blobIDs %>%
   group_by(year) %>%
   mutate(numID = 1:n()) %>%
   ungroup() %>%
-  filter(year > 2009 & year < 2022)
+  filter(year > 2009 & year < 2023)
 
 # Some things about data --------------------------------------------------
 
@@ -124,7 +124,7 @@ all_blobs <- ebird_blobIDs %>%
 #~16.5% imputing, it now has ~10% and all the others have all
 #their data
 ebird3 <- ebird %>%
-  filter(year > 2009 & year < 2022)
+  filter(year > 2009 & year < 2023)
 
 # Data objects for jags ---------------------------------------------------
 
@@ -145,7 +145,7 @@ n.blobs <- all_blobs %>%
 #can better represent the cone data - when i have the full
 #dataset, ~16.5% of the final lag are being imputed for cone data
 #and i'm wondering if that's why estimates have been weird.
-n.years <- length(2010:2021)
+n.years <- length(2010:2022)
 
 #area to multiply lambda by [year, blob]
 blobArea <- all_blobs %>%
