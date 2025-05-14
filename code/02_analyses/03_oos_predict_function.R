@@ -3,7 +3,7 @@
 
 package.list <- c("here", "tidyverse", 'data.table',
                   'corrplot',
-                  'sf')
+                  'sf', 'coda')
 
 ## Installing them if they aren't already on the computer
 new.packages <- package.list[!(package.list %in% installed.packages()[,"Package"])]
@@ -16,7 +16,7 @@ for(i in package.list){library(i, character.only = T)}
 # Load data objects -------------------------------------------------------
 
 data <- readRDS(here('data',
-                     'jags_input_data',
+                     '03_jags_input_data',
                      'oos',
                      'oos_ebird_data_list_nospuncert.RDS'))
 
@@ -33,12 +33,32 @@ beta_samples <- readRDS(here('monsoon',
                              'outputs',
                              'ebird_abund_model_covariate_effect_samples.RDS'))
 
-beta_samps <- as.data.frame(betas$statistics) %>%
-  rownames_to_column(var = "parm") %>%
-  mutate(iter = 1)
 
-beta_samps %>%
-  filter(iter == 1)
+beta_samps <- bind_rows(as.data.frame(beta_samples[[1]]),
+               as.data.frame(beta_samples[[2]]),
+               as.data.frame(beta_samples[[3]])) %>%
+  mutate(sample = 1:n()) %>%
+  pivot_longer(-sample,
+               names_to = "parm",
+               values_to = "value")
+
+rmse_samples <- readRDS(here('monsoon',
+                             'ebird',
+                             'nospuncert',
+                             'outputs',
+                             'ebird_abund_model_RMSE_samples.RDS'))
+
+rmse_df <- bind_rows(as.data.frame(rmse_samples[[1]]),
+                     as.data.frame(rmse_samples[[2]]),
+                     as.data.frame(rmse_samples[[3]])) %>%
+  dplyr::select(RMSE) %>%
+  mutate(type = "test")
+
+tidy_oos_df <- readRDS(here('data',
+             '01_ebird_data',
+             'cleaned_data',
+             'oos',
+             'oos_ebird_check_blob_yr_ids.RDS'))
 
 # Prep data for the loop --------------------------------------------------
 
@@ -88,56 +108,52 @@ Speed <- data$Speed
 #NumObservers[t,i,r] 
 NumObservers <- data$NumObservers
 
-predict_fun <- function(iter){
+predict_fun <- function(sample){
 #posterior samples for:
 #a0
 a0 <- beta_samps %>%
-  filter(iter == {{iter}}) %>%
+  filter(sample == {{sample}}) %>%
   filter(str_detect(parm, "a0")) %>%
-  dplyr::select(Mean) %>%
+  dplyr::select(value) %>%
   as_vector()
 #a
 a <- beta_samps %>%
-  filter(iter == {{iter}}) %>%
+  filter(sample == {{sample}}) %>%
   filter(str_detect(parm, "a")) %>%
   filter(!str_detect(parm, "wA|a0|deviance")) %>%
-  dplyr::select(Mean) %>%
+  dplyr::select(value) %>%
   as_vector()
 #wA
 wA <- beta_samps %>%
-  filter(iter == {{iter}}) %>%
+  filter(sample == {{sample}}) %>%
   filter(str_detect(parm, "wA")) %>%
-  dplyr::select(Mean) %>%
+  dplyr::select(value) %>%
   as_vector()
 #wB
 wB <- beta_samps %>%
-  filter(iter == {{iter}}) %>%
+  filter(sample == {{sample}}) %>%
   filter(str_detect(parm, "wB")) %>%
-  dplyr::select(Mean) %>%
+  dplyr::select(value) %>%
   as_vector()
 #wC
 wC <- beta_samps %>%
-  filter(iter == {{iter}}) %>%
+  filter(sample == {{sample}}) %>%
   filter(str_detect(parm, "wC")) %>%
-  dplyr::select(Mean) %>%
+  dplyr::select(value) %>%
   as_vector()
 #c0
 c0 <- beta_samps %>%
-  filter(iter == {{iter}}) %>%
+  filter(sample == {{sample}}) %>%
   filter(str_detect(parm, "c0")) %>%
-  dplyr::select(Mean) %>%
+  dplyr::select(value) %>%
   as_vector()
-#c1
-# c1 <- beta_mean %>%
-#   filter(str_detect(parm, "c1")) %>%
-#   dplyr::select(Mean) %>%
-#   as_vector()
+
 #c
 c <- beta_samps %>%
-  filter(iter == {{iter}}) %>%
+  filter(sample == {{sample}}) %>%
   filter(str_detect(parm, "c")) %>%
   filter(!str_detect(parm, 'c0|c1|deviance')) %>%
-  dplyr::select(Mean) %>%
+  dplyr::select(value) %>%
   as_vector()
 
 #create empty objects to fill
@@ -236,10 +252,34 @@ return(RMSE)
 
 }
 
-n.iter <- length(unique(beta_samps$iter))
-sample_nums <- 1:n.iter
 
-iter_list <- lapply(sample_nums, predict_fun)
+# Run the function for all covariate samples ------------------------------
+
+
+
+n.sample <- length(unique(beta_samps$sample))
+sample_nums <- 1:n.sample
+
+#get the list of RMSE for each sample
+sample_list <- lapply(sample_nums, predict_fun)
+
+#turn into a DF
+oos_RMSE_df <- as.data.frame(do.call(rbind, sample_list)) %>%
+  rename(RMSE = V1) %>%
+  mutate(type = "oos")
+#export
+saveRDS(oos_RMSE_df, here('data',
+                           '04_cross_validation',
+                           'oos_RMSE.RDS'))
+
+# Plot both RMSE ----------------------------------------------------------
+
+both_RMSE <- oos_RMSE_df %>%
+  bind_rows(rmse_df)
+  
+theme_set(theme_bw())
+ggplot() +
+  geom_boxplot(data = both_RMSE, aes(x = type, y = RMSE))
 
 #WHAT IS THIS?? I DUNNO
 #maybe looking at observed v predicted for the 

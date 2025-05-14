@@ -50,19 +50,21 @@ set.seed(1)
 # load ebird --------------------------------------------------------------
 
 ebird <- read.csv(here('data',
-                       'ebird_data',
+                       '01_ebird_data',
                        'cleaned_data',
                        'all_ebird_data.csv'))
 
 ebird %>%
+  filter(year > 2009 & year < 2023) %>%
   summarise(obs = sum(observation_count > 0, na.rm = T),
             total = n(),
-            prop  = obs/total)
+            prop  = obs/total,
+            max = max(observation_count, na.rm = T))
 # Load spatial dataset ----------------------------------------------------
 
 #for masking to
 pinyonba_rast <- terra::rast(here('data',
-                                  'spatial_data',
+                                  '02_spatial_data',
                                   'pinyonBA',
                                   'PinyonBA_4km_sqmPerHa.tif'))
 

@@ -27,7 +27,7 @@ for(i in package.list){library(i, character.only = T)}
 # Load data ---------------------------------------------------------------
 
 ebird <- readRDS(here('data',
-                      'ebird_data',
+                      '01_ebird_data',
                       'cleaned_data',
                       'ebird_check_blob_yr_ids.RDS')) %>%
   st_as_sf()
@@ -36,13 +36,13 @@ residuals_sum <- readRDS(here('monsoon',
                        'ebird',
                        'nospuncert',
                        'outputs',
-                       'ebird_abund_model2_residuals.RDS'))
+                       'ebird_abund_model_residuals.RDS'))
 
-yrep_samps <- readRDS(here('monsoon',
-                         'ebird',
-                         'nospuncert',
-                         'outputs',
-                         'ebird_abund_model2_yrepsamples.RDS'))
+# yrep_samps <- readRDS(here('monsoon',
+#                          'ebird',
+#                          'nospuncert',
+#                          'outputs',
+#                          'ebird_abund_model2_yrepsamples.RDS'))
 
 
 # Get dataframes in order -------------------------------------------------
@@ -93,13 +93,15 @@ spatial_fun <- function(yearID){
   plotspline <- plot(spline.correlog(coords$X, coords$Y,
                             df$residuals,
                             latlon = T,
-                            resamp = 200))
+                            resamp = 200,
+                            xmax = 500),
+                     main = yearID)
   
   return(plotspline)
 
 }
 
-years1 <- 1:12
+years <- 1:13
 lapply(years, spatial_fun)
 
 ## Now looking at residuals
@@ -111,15 +113,15 @@ lapply(years, spatial_fun)
 #but I'm not really sure how to convert this in this case because
 #these are at the "blob" because of the detection component
 
-sim <- createDHARMa(simulatedResponse = yrep, 
-                    observedResponse = resids2$obsrvtn_c,
-                    integerResponse = F)
-
-coords <- as.data.frame(st_coordinates(resids2$geometry))
-
-# Spline correlogram for all points
-s <- spline.correlog(coords$X, coords$Y, resids2$residuals, 
-                     latlon = T, resamp = 200) ## 
-testSpatialAutocorrelation(refit, refit$X, refit$Y) ## Significant, but not particularly problematic autocorrelation here, especially given above test
-
+# sim <- createDHARMa(simulatedResponse = yrep, 
+#                     observedResponse = resids2$obsrvtn_c,
+#                     integerResponse = F)
+# 
+# coords <- as.data.frame(st_coordinates(resids2$geometry))
+# 
+# # Spline correlogram for all points
+# s <- spline.correlog(coords$X, coords$Y, resids2$residuals, 
+#                      latlon = T, resamp = 200) ## 
+# testSpatialAutocorrelation(refit, refit$X, refit$Y) ## Significant, but not particularly problematic autocorrelation here, especially given above test
+# 
 

@@ -50,3 +50,11 @@ rhat_graph_fun <- function(list){
 }
 
 rhat_graph_fun(list = mod_rhat)
+
+ggsave(here('pictures',
+            'final',
+            'rhat.jpg'),
+       width = 5,
+       height = 4,
+       units = 'in')       
+

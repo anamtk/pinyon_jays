@@ -20,7 +20,7 @@ for(i in package.list){library(i, character.only = T)}
 
 
 ebd_co <- auk_ebd(file = here('data',
-                              'ebird_data',
+                              '01_ebird_data',
                               'ebd_US-CO_pinjay_smp_relMay-2024',
                               'ebd_US-CO_pinjay_smp_relMay-2024.txt'),
                   file_sampling = here('data',
@@ -48,11 +48,11 @@ ebd_filters <- ebd_co %>%
   auk_complete()
 
 f_ebd_co <- file.path(here('data',
-                           'ebird_data',
+                           '01_ebird_data',
                            'cleaned_data',
                            'ebd_co_filtered.txt'))
 f_sampling_co <- file.path(here('data',
-                            'ebird_data',
+                            '01_ebird_data',
                             'cleaned_data',
                             'ebd_co_checklists.txt'))
 
@@ -64,11 +64,11 @@ if (!file.exists(f_ebd_co)) {
 # New Mexico --------------------------------------------------------------
 
 ebd_nm <- auk_ebd(file = here('data',
-                              'ebird_data',
+                              '01_ebird_data',
                               'ebd_US-NM_pinjay_smp_relMay-2024',
                               'ebd_US-NM_pinjay_smp_relMay-2024.txt'),
                   file_sampling = here('data',
-                                       'ebird_data',
+                                       '01_ebird_data',
                                        'ebd_US-NM_pinjay_smp_relMay-2024',
                                        'ebd_US-NM_pinjay_smp_relMay-2024_sampling.txt'))
 
@@ -92,11 +92,11 @@ ebd_filters <- ebd_nm %>%
   auk_complete()
 
 f_ebd_nm <- file.path(here('data',
-                           'ebird_data',
+                           '01_ebird_data',
                            'cleaned_data',
                            'ebd_nm_filtered.txt'))
 f_sampling_nm <- file.path(here('data',
-                                'ebird_data',
+                                '01_ebird_data',
                                 'cleaned_data',
                                 'ebd_nm_checklists.txt'))
 
@@ -109,11 +109,11 @@ if (!file.exists(f_ebd_nm)) {
 # Arizona -----------------------------------------------------------------
 
 ebd_az <- auk_ebd(file = here('data',
-                              'ebird_data',
+                              '01_ebird_data',
                               'ebd_US-AZ_pinjay_smp_relJun-2024',
                               'ebd_US-AZ_pinjay_smp_relJun-2024.txt'),
                   file_sampling = here('data',
-                                       'ebird_data',
+                                       '01_ebird_data',
                                        'ebd_US-AZ_pinjay_smp_relJun-2024',
                                        'ebd_US-AZ_pinjay_smp_relJun-2024_sampling.txt'))
 
@@ -137,11 +137,11 @@ ebd_filters <- ebd_az %>%
   auk_complete()
 
 f_ebd_az <- file.path(here('data',
-                           'ebird_data',
+                           '01_ebird_data',
                            'cleaned_data',
                            'ebd_az_filtered.txt'))
 f_sampling_az <- file.path(here('data',
-                                'ebird_data',
+                                '01_ebird_data',
                                 'cleaned_data',
                                 'ebd_az_checklists.txt'))
 
@@ -154,11 +154,11 @@ if (!file.exists(f_ebd_az)) {
 # UTah --------------------------------------------------------------------
 
 ebd_ut <- auk_ebd(file = here('data',
-                              'ebird_data',
+                              '01_ebird_data',
                               'ebd_US-UT_pinjay_smp_relJun-2024',
                               'ebd_US-UT_pinjay_smp_relJun-2024.txt'),
                   file_sampling = here('data',
-                                       'ebird_data',
+                                       '01_ebird_data',
                                        'ebd_US-UT_pinjay_smp_relJun-2024',
                                        'ebd_US-UT_pinjay_smp_relJun-2024_sampling.txt'))
 
@@ -182,11 +182,11 @@ ebd_filters <- ebd_ut %>%
   auk_complete()
 
 f_ebd_ut <- file.path(here('data',
-                           'ebird_data',
+                           '01_ebird_data',
                            'cleaned_data',
                            'ebd_ut_filtered.txt'))
 f_sampling_ut <- file.path(here('data',
-                                'ebird_data',
+                                '01_ebird_data',
                                 'cleaned_data',
                                 'ebd_ut_checklists.txt'))
 
@@ -266,7 +266,7 @@ ebird <- ebd_zf_filtered %>%
          number_observers)
 
 write.csv(ebird, here('data',
-               'ebird_data',
+               '01_ebird_data',
                'cleaned_data',
                'all_ebird_data.csv'))
 

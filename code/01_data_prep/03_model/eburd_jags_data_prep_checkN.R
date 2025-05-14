@@ -40,7 +40,7 @@ theme_set(theme_bw())
 
 
 ebird <- read_sf(here('data',
-                       'ebird_data',
+                       '01_ebird_data',
                        'cleaned_data',
                        'all_ebird_data_conefiltered.shp')) %>%
   dplyr::select(cellID,
@@ -57,7 +57,7 @@ ebird <- read_sf(here('data',
   rename(blobID = cellID)
 
 ebird_blobIDs <- read.csv(here('data',
-                       'ebird_data',
+                       '01_ebird_data',
                        'cleaned_data',
                        'ebird_cellIDlists.csv')) %>%
   dplyr::select(-X) %>%
@@ -65,32 +65,32 @@ ebird_blobIDs <- read.csv(here('data',
   rename(cellID = cell)
 
 cones <- read.csv(here('data',
-                       'spatial_data',
+                       '02_spatial_data',
                        'cleaned_data',
                        'cones_weighted_mean_blob.csv'))
 
 temp <- read.csv(here('data',
-                      'spatial_data',
+                      '02_spatial_data',
                       'cleaned_data',
                       'temp_weighted_mean_blob.csv'))
 
 tmean <- read.csv(here('data',
-                      'spatial_data',
+                      '02_spatial_data',
                       'cleaned_data',
                       'tmean_weighted_mean_blob.csv'))
 
 ppt <- read.csv(here('data',
-                     'spatial_data',
+                     '02_spatial_data',
                      'cleaned_data',
                      'ppt_weighted_mean_blob.csv'))
 
 monsoon <- read.csv(here('data',
-                         'spatial_data',
+                         '02_spatial_data',
                          'cleaned_data',
                          'monsoon_weighted_mean_blob.csv'))
 
 pinyon <- read.csv(here('data',
-                        'spatial_data',
+                        '02_spatial_data',
                         'cleaned_data',
                         'pinyonBA_weighted_mean_blob.csv'))
 
@@ -119,16 +119,41 @@ all_blobs <- ebird_blobIDs %>%
 ebird3 <- ebird %>%
   filter(year > 2009 & year < 2023)
 
+as.data.frame(ebird3) %>%
+  ungroup() %>%
+  dplyr::select(blobID, year, obsrvtn_c) %>%
+  group_by(blobID, year) %>%
+  tally() %>%
+  ungroup() %>%
+  summarise(mean = mean(n),
+            sd = sd(n),
+            total = n(),
+            se = sd/sqrt(total))
 
+as.data.frame(ebird3) %>%
+  ungroup() %>%
+  dplyr::select(blobID, year, obsrvtn_c) %>%
+  summarise(max = max(obsrvtn_c, na.rm = T),
+            mean = mean(obsrvtn_c, na.rm = T),
+            sd = sd(obsrvtn_c, na.rm = T),
+            total = n(),
+            se = sd/sqrt(total))
+
+as.data.frame(ebird3) %>%
+  ungroup() %>%
+  dplyr::select(blobID, year, obsrvtn_c) %>%
+  summarise(obs = sum(obsrvtn_c > 0, na.rm = T),
+            total = n(),
+            prop  = obs/total)
 # Plot quickly ------------------------------------------------------------
 
 ba <- read.csv(here('data',
-                    'spatial_data',
+                    '02_spatial_data',
                     'cleaned_data',
                     'pinyonba_data_df.csv'))
 
 cone_map <- read.csv(here('data',
-                          'spatial_data',
+                          '02_spatial_data',
                           'cleaned_data',
                           'cone_masting_df.csv'))
 
@@ -190,6 +215,9 @@ ebird_blobIDs %>%
   group_by(blobnum) %>%
   tally() %>%
   summarise(mean = mean(n),
+            sd = sd(n),
+            total = n(),
+            se = sd/sqrt(total),
             min = min(n),
             max = max(n))
 
