@@ -1,2 +1,9 @@
 ebird_abund_model2_residuals.RDS
 ebird_abund_model2_yrep.RDS
+ebird_abund_model_yyrepr2.RDS
+ebird_abund_model_yrepsamples.RDS
+ebird_abund_model_yrep.RDS
+ebird_abund_model_residuals.RDS
+ebird_abund_model_covariate_effect_samples.RDS
+ebird_abund_model_RMSE_samples.RDS
+ebird_abund_model2conelagonly_summary.RDS
