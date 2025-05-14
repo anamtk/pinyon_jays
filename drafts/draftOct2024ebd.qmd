@@ -1,5 +1,5 @@
 ---
-title: "**Title**: Linking pinyon jay population abundance to pinyon cone production and climate in the SW United States"
+title: "**Title**: The relationship between an avian seed disperser and seed availability in the Southwest USA is lagged and dependent on climate and habitat context"
 format:
   docx:
     reference-doc: custom-reference-doc.docx
@@ -7,6 +7,24 @@ editor: visual
 bibliography: references.bib
 csl: journal-of-animal-ecology.csl
 ---
+
+```{r}
+#| echo: false
+#| include: false
+#| warning: false
+#| message: false
+
+
+package.list <- c("here", "tidyverse")
+
+## Installing them if they aren't already on the computer
+new.packages <- package.list[!(package.list %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+## And loading them
+for(i in package.list){library(i, character.only = T)}
+
+```
 
 **Author list**: Ana Miller-ter Kuile^1,2^, Andreas Wion^3^, Kyle Rodman^4^, Kiona Ogle^1^, Jamie S. Sanderlin^2^
 
@@ -20,86 +38,103 @@ csl: journal-of-animal-ecology.csl
 
 4 Ecological Restoration Institute, Northern Arizona University, Flagstaff, Arizona, USA
 
-**Keywords**:
+**Corresponding author:** Ana Miller-ter Kuile, ana.miller-ter-kuile\@nau.edu, Northern Arizona University School of Informatics, Computing, and Cyber Systems, 1295 Knoles Drive, Flagstaff, Arizona 86011
+
+# Conflict of Interest
+
+The authors declare no conflicts of interest.
+
+# Author Contributions
+
+Ana Miller-ter Kuile, Andreas Wion, and Kyle Rodman conceived the ideas; Ana Miller-ter Kuile, Kiona Ogle, and Jamie Sanderlin developed statistical methods; Ana Miller-ter Kuile and Kyle Rodman developed novel data layers and ran statistical models; Ana Miller-ter Kuile led the writing of the manuscript with main support from Andreas Wion and Kyle Rodman. All authors contributed to the drafts and gave final approval for publication. Statement on inclusion: The authors reside within the study area. We shared preliminary results with wildlife biology land managers in the region and intend to provide a 1-page report to managers and others aimed at conserving piñon pine and Pinyon Jay.
 
 # Data availability
+
+Data and code for this paper are available on Zenodo (get up there!)
 
 \newpage
 
 # Abstract
 
+1.  \[Big picture and gaps\]
+2.  \[Methods\]
+3.  \[Results\]
+4.  \[Synthesis\]
+
+# Keywords
+
+masting, monsoon, mutualism, piñon pine, pinyon jay, precipitation, species interactions, temperature
+
 # 1 Introduction
 
-What happens to mutualisms across time and space and ongoing directional change?
+\[big picture: species interactions what cool climate change oh no\]
 
-\[big picture\]
+Species interactions, including predation, herbivory, competition, and mutualisms, shape the functioning of every ecosystem (Tylianakis et al. 2008). These relationships vary across space, time, and environmental context and mutualisms, in particular, often change in magnitude and even direction depending on other factors (Chamberlain et al., Gomez and Jordano 2018). Mutualist relationships are also threatened by environmental change across the globe - the loss of one interaction partner often leads to the co-extinction or functional extinction of the other and the loss of ecological functions maintained by mutualist interactions (Donoso et al., Bascompte et al. Nature paper, Valiente-Banuet et al.).
 
-Mutualist relationships have co-evolved and may be changing with climate change. Additionally, how we may draw understanding about the diversity of responses because these mutualist relationships occur on the background of other broad-scale variation in species' ranges that might mediate (good or bad, helping/hurting) the co-evolution and its response to global change drivers.
+\[zooming in: seed dispersal and masting\]
 
-\[zooming in\]
+Interactions between plants and their seed dispersers ("synzoochrony"; Gomez and Jordano) are an important subset of mutualistic interactions that shape plant and animal populations and communities. In seed dispersal interactions, plants often benefit by being dispersed further from conspecifics and pathogens (Janzen, Connell, more recent) and animals benefit by eating many of the seeds they disperse. However, the mutual benefit of seed dispersal can become a negative interaction for plants, with seed dispersers becoming seed predators when fewer seeds are available (Bogdziewicz et al. 2019). Thus, many plant species that rely on animal seed dispersal exhibit "masting" patterns in which, at the population level, plants produce a large abundance of seeds in some years - animals will still eat many seeds but at least a few seeds will be dispersed to areas favorable for germination (Vander Wall 2002). This masting pattern, especially in regions where plants do not mast every year, means that seeds are an unreliable resource and many animal seed dispersers (especially mammals and birds) are adapted to take advantage of other foods, including the seeds of other plants and other animals (e.g., insects; McKinnon et al. 2017, Simon et al. 2023).
 
-In the SW, there is an important mutualism between pinyon pine and pinyon jays. Jays have been declining over the last several decades. This jay caches pinyon seeds across the landscape to eat or to forget later and help the tree disperse to new areas. Pinyon pines have also seen dramatic shifts in range (expansions, die offs) and reproduction due to climate change and climate variability. \[Some biology about pinyon masting. Some more info on the nature of the co-evolution here too\]
+In temperate conifer forests, many of the most important seed dispersers are birds (Vander Wall 2023, Pessendorfer et al. 2016). For example, in the western USA, piñon pine forests benefit from pinyon jays caching seeds across the landscape (Ligon 1978, Wiggins 2005, Floyd 1982). Piñon pine is a masting species, so jays have adapted to taking advantage of the pulse of resources through the evolution of morphological traits such as esophageal pouches and behavioral traits such as long-range foraging dispersal ("irruption") and flock-based social structures that help birds find seeds (Ligon, Wiggins, Balda??). Pinyon Jays have been declining over the last several decades, but the cause of their decline is a complex and unknown set of drivers which could include habitat change and climate (Boone et al. vanLanen et al.). Pinyon pines have also seen large shifts in demography, range (expansions and die offs), and reproduction due to climate change and climate variability (CITE - also make sure I didn't mispeak above, Shriver et al. 2025, Wion et al. 2025, some things about expansions/dieoff). Because of their mutual relationship, it is likely that the trends of these two species are linked in important ways for the conservation of both pinyon jays and the piñon pine ecosystem.
 
-\[gap\]
+\[gap; temporal lags in mutualisms, context dependence of mutualisms\]
 
-\[What is causing their decline?\] Given the complex co-evolution of the interaction between the pinyon pine and the pinyon jay, it is hard to tease apart the cause and effect of these patterns or how changes in resource availability alter jay abundances. This has not been evaluated to date. It is likely that, given the broad geographical range of both species, that a different combination of forces may be playing out across the species' range, and that these effects may not be concurrent. Pinyon pine cone production occurs \~2 years following favorable climate years. Other food resources for jays in these systems may respond more quickly to the same climate conditions (e.g., insects, junipers, and gambel oak). Thus, it may be that jay populations increase \*prior\* to good cone years for pinyon pines as they are either signaled to "get ready" by the same climate conditions as trees or because their populations get a boost prior to a good cone year from other food resources. The result of jays "predicting" good cone years is that more jays will be in the landscape to distribute seeds to more new places. In addition or conversely, jays could also respond with an immediate or lagged effect to cone production as seed resources give them immediate or lagged benefits to survival, fitness, and reproduction. Teasing these patterns out and how other climatic conditions mediate these effects could be imperative for understanding the link between patterns in resources and birds and help in conservation of the species.
+While the dependence of seed dispersers on seeds may vary across space and time and with the availability of seed, these relationships are likely to have complex temporal patterns (e.g., lags between seed availability and seed disperser population increases; Moore and Dittel) and to be shaped by abiotic and biotic context (Chamberlain et al. , Ellwood et al. 2017, Sawaya et al. 2018). Studying these relationships with time and context require long-term data, which is often lacking in studies across many seed disperser systems (Moore and Dittel). For example, for pinyon jay and piñon seeds, the longest-term studies of these relationships are a series of \~2-4 year behavioral studies (eg. Ligon 1978, Balda papers???, make sure this year thing is true??) and did not consider lagged or context-dependent responses. Across space and time, the context of species interactions is likely to change with changes in biotic and abiotic context, such as the relative frequency at which masting occurs (Pearse et al. 2016), the presence of other competing seed dispersers (Chamberlain et al.), or the combination of other resources and stressors in a given space and time (Sawaya et al. 2018). For pinyon jays, this may mean they rely on piñon seeds to different degrees across space and time based on the reliability of seeds (e.g., how often masting occurs in a location) or when other climate conditions are creating population boons or bottlenecks (McDermott et al.). Understanding the timescales of relationships between seed production in masting species and seed dispersers, generally, is an important first step in understanding the ecology and evolution of the complex species interaction of seed dispersal from both the plant and animal perspective (Moore and Dittel)
 
 \[our study\]
 
-In this study, we aimed to determine the relationship between pinyon pine cones and pinyon jay abundance in the Southwest US and how other site-level factors may mediate this relationship. To leverage the broadest spatial and temporal availability of data on pinyon jay abundance, we used eBIRD (Cite) data from (2010 - 2021) to evaluate how pinyon jay abundance is related to cone production (CITE andreas), pinyon pine basal area, climate (maximum temperature, precipitation, and monsoonality), and the interactions between cone production and these other variables as broad-scale mediators of the relationship between cone availability and alternative food sources in a given site and a given year (e.g., seeds, acorns, insects). We allowed cone availability to have immediate, lead (jays "predict" cone years), and lag (jays "respond to" cone years) effects on jay abundance using a stochastic antecedent modeling approach (CITE). Relatedly, we allowed maximum temperature and precipitation to have lagged and immediate effects on jay abundance. Specifically, in this study, we wanted to evaluate 1) how strong is the relationship between pinyon jay abundance and cone availability? and 2) how is this relationship mediated by habitat and climate variables that vary by site and/or year? This study provides a valuable way of determining the strength of co-evolution between pinyon pines and pinyon jays and valuable insights into the broad-scale mechanisms by which pines and jays may be declining in the Southwest US with key insights for conservation of both species.
+In this study, we aimed to determine the temporal dynamics and context dependence of the relationship between piñon pine and its seed disperser, the pinyon jay, in the Southwest USA. To leverage the broadest spatial and temporal availability of data on pinyon jay abundance, we used eBIRD (Cite eBIRD) data (13 years; 2010 - 2022) to evaluate how pinyon jay abundance is related to piñon pine seed availability (Wion et al. 2025), piñon pine basal area, climate (maximum temperature, precipitation, and monsoonality), and the interactions between piñon pine seed availability and these other variables as broad-scale mediators of the dependence on seed availability in a given site and a given year. We allowed seed availability to have lead (jays "predict" seed years), and lag (jays "respond to" seed years) effects on jay abundance using a stochastic antecedent modeling approach (Ogle et al. 2015). Relatedly, we allowed maximum temperature and precipitation to have lagged and immediate effects on jay abundance. Specifically, in this study, we evaluate 1) what is the magnitude and time scales of the relationship between birds and piñon pine seed availability? and 2) how is this relationship mediated by habitat and climate variables that vary by site and/or year? Understanding these patterns is not only crucial for the conservation of pinyon jays, but also builds a general framework for evaluating the context dependence of seed dispersal interactions and how ongoing habitat and climate changes may shape these interactions in the future (e.g., temporal mismatches in birds and resources; Belitz et al. 2025).
 
-# 2 Methods
+# 2 Materials and Methods
 
 ### 2.1 Pinyon jay biology and study site
 
-Pinyon jays are a widespread species that occurs across the western US (California, Nevada, Utah, Arizona, Colorado, New Mexico). Pinyon jays are generalist seed- and insect-eaters and are part of an important mutualistic relationship with pinyon pines (CITE Balda 2020, Ligon 1978). Birds cache large amounts of pinyon pine seeds when they are available and by burying seeds they increase the potential for seedlings to germinate (CITE: Floyd 1982). Pinyon jays often flock and nest in large numbers and are highly social \[maybe examples\] (CITE some behavior studies). Pinyon jays are in decline across much of their range for a variety of potential reasons, including changes in habitat quality and food availability (CITE Boone, VanLannen). Concurrently, pinyon pines have seen shifts in their range and reproduction \[Andreas - provide some details here about decline/change for pinyon pine\].
+Pinyon jays are a widespread species that occurs across the western US (California, Nevada, Utah, Arizona, Colorado, New Mexico). Pinyon jays are generalist seed- and insect-eaters and are part of an important mutualistic relationship with piñon pines (CITE Balda 2020, Ligon 1978). Birds cache large amounts of piñon pine seeds when they are available and by burying seeds they increase the potential for seedlings to germinate (CITE: Floyd 1982). Pinyon jays often flock and nest in large numbers and are highly social (Bednekoff and Balda 1996, Stotz and Balda 1995, Marzluff and Balda 1988, Marzluff 1988). Pinyon jays are in decline across much of their range for a variety of potential reasons, including changes in habitat quality and food availability (CITE Boone, VanLannen). Piñon pine is a masting species \[Andreas can you fill in some cool ecology mirroring above for piñon?\] Concurrently, piñon pines have seen shifts in their range, age and size structure, and reproduction \[Andreas - provide some details here about decline/change for pinyon pine, matching above for the bird side\].
 
-Although pinyon jays occur across the western US, in this study, we focused on the intermountain and southwest regions of the US because of available information on cone production for single-needle pinyon (e.g., data from Utah, Colorado, New Mexico, and Arizona; CITE ANDREAS). \[Any other justifications for including only data from this region WRT climate/habitat? Please add tree guys\].
+Although pinyon jays occur across the western US, in this study, we focused on the intermountain and southwest regions of the US because of available information on cone production (as a proxy for seed production) for single-needle pinyon (e.g., data from Utah, Colorado, New Mexico, and Arizona; Wion et al. 2025). \[Any other justifications for including only data from this region WRT climate/habitat? Please add tree guys\]. Pinyon jays occur in piñon ecosystems of other subspecies of piñon pine (CITE), but no masting information is available at a broad scale for these species (Andreas - TRUE?)
 
 ### 2.2 Covariate data
 
-Because we are interested in relationships between pinyon jays and pinyon pine cone production, we built a model that included cone production (CITE Wion et al. 2025) and other mediating factors. These mediating factors included site-level yearly climate and pinyon basal area data as well as site level average monsoonal moisture (precipitation occurring in July and August). We compiled all covariates at a 4x4 km raster grid scale since this is a scale at which these data are available (e.g., PRISM). Cone production data came from published models estimating yearly cone production across the region \[Andreas, please fill in here\]. We derived yearly basal area by \[Kyle please fill in here\]. In addition to these covariates, we also gathered gridded climate data relevant to bird biology (physiology and alternative food availability; CITE stuff here) from PRISM, including monthly maximum temperature, monthly cumulative precipitation, and the percent of the 30-year monthly normal precipitation falling in the months of July and August to quantify the proportion of moisture experienced in a grid during the monsoon season (CITE something about monsoon).
+Because we were interested in relationships between pinyon jays and piñon pine seed production, we built a model that included cone production (as a proxy for piñon seed production; Wion et al. 2025) and other mediating factors. We used the cone production dataset both as a direct measure of piñon seed availability and a proxy for the availability of other seeds eaten by Pinyon Jay (e.g., acorns, juniper berries) that respond to the same climate signals as piñon pine, but with different temporal lags (1-year lag for acorns and juniper berries, 2-year lag for piñon pine; Parmenter paper). The covariates we included as mediating factors included site-level yearly climate and pinyon basal area data as well as site level average monsoonal moisture (precipitation occurring in July-September). We compiled all covariates at a 4x4 km raster grid scale since this is a scale at which these data are available (e.g., PRISM). Cone production data came from published models estimating yearly cone production across the region \[Andreas, please fill in here\]. \[Andreas, can you provide citations linking cone to seed availability?\] We derived yearly basal area by \[Kyle please fill in here\]. In addition to these covariates, we also gathered gridded climate data relevant to bird biology (physiology and relative food availability; Ligon 1978, Stotz and Balda, McDermott et al., Skagen et al.) from PRISM, including monthly maximum temperature, monthly cumulative precipitation, and the percent of the 30-year monthly normal precipitation falling in the months of July-September to quantify the proportion of moisture experienced in a grid during the monsoon season (Wion et al. 2025 OTHER "monsoon" citations?).
 
 ### 2.3 eBIRD filtering and subsampling
 
-To estimate pinyon jay abundance in relation to recent (2010-2021) cone abundance, we used data from eBIRD \[cite\] data from the four states of interest (Arizona, Colorado, New Mexico, and Utah) and further filtered pinyon jay observations to areas with pinyon pine vegetation cover (CITE where Kyle got his pinyon pine layers from). We chose to use eBIRD data because it has broad spatial and temporal coverage within the region of interest and fine enough spatial scale to compare bird abundance at a scale similar to that of our covariates (4 x 4 km grid cells). This scale is too fine for many broad-scale standardized monitoring protocols, such as Breeding Bird Survey (25-mile transects; CITE).
+To estimate pinyon jay abundance in relation to recent (2010-2022) seed abundance, we used data from eBIRD \[cite\] data from the four states of interest (Arizona, Colorado, New Mexico, and Utah) and further filtered pinyon jay observations to areas with pinyon pine vegetation cover (CITE where Kyle got his pinyon pine layers from). We chose to use eBIRD data because it has broad spatial and temporal coverage within the region of interest and fine enough spatial scale to compare bird abundance at a scale similar to that of our covariates (4 x 4 km grid cells). This scale is too fine for many long-term, broad-scale standardized monitoring protocols, such as Breeding Bird Survey (25-mile transects; CITE BBS).
 
-eBIRD is community science data, meaning that non-scientist birders collect bird observation data and contribute to the eBIRD database. We followed filtering methods from the eBIRD database curators (Cornell Lab CITE/LINK HERE). Specifically, we selected data that represented only complete checklists (e.g., observers recorded all birds of all species observed, not just individuals of species of interest). We selected checklists from the nesting season (late February to early May CITE) and included only observations of "stationary" and "traveling" protocols. We considered only the nesting season because this is a time of year in which the mechanisms for local bird abundance are easy to evaluate because of communal nesting behavior and because nesting often occurs near areas where birds have cached seeds from the previous year (CITE). We only included checklists that were collected in under five hours, 0-5 km in distance, and with ten or fewer observers.
+eBIRD is community science data, meaning that non-scientist birders collect bird observation data and contribute to the eBIRD database. We followed filtering methods from the eBIRD database curators (Strimas-Mackey et al. 2023). Specifically, we selected data that represented only complete checklists (e.g., observers recorded all birds of all species observed, not just individuals of species of interest). We selected checklists from the nesting season (late February to early May; CITE Wiggens 2005) and included only observations of "stationary" and "traveling" protocols. We considered only the nesting season because this is a time of year in which the mechanisms for local bird abundance are easy to evaluate because of communal nesting behavior and because nesting often occurs near areas where birds have cached seeds from the previous year (Ligon 1978, Wiggens 2005). We only included checklists that were collected in under five hours, 0-5 km in distance, and with ten or fewer observers.
 
-eBIRD data is unstructured data without a regular sampling design, so we performed spatial and temporal sub-sampling [@robinson2018]. To do this, we divided the landscape into 4x4 km grid cells to match the spatial scale of the covariates. We spatially sub-sampled eBIRD observations to include a set of checklists in each grid cell that represented relatively equal sampling effort across time and space. Given that we observed the fewest number of checklists per year in 2010 (average 4.2 checklists per grid cell), we subsampled to this level (4 checklists per cell). After filtering to this level, we still had fewer checklists in early years due to fewer cells having checklists in them. Thus, we further reduced temporal bias by subsampling checklists again so that we had relatively equal sample sizes across years based on the year with the fewest checklists (n = 1715 checklists in 2010). We performed this temporal sampling randomly (e.g., not by 4x4 km grid cell) We also removed all checklists within 10 km of the exterior edges of the four states for which we had data (Arizona, Colorado, New Mexico, and Utah) since we had masked some other covariate layers to these states and observations near edges may have misrepresented values for pinyon basal area and cone production. As a result, we had, on average \_\_ checklists per grid cell in a specific year.
+eBIRD data is unstructured data without a regular sampling design, so we performed spatial and temporal sub-sampling (Robinson et al. 2018). To do this, we divided the landscape into 4x4 km grid cells to match the spatial scale of the covariates. We spatially sub-sampled eBIRD observations to include a set of checklists in each grid cell that represented relatively equal sampling effort across time and space. Given that we observed the fewest number of checklists per year in 2010 (average 4.2 checklists per grid cell), we subsampled to this level (4 checklists per cell). After filtering to this level, we still had fewer checklists in early years due to fewer cells having checklists in them. Thus, we further reduced temporal bias by subsampling checklists again so that we had relatively equal sample sizes across years based on the year with the fewest checklists (n = 1715 checklists in 2010). We performed this temporal sampling randomly (e.g., not by 4x4 km grid cell) We also removed all checklists within 10 km of the exterior edges of the four states for which we had data (Arizona, Colorado, New Mexico, and Utah) since we had masked some other covariate layers to these states and observations near edges may have misrepresented values for pinyon basal area and cone production. Of 833,834 checklists for the region in the nesting seasons between 2010-2022, we ran our model on 22,295 (average: 1.4 (SE: 0.01) checklists per grid cell in a specific year).
 
 ### 2.5 Modeling relationships between cones and birds with eBIRD
 
-To explore relationships between pinyon jay abundance and environmental covariates, we used a two-part model with an observation process for eBIRD and a biological process model that estimates latent "abundance" values (CITE). The observation process models include covariates that describe variation in detection probabilities (e.g., survey conditions). The biological process includes a likelihood that describes the biological drivers of latent abundance. These biological covariates include a stochastic antecedent modeling structure that allows cone abundance to have both lead and lagged effects (e.g., bird abundance can respond before or after cone maturation) and other yearly climate variables to have lagged effects [@ogle2015].
+To explore relationships between pinyon jay abundance and environmental covariates, we used a two-part model with an observation process for eBIRD and a biological process model that estimates latent "abundance" values (CITE N-mixture models; Royle 2004). The observation process models include covariates that describe variation in detection probabilities (e.g., survey conditions). The biological process includes a likelihood that describes the biological drivers of latent abundance. These biological covariates include a stochastic antecedent modeling structure that allows seed abundance to have both lead and lagged effects (e.g., bird abundance can respond before or after cone and seed maturation) and other yearly climate variables to have lagged effects (Ogle et al. 2015).
 
 ### 2.4.1 Observation process for eBIRD
 
-<!--# Fix this section for appropriate calculation and indexing of N! waiting on models to know what this should be... -->
-
-In our two-part model, observed count data from eBIRD checklists are used to estimate a "true" latent abundance, $N$, which is dependent on space and time (more in section NAME). eBIRD data are provided in an observation process models that incorporates covariates that impact the detection of birds. Observed count data are binomially distributed based on a detection probability for a checklist in a year and the "true" latent abundance for the space and time in which those checklists occur, $N$, being the total possible "trials".
+In our model, observed count data from eBIRD checklists are used to estimate a "true" latent abundance, $N$, which is dependent on space and time (more in section NAME). eBIRD data are provided in an observation process models that incorporates covariates that impact the detection of birds. Observed count data are binomially distributed based on a detection probability for a checklist in a year and the "true" latent abundance for the space and time in which those checklists occur, $N$, being the total possible "trials".
 
 eBIRD checklists are recorded with a geographical point location and also often include observers walking some distance (\< 5km in our dataset after filtering). Thus, there is spatial uncertainty arising from two sources: 1) uncertainty in the location in which the survey was conducted (e.g., was the location recorded at the beginning, middle, or end of a survey and at what level of precision) and 2) uncertainty in the location along a survey at which pinyon jays were observed (e.g., were birds observed at the beginning, middle, or end of a walking survey). To account for this spatial uncertainty, we created buffers around each eBIRD checklist based on the sampling distance for that checklist (1/2 of distance traveled for "traveling" checklists; 0.5 km for "stationary" checklists). Then, we created a merged polygon ("blob") of all the checklists within a 4x4 grid cell in a given year by merging the buffers of all checklists within a grid cell. Thus, the "blob" and not the underlying 4x4 km grid cell, is the spatial unit at which we estimated abundance, *N*.
 
-eBIRD observed count data for checklist, $c$, in blob, $i$, and year, $y$, are binomially distributed based on a detection probability, *p*, and the latent true abundance of birds in the blob in which the checklist is located:
+eBIRD observed count data for checklist, $c$, in blob, $i$, and year, $y$, are binomially distributed based on a detection probability, *p*, and the latent true abundance of birds in the checklist:
 
 $$
-eBIRDCount_{c,i,y} \sim Binomial(N_{i,y}, p_{c,i,y})
+eBIRDCount_{c,i,y} \sim Binomial(N_{c,i,y}, p_{c,i,y})
 $$
 
-The detection probability for eBIRD data includes a regression with the detection covariates of survey type (stationary or traveling), start time, duration of survey, distance traveled, and the number of observers for each checklist. See above (\_\_\_) for how we filtered these variables initially based on best practices so that checklists represented similar effort. These covariates all depended on checklist, blob, and year. Thus, the detection component of the model has a likelihood of the form:
+The detection probability for eBIRD data includes a regression with the detection covariates of start time, duration of survey, speed, and the number of observers for each checklist. See above (\_\_\_) for how we filtered these variables initially based on best practices so that checklists represented similar effort. These covariates all depended on checklist, blob, and year. Thus, the detection component of the model has a likelihood of the form:
 
 $$
 logit(p_{c,i,y}) = \gamma_0 + \sum_{j=1}^{5}\gamma_j\cdot X_{j_{c,i,y}}
 $$
 
-where $\gamma_0$ is the underlying detection probability (intercept) and each $\gamma_j$ is the slope of the relationship between detection probability (on the logit scale) and a set of *J* covariates (j = 1, 2, ... 5).
+where $\gamma_0$ is the underlying detection probability (intercept) and each $\gamma_j$ is the slope of the relationship between detection probability (on the logit scale) and a set of *J* covariates (j = 1, 2, ... 4).
 
 ### 2.4.2 Biological process of latent pinyon jay abundance with covariates with lead and lagged effects
 
-Latent true abundance of jays in a blob in a year, $N_{i,y}$ is Poisson distributed around an expected rate parameter, $\lambda_{i,y}$, multiplied by the area of the blob, $A_{i}$ as follows:
+Latent true abundance of jays in a checklist in a year, $N_{c,i,y}$ is Poisson distributed around an expected rate parameter, $\lambda_{i,y}$, for the blob in which the checklist is located multiplied by the area of the checklist, $A_{c}$ as follows:
 
 $$
-N_{i,y} \sim Poisson(\lambda_{i,y}\times A_i)
+N_{c,i,y} \sim Poisson(\lambda_{i,y}\times A_c)
 $$
 
 Furthermore, $\lambda_{i,y}$ is dependent on a regression of environmental covariates:
@@ -108,21 +143,23 @@ $$
 log(\lambda_{i,y}) = \alpha_0 + \sum_{j=1}^J \alpha_j \cdot X_{j_{i,y}} + \sum_{k=1}^K \alpha_k \cdot Z_{k_{i,y}} + \sum_{m=1}^4\sum_{n=m+1}^4 \alpha_{mn} \cdot Z_{m_{i,y}} \cdot X/Z_{n_{i,y}}
 $$
 
-In this formulation, covariates $X_{j_{i,y}}$ include only concurrent effects. These variables in the model include monsoonality and pinyon pine basal area (yearly). Conversely, values for each $Z_{k_{i,y}}$ comprise a stochastic antecedent structure [@ogle2015] dependent on the covariate, where each $Z_{k_{i,y}}$ is the weighted average value of a set of seasonal or yearly values for that covariate across a defined set of seasons or years. The weights for each covariate across all seasons or years, *l*, $w_{k,l}$, have a Dirichlet prior and sum to 1. The weight, or importance weight, for each season or year indicates how important that value is to the overall effect (larger values of the weight mean more importance of that season or year to that covariate effect). The covariates for which antecedent weights are calculated are cone production, maximum temperature, and precipitation. Cone production is considered on a yearly scale (cones only produce up to one time in a year) and include both lead and lagged effects (e.g., jays "predict" cone years or "respond" to good cone years), and include three prior years, the current year, and three years after the current year. Both temperature and precipitation are at a seasonal scale and only consider lagged effects. The seasons are based on important seasonal biology for pinyon jays, including: breeding (February-April), feeding dependent young (May-June), summer (July), fall and winter foraging, potentially with irruption (August - January) [@wigginsd.a.2005]. For seasonal covariates, we considered 12 seasons into the past. We also considered interactions between cone production and all other covariates (pinyon basal area, monsoonality, maximum temperature, and precipitation) to determine how the relationship between cones and birds is mediated by other covariates related to cone reliability and alternative food resources (e.g., juniper berries, acorns, insects).
+In this formulation, covariates $X_{j_{i,y}}$ include only concurrent effects. These variables in the model include monsoonality and pinyon pine basal area (yearly). Conversely, values for each $Z_{k_{i,y}}$ comprise a stochastic antecedent structure (Ogle et al. 2015) dependent on the covariate, where each $Z_{k_{i,y}}$ is the weighted average value of a set of seasonal or yearly values for that covariate across a defined set of seasons or years. The weights for each covariate across all seasons or years, *l*, $w_{k,l}$, have a Dirichlet prior and sum to 1. The weight, or importance weight, for each season or year indicates how important that value is to the overall effect (larger values of the weight mean more importance of that season or year to that covariate effect). The covariates for which we calculated antecedent weights are seed (cone) production, maximum temperature, and precipitation. Seed (cone) production is considered on a yearly scale (cones are only produced up to one time in a year) and include both lead and lagged effects (e.g., jays "predict" seed years or "respond" to good seed years), and include one prior year and the current year (both "predictive" time periods), and three years after the current year ("lagged" time periods). Lead ("predictive") years represent years in which "quicker" resources are available (e.g., acorns, juniper berries) and/or birds observe cones developing on trees (Parmenter, "Predict" paper for jays). Lag years represent both the year in which birds cached seeds and years following in which individuals that hatched during the caching year nesting season enter the breeding population (\~1.5-2 years CITE; Figure 1). Both temperature and precipitation are at a seasonal scale and only consider lagged effects. The seasons are based on important seasonal biology for pinyon jays, including: breeding (February-April), feeding dependent young (May-June), summer (July), fall and winter foraging, potentially with irruption (August - January) (Wiggins 2005). For seasonal covariates, we considered 12 seasons into the past. We also considered interactions between seed (cone) abundance and all other covariates (pinyon basal area, monsoonality, maximum temperature, and precipitation) to determine how the relationship between cones and birds is mediated by other covariates related to piñon seed reliability and alternative food resources (e.g., juniper berries, acorns, insects).
 
-Because blobs sometimes covered more than one 4x4 km grid cell (average value and range here\_\_\_), we determined the percent of a blob covering each of these grid cells and then calculated weighted average covariate values based on the covariate values of all overlapped cells times the percent of the blob overlapping that cell. On average, blobs covered \_\_ 4x 4 km grid cells, with a minimum of one grid and a maximum of \_\_ for a single blob.
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| out-width: 100%
+#| fig-cap: "Figure 1: A timeline of pinyon jay responses (top) and the progression of seed and cone development (bottom) following a favorable climate year for cone development. We outline three hypotheses driving the temporal relationships between pinyon jay and seed availability, including 1: jays 'predict' seed availability through utilization of other foods (e.g., acorns, juniper berries) or because they see cones developing in an area; 2: jays 'respond' to seed availability in the nesting season after they cache seeds and 3: jays 'respond' to seed availability with a delay as the young from the caching year enter the breeding population 1.5-2 years later."
 
-| Covariate or interaction           | Description                                                                                                                   | Question                                                                                                                          |
-|------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
-| Pinyon pine cone abundance         | Abundance of cones from a predictive model (CITE)                                                                             | How is pinyon jay abundance linked to pinyon cone availability (can have lead, immediate, and lagged effects)?                    |
-| Maximum temperature                | A proxy for physiological limits and/or insect resource availability (can have lagged effects)                                | How is pinyon jay abundance linked to physiological limits and/or insect availability?                                            |
-| Cumulative precipitation           | A proxy for insect resource availability (can have lagged effects)                                                            | How is pinyon jay abundance linked to insect availability?                                                                        |
-| Monsoonality                       | The degree to which the site depends on monsoon moisture (percent of total annual precipitation occurring in July and August) | How is pinyon jay abundance shaped by broad-scale climatic mediators of cone reliability?                                         |
-| Pinyon basal area                  | The basal area of pinyon pine                                                                                                 | How is pinyon jay abundance shaped by local habitat preferences for food trees?                                                   |
-| Cone abundance x Temperature       |                                                                                                                               | Is the importance of cone abundance for jays mediated by temperature?                                                             |
-| Cone abundance x Precipiation      |                                                                                                                               | Is the importance of cone abundance for jays mediated by precipitation (e.g., more/less availability of insect prey)              |
-| Cone abundance x Monsoonality      |                                                                                                                               | Is the importance of cone abundance for jays different across a range of monsoonal conditions that alter cone reliability?        |
-| Cone abundance x Pinyon basal area |                                                                                                                               | Is the importance of cone abundance for jays different depending on the local habitat configuration and abundance of pinyon pine? |
+
+knitr::include_graphics(here('pictures',
+                             'final',
+                             'time_conceptual.jpg'))
+
+```
+
+Because blobs sometimes covered more than one 4x4 km grid cell, we determined the percent of a blob covering each grid cell and then calculated weighted average covariate values based on the covariate values of all overlapped cells times the percent of the blob overlapping that cell. On average, blobs covered 2.13 \[SE = 0.01\] 4x 4 km grid cells, with a minimum of one grid and a maximum of nine for a single blob.
 
 ### 2.5 Model implementation, convergence, and diagnostics
 
@@ -132,28 +169,152 @@ We initially ran models to generate 4000 MCMC samples with which to determine ho
 
 ### 2.6 Out of sample model validation
 
-To evaluate model fit, we performed the same set of steps for spatially and temporally stratifying available checklists from eBIRD (section \_\_ above), ensuring that we selected checklists that were not used in model fitting. We used model results (median values for covariate effects and intercepts) to calculate estimates for this dataset and used RMSE to evaluate model fit.
-
-<!--# From Stack Overflow: "RMSE has the same unit as the dependent variable (DV). It means that there is no absolute good or bad threshold, however you can define it based on your DV. For a datum which ranges from 0 to 1000, an RMSE of 0.7 is small, but if the range goes from 0 to 1, it is not that small anymore. However, although the smaller the RMSE, the better, you can make theoretical claims on levels of the RMSE by knowing what is expected from your DV in your field of research. Keep in mind that you can always normalize the RMSE." The RMSE for your training and your test sets should be very similar if you have built a good model. If the RMSE for the test set is much higher than that of the training set, it is likely that you've badly over fit the data, i.e. you've created a model that tests well in sample, but has little predictive value when tested out of sample. -->
+To evaluate model fit, we performed the same set of steps for spatially and temporally stratifying available checklists from eBIRD (section \_\_ above), ensuring that we selected checklists that were not used in model fitting. We had 20,380 checklists that represented "out of sample" data. We predicted out of sample model fit using \~1000 posterior samples for covariate effects and intercepts from the test dataset and model. We used RMSE to compare the test and out of sample datasets for model fit.
 
 # Results
 
+\[How often are jays observed in eBIRD data? How abundant are they in a given checklist?\]
+
+Of the total number of available eBIRD checklists in the years of interest (2010-2022), Pinyon Jays were observed in 5,658 of them (0.7%). In our in-sample dataset (n = 22,295 checklists), Pinyon Jays were observed in 600 (2.7%). The maximum number of birds observed in one survey in this dataset was 350 (mean: 0.42; SE: 0.04). All parameters in the model converged with an $\hat{R} \leq$ 1.1 (SI Figure 1).
+
+\[What is the magnitude and time scales of the relationship between birds and piñon pine seed availability?\]
+
+Pinyon jay abundance was positively correlated with cone availability ($\hat{\beta}$ = 0.95 \[0.92, 0.98\]). The importance weights of the years considered (two years before cones; three years after cones) indicate the greatest weight the year after cones ($\hat{w}$ = 0.64 \[0.60, 0.67\]) and some weight to two and three years after cones ($\hat{w}$ = 0.13 \[0.07, 0.18\] and 0.21 \[0.17, 0.25\], for two and three years after cones, respectively), though negligible weight for the years before cones ($\hat{w}$ = 0.01 \[0, 0.03\] and 0.01 \[0, 0.06\] for two and one years before cones, respectively).
+
+```{r}
+#| echo: false
+#| out-width: 100%
+#| message: false
+#| warning: false
+#| fig-cap: "Figure 2: Covariate effects for all main covariates and their interactions with cones. All covariates were scaled and so their relative magnitudes of effect can be compared. All values represent posterior median and 95% Bayesian Credible Intervals and any covariate ranges that cross the dashed line at zero have no clear effect on pinyon jay abundance."
+
+
+knitr::include_graphics(here('pictures',
+                             'final',
+                             'covariate_effects.jpg'))
+#figure 2
+```
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| out-width: 100%
+#| fig-cap: "Figure 3: Importance weights for the years considered for the relationship between pinyon jays and pinyon cone (seed) availability. Colored boxes indicate the three ecological hypotheses about the time period(s) of the relationship between jays and cones. The dashed line indicates the distinction between the years before cones (left) and years after cones (right)."
+
+
+knitr::include_graphics(here('pictures',
+                             'final',
+                             'cone_weights.jpg'))
+#figure 3
+```
+
+\[How is this relationship mediated by habitat and climate variables that vary by site and/or year?\]
+
+All other covariates and interactions in the model had non-zero effects on Pinyon Jay abundance. Those main effects that were negatively related to Pinyon Jay abundance were: precipitation ($\hat{\beta}$ = -2.62 \[-2.72, -2.53\]) and maximum temperature ($\hat{\beta}$ = -0.92 \[-0.96, -0.88\]). Main effects that were positively related to Pinyon Jay abundance were: Monsoonality ($\hat{\beta}$ = 0.51 \[0.46, 0.56\]) and pinyon basal area ($\hat{\beta}$ = 0.27 \[0.25, 0.29\]). Positive interactions included the interactions between cones and: precipitation ($\hat{\beta}$ = 0.60 \[0.56, 0.66\]) and maximum temperature ($\hat{\beta}$ = 0.37 \[0.33, 0.40\]). Negative interactions included the interactions between cones and: pinyon basal area ($\hat{\beta}$ = -0.12 \[-0.14, -0.11\]) and monsoonality ($\hat{\beta}$ = -0.21 \[-0.25, -0.19\]). All covariates were scaled in the model, so the relative magnitudes of these effects can be compared.
+
+Important seasons for precipitation based on importance weights from the SAM model included, in order of importance weights: two years ago during fledging, three years ago during breeding, two years ago during breeding, and one year ago during fledging ($\hat{w}$ = 0.37 \[0.35, 0.39\]; 0.20 \[0.18, 0.21\]; 0.16 \[0.14, 0.18\]; 0.12 \[0.10, 0.14\], for each of those seasons, respectively). All other weights were not important (SI Figure 2). Important seasons for maximum temperature based on the importance weights from the SAM model included: the breeding and fledging seasons two years ago ($\hat{w}$ = 0.60 \[0.50, 0.69\] and 0.34 \[0.25, 0.44\], for the breeding and fledging seasons, respectively). All other weights were not important (SI Figure 2).
+
+```{r}
+#| echo: false
+#| out-width: 100%
+#| message: false
+#| warning: false
+#| fig-cap: "Figure 4: Interaction plots for the four covariates with significant interactive effects with cone (seed) availability, including: a) precipitation, b) maximum temperature, c) monsoonality, and d) pinyon basal area. Darker pink/red color corresponds to a greater number of birds in that combination of covariates. Black circles represent the distribution of the observed data. The predicted number of birds, lambda, is presented on the log scale to better highlight differences."
+
+
+knitr::include_graphics(here('pictures',
+            'final',
+            'interaction_plots.jpg'))
+#figure 4
+```
+
+\[Model fit and oos evaluation\]
+
+As a goodness-of-fit metric, the relationship between our observed data and replicated data produced by the model had a mean $R^2$ = 0.74 (SE: 0.0003). In general, the model under-estimates higher counts (SI Figure 3). The RMSE for our in-sample ("test") dataset had an average value of 5.10 (SE: 0.0002) and the out-of-sample dataset had a value of 3.25 (SE: 0.001; SI Figure 4). Thus, our model predicts slightly better to our in-sample ("test") data than out-of-sample data, but neither are large on the scale of the count data (counts per checklist ranged from 0 - 350), suggesting good model fit and predictive capacity. Because of the spatial nature of the data in this project, we also verified that there was no spatial autocorrelation in residuals (SI Figure 5).
+
 # Discussion
+
+\[Main results\]
+
+\[Main cone effects\]
+
+\[Effects mediating cones\]
+
+\[Next steps\]
+
+\[Conclusion\]
 
 # Tables and Figures
 
 # References
 
+# SI Figures
+
 ```{r}
 #| echo: false
-#| eval: false
-#| include: false
+#| out-width: 100%
+#| message: false
+#| warning: false
+#| fig-cap: "SI Figure 1: Convergence statistics for biological (a and a0) and detection (c and c0) covariate effects, deviance, and the cone and climate weights (wA, wB, and wC). All covariate effects and parameters converged with Rhat values <= 1.1 (dashed line)."
 
-#found info on adding reference styles here:
-#https://quarto.org/docs/authoring/citations.html
-#and list of csls here:
-#https://www.zotero.org/styles
+
+knitr::include_graphics(here('pictures',
+            'final',
+            'rhat.jpg'))
 
 ```
 
-# 
+```{r}
+#| echo: false
+#| out-width: 100%
+#| message: false
+#| warning: false
+#| fig-cap: "SI Figure 2: Seasonal weights for climate (precipitation and maximum temperature) in the model. The dashed line indicates the 'null' weight in which all time periods would have equal weights. Any weights that extend clearly above this line have significant importance to the climate variable. Seasons are based on bird biology and include Br: breeding (February - May), Fl: fledging (May - June), Su: summer localized foraging (July), SW: summer and winter dispersed foraging ('irruption'; August - January)."
+
+
+knitr::include_graphics(here('pictures',
+                             'final',
+                             'climate_weight_plots.jpg'))
+```
+
+```{r}
+#| echo: false
+#| message: false
+#| out-width: 100%
+#| warning: false
+#| fig-cap: "SI Figure 3: As an evaluation of goodness-of-fit, we examined a) the relationship between observed pinyon jay counts and counts predicted from the model (median and 95% Bayesian Credible Interval) and b) the R2 of this relationship from ~1000 posterior samples. In a), the dashed line represents the 1:1 line where predictions exactly match. In b) the dashed vertical line represents the mean R2."
+
+
+knitr::include_graphics(here('pictures',
+            'final',
+            'y_yrep_linearr2.jpg'))
+
+
+```
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| out-width: 100%
+#| fig-cap: "SI Figure 4: RMSE for the test and out of sample (oos) datasets. Values for RMSE are on the scale of the data (counts of pinyon jays). They are relatively small compared to the range of possible counts in a checklist (0 - 350 birds in our test dataset)."
+
+
+knitr::include_graphics(here('pictures',
+            'final',
+            'RMSE.jpg'))
+```
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| out-width: 75%
+#| fig-cap: "SI Figure 5: Evaluation of spatial autocorrelation (Pearson correlation on the y-axis) for residuals in each year (1 = 2010; 13 = 2022). There was no consistent evidence of spatial autocorrelation of residuals."
+
+
+knitr::include_graphics(here('pictures',
+            'final',
+            'spatial_autocorrelation_yrly.jpg'))
+```
