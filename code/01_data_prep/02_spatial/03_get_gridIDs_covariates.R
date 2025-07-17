@@ -24,7 +24,7 @@ for(i in package.list){library(i, character.only = T)}
 # Load cone dataset -------------------------------------------------------
 
 cones <- terra::rast(here("data",
-                          "spatial_data", 
+                          "02_spatial_data", 
                           "masting_data",
                           "ConePredictions_final.tif"))
 
@@ -35,7 +35,7 @@ cone_df <- terra::as.data.frame(cones,
 # Load ppt and temp datasets ----------------------------------------------
 
 pptrastlist <- list.files(path = here('data',
-                                      'spatial_data',
+                                      '02_spatial_data',
                                       'prism_monthly_ppt'), pattern='.bil$', 
                           recursive = T, all.files= T, full.names= T)
 

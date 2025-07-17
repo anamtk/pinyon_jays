@@ -7,7 +7,7 @@
 # Load packages -----------------------------------------------------------
 
 package.list <- c('tidyverse',
-                  'here', 'patchwork', 'coda') 
+                  'here', 'patchwork', 'coda', "FNN") 
 
 ## Installing them if they aren't already on the computer
 new.packages <- package.list[!(package.list %in% installed.packages()[,"Package"])]
@@ -200,7 +200,26 @@ corr_beta_sum <- corr_beta_df %>%
          lci = quantile(value_corrected, probs = c(0.025),
                         type = 8),
          uci = quantile(value_corrected, probs = c(0.975),
-                        type = 8))
+                        type = 8)) %>%
+  mutate(type = case_when(covariate %in% c("Cones", "Monsoon",
+                                           "PPT", "PinyonBA",
+                                           "Tmax") ~ "Main effects",
+                          covariate %in% c("ConexBA",
+                                           "ConexMonsoon",
+                                           "ConexPPT",
+                                           "ConexTmax") ~ "Interactions",
+                          TRUE ~ NA_character_)) %>%
+  mutate(covariate = case_when(covariate == "Monsoon" ~ "Monsoonality \n (Monsoon)",
+                               covariate == "Cones" ~ "Pinyon pine seed \n availability (Cones)",
+                               covariate == "PinyonBA" ~ "Pinyon basal area \n (PBA)",
+                               covariate == "PPT" ~ "Precipitation \n (PPT)",
+                               covariate == "Tmax" ~ "Maximum temperature \n (Tmax)",
+                               covariate == "ConexBA" ~ "Cones by PBA",
+                               covariate == "ConexMonsoon" ~ "Cones by Monsoon",
+                               covariate == "ConexPPT" ~ "Cones by PPT",
+                               covariate == "ConexTmax" ~ "Cones by Tmax",
+                               TRUE ~ covariate))
+  
 
 
 # Figure 2: covariate effects ---------------------------------------------
@@ -208,25 +227,19 @@ corr_beta_sum <- corr_beta_df %>%
 
 (covariate_betas <- corr_beta_sum %>%
   filter(covariate != 'a0') %>%
-   mutate(covariate = factor(covariate, 
-                             levels = c("ConexBA", "ConexMonsoon", 
-                                        "ConexTmax", "ConexPPT",
-                                        "PinyonBA", "Monsoon", 
-                                        "Tmax", "PPT", "Cones"))) %>%
+   mutate(type = factor(type, levels = c("Main effects", "Interactions"))) %>%
   ggplot() +
   geom_vline(xintercept = 0, linetype = 2) +
   geom_pointrange(aes(x = median, 
-                      y = covariate,
+                      y = reorder(covariate, median),
                       xmin = lci,
                       xmax = uci),
-                  size = 0.2) + 
-   scale_y_discrete(labels = c("Cones by PBA", "Cones by Monsoon",
-                               "Cones by Tmax", "Cones by PPT",
-                               "Pinyon basal area \n (PBA)", "Monsoonality \n (Monsoon)",
-                               "Maximum temperature \n (Tmax)", 
-                               "Precipitation \n (PPT)", "Cones")) +
+                  size = 0.05) + 
   labs(x = "Covariate effect\n(median and 95% BCI)",
-       y = "Covariate")
+       y = "Covariate") +
+   facet_grid(type~., scales ="free") +
+   theme(strip.background = element_rect(fill = "white",
+                                         color = "white"))
 )
 
 ggsave(plot = covariate_betas,
@@ -235,6 +248,7 @@ ggsave(plot = covariate_betas,
                    'covariate_effects.jpg'),
        width = 5,
        height = 3.5,
+       dpi = 300,
        units = "in")
 
 
@@ -299,7 +313,8 @@ ggsave(here('pictures',
             'cone_weights.pdf'),
        width = 6,
        height = 3,
-       units = 'in')
+       units = 'in',
+       dpi = 300)
 #green - lag
 #ccebc5
 #blue - predictive
@@ -385,39 +400,76 @@ mons_sim <- seq(from = min(monsoon$wt, na.rm = T),
 ba_sim <- seq(from = min(pinyon$wt, na.rm = T), to = max(pinyon$wt),
               length.out= 100)
 
+
 #IDs for covariates:  
+
+covariate <- c('a0', "Cones", "Tmax", "PPT", "Monsoon",
+               "PinyonBA", "ConexTmax", "ConexPPT",
+               'ConexMonsoon', "ConexBA")
+
+# a[1]*AntCone[t,i] +
+#   a[2]*AntTmax[t,i] +
+#   a[3]*AntPPT[t,i] +
+#   a[4]*Monsoon[t,i] +
+#   a[5]*PinyonBA[t,i] +
+#   a[6]*AntCone[t,i]*AntTmax[t,i] + 
+#   a[7]*AntCone[t,i]*AntPPT[t,i] + 
+#   a[8]*AntCone[t,i]*Monsoon[t,i] + 
+#   a[9]*AntCone[t,i]*PinyonBA[t,i]
+
+beta_median_df <- beta_samps %>%
+  filter(str_detect(parm, "a")) %>%
+  filter(!parm %in% c("deviance")) %>%
+  filter(!parm %in% c("wA")) %>%
+  mutate(covariate = case_when(parm == "a0" ~ "a0",
+                               parm == "a[1]" ~ 'Cones',
+                               parm == "a[2]" ~ "Tmax",
+                               parm == "a[3]" ~ 'PPT',
+                               parm == "a[4]" ~ 'Monsoon',
+                               parm == "a[5]" ~ 'PinyonBA',
+                               parm == "a[6]" ~ "ConesxTmax",
+                               parm == 'a[7]' ~ "ConesxPPT",
+                               parm == "a[8]" ~ "ConesxMonsoon",
+                               parm == "a[9]" ~ "ConesxBA",
+                               TRUE ~ NA_character_)) %>%
+  group_by(covariate) %>%
+  summarise(median = median(value)) %>%
+  ungroup()
+
 cov_function <- function(cov){
-  df2 <- corr_beta_sum %>%
+  vec <- beta_median_df %>%
     filter(covariate == {{cov}}) %>%
     dplyr::select(median) %>%
     as_vector() 
-  return(df2)
+  
+  return(vec)
+  
 }
+
 
 #a0 
 a0 <- cov_function(cov = "a0")
 #a[1]:cones
 aCones <- cov_function(cov = "Cones")
 #a[2]:tmax
-aTmax <- cov_function(cov = "Tmax")
+aTmax <- cov_function(cov =  "Tmax")
 #a[3]:ppt
 aPPT <- cov_function(cov = "PPT")
 #a[4]:monsoon
 aMons <- cov_function(cov = "Monsoon")
 #a[5]:ba
-aBA <- cov_function(cov = 'PinyonBA')
+aBA <- cov_function(cov = "PinyonBA")
 #a[6]: conextmax
-aConeTmax <- cov_function(cov = "ConexTmax")
+aConeTmax <- cov_function(cov = "ConesxTmax")
 #a[7]: conexppt
-aConePPT <- cov_function(cov = "ConexPPT")
+aConePPT <- cov_function(cov = "ConesxPPT")
 #a[8]: conexmonsoon
-aConeMons <- cov_function(cov = "ConexMonsoon")
+aConeMons <- cov_function(cov = "ConesxMonsoon")
 #a[9]:conexba
-aConeBA <- cov_function(cov = 'ConexBA')
+aConeBA <- cov_function(cov = "ConesxBA")
 
 
 # Figure 4: interaction plots ---------------------------------------------
-
 
 cone_interaction_function <- function(int_cov,
                                       cov_name,
@@ -429,17 +481,36 @@ cone_interaction_function <- function(int_cov,
            cov = Var2) %>%
     mutate(loglambda = a0 + aCones*cones +
              beta*cov + int_beta*cones*cov,
-           lambda = exp(loglambda)) 
+           lambda = exp(loglambda))
+  
+  cov_vector <- weighted_cov_sum_df %>%
+    dplyr::select({{cov_name}})
+  
+  int_df$nnDists <- knnx.dist(data = cbind(weighted_cov_sum_df$cones, 
+                                           cov_vector),
+                              query = cbind(int_df$cones, int_df$cov),
+                              k = 1)    
+  
+  # And set values far from observed data (> 0.1 distance in z-scores across both axes) to NA
+  int_df$loglambda[int_df$nnDists > 0.75] <- NA  
   
   #return(int_df)
   #c <- noquote('")')
   lab <- expression(paste(italic("log"), "(", lambda, ")"))
   #lab <- expression(paste("ln(E(x))"))
+  #lab <- (expression(paste(lambda), "\n (birds \cdot m^{-2})"))
+  
+  #ylab(expression(Anthropogenic~SO[4]^{"2-"}~(ngm^-3))) 
+  lab <- expression(paste("birds" %.% m^{-2}))
   
   plot <- ggplot(int_df) +
     geom_tile(aes(x = cones, y = cov, fill = loglambda)) +
     scale_fill_distiller(type = "seq",
-                         palette = "PuRd") +
+                         palette = "PuRd",
+                         direction = 1,
+                         breaks = c(-9.2, -13.8, -18.4),
+                         labels = c(1e-04, 1e-06, 1e-08), 
+                         na.value = "transparent") +
     geom_contour(aes(x = cones, y = cov, z = loglambda), color = "lightgrey", alpha = 0.5) +
     geom_point(data = weighted_cov_sum_df, 
                aes(x = cones, y = {{cov_name}}), 
@@ -451,12 +522,19 @@ cone_interaction_function <- function(int_cov,
   
 }
 
+# scale_fill_distiller(type = "seq",
+#                      palette = "PuRd",
+#                      direction = 1,
+#                      breaks = c(-9, -14, -20),
+#                      labels = c(1e-04, 1e-06, 1e-09)) 
+#meters
+
 #conextmax:
-a <- cone_interaction_function(int_cov = temp_sim,
+(a <- cone_interaction_function(int_cov = temp_sim,
                                beta = aTmax,
                                int_beta = aConeTmax,
                                cov_name = tmax) +
-  labs(x = "Cones", y = "Maximum temperature")
+  labs(x = "Cones", y = "Maximum temperature"))
 
 #conexppt:
 b <- cone_interaction_function(int_cov = ppt_sim,
@@ -467,12 +545,12 @@ b <- cone_interaction_function(int_cov = ppt_sim,
   theme(legend.position = "none")
 
 #conexmonsoon
-c <- cone_interaction_function(int_cov = mons_sim,
+(c <- cone_interaction_function(int_cov = mons_sim,
                                beta = aMons,
                                int_beta = aConeMons,
                                cov_name = monsoon)+
   labs(x = "Cones", y = "Monsoonality")+
-  theme(legend.position = "none")
+  theme(legend.position = "none"))
 
 #conexba
 d <- cone_interaction_function(int_cov = ba_sim,
@@ -492,7 +570,8 @@ ggsave(here('pictures',
             'interaction_plots.jpg'),
        width = 6,
        height = 5,
-       units = 'in')
+       units = 'in',
+       dpi = 300)
 
 # SI fig: climate weights -------------------------------------------------
 
@@ -510,7 +589,7 @@ weights_df %>%
   filter(!covariate %in%  c("Cones", "Precipitation")) %>%
   arrange(desc(`50%`))
 
-clim_weights_plot <- weights_df %>%
+(clim_weights_plot <- weights_df %>%
   filter(covariate != "Cones") %>%
 ggplot(aes(x = lag, y = `50%`)) +
   geom_hline(yintercept = 1/13, linetype = 2) +
@@ -525,12 +604,13 @@ ggplot(aes(x = lag, y = `50%`)) +
                                 "9(SW)", "10(Su)", "11(Fl)", "12(Br)")) +
   labs(x = "Season into the past",
        y = "Importance weight \n (median and 95% BCI)") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)))
 
 ggsave(here('pictures',
             'final',
             'climate_weight_plots.jpg'),
        width = 5,
        height = 3,
-       units = 'in')
+       units = 'in',
+       dpi = 300)
 
