@@ -170,6 +170,9 @@ PPTTemp<- array(NA, dim = c(n.years, max(n.blobs), n.clag))
 #checklist loops:
 logit_p<- array(NA, dim = c(n.years, max(n.blobs), max(n.ebird.check, na.rm = T)))
 p.ebird<- array(NA, dim = c(n.years, max(n.blobs), max(n.ebird.check, na.rm = T))) 
+ebird.count.rep <- array(NA, dim = c(n.years, max(n.blobs), max(n.ebird.check, na.rm = T))) 
+
+
 N<- array(NA, dim = c(n.years, max(n.blobs), max(n.ebird.check, na.rm = T)))
 
 #GOF
@@ -240,22 +243,39 @@ for(t in 1:n.years){
       #to get rmse
       sqr[t,i,r] <- (ebird.count[t,i,r] - p.ebird[t,i,r]*N[t,i,r])^2
       
+      #get replicated data
+      ebird.count.rep[t,i,r] <- p.ebird[t,i,r]*N[t,i,r]
+ 
     }
     
   }
   
 }
 
+#ebird count and count rep R2
+ebird.count.df <- as.data.frame(ebird.count) %>%
+  pivot_longer(everything(),
+               names_to = "val",
+               values_to= "count") 
+
+ebird.count.rep.df <- as.data.frame(ebird.count.rep) %>%
+  pivot_longer(everything(),
+               names_to = "val",
+               values_to= "count.rep") 
+
+m1 <- cor(ebird.count.rep.df$count.rep, ebird.count.df$count,
+          use = "complete.obs")
+  
+R2 <- m1^2
+
 RMSE <- sqrt(sum(sqr[], na.rm = T)/n.checklists)
 
-return(RMSE)
+return(data.frame(RMSE, R2))
 
 }
 
 
 # Run the function for all covariate samples ------------------------------
-
-
 
 n.sample <- length(unique(beta_samps$sample))
 sample_nums <- 1:n.sample
@@ -264,9 +284,9 @@ sample_nums <- 1:n.sample
 sample_list <- lapply(sample_nums, predict_fun)
 
 #turn into a DF
-oos_RMSE_df <- as.data.frame(do.call(rbind, sample_list)) %>%
-  rename(RMSE = V1) %>%
+oos_df <- as.data.frame(do.call(rbind, sample_list)) %>%
   mutate(type = "oos")
+
 #export
 saveRDS(oos_RMSE_df, here('data',
                            '04_cross_validation',

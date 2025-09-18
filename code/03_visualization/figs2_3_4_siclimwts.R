@@ -234,20 +234,23 @@ corr_beta_sum <- corr_beta_df %>%
                       y = reorder(covariate, median),
                       xmin = lci,
                       xmax = uci),
-                  size = 0.05) + 
+                  size = 0.25) + 
   labs(x = "Covariate effect\n(median and 95% BCI)",
        y = "Covariate") +
    facet_grid(type~., scales ="free") +
    theme(strip.background = element_rect(fill = "white",
-                                         color = "white"))
+                                         color = "white"),
+         strip.text = element_text(size = 12),
+         axis.title = element_text(size = 15),
+         axis.text = element_text(size = 10))
 )
 
 ggsave(plot = covariate_betas,
        here('pictures',
                    'final',
                    'covariate_effects.jpg'),
-       width = 5,
-       height = 3.5,
+       width = 6,
+       height = 4,
        dpi = 300,
        units = "in")
 
@@ -471,6 +474,9 @@ aConeBA <- cov_function(cov = "ConesxBA")
 
 # Figure 4: interaction plots ---------------------------------------------
 
+weighted_cov_sum_df2 <- weighted_cov_sum_df %>%
+  sample_n(1500)
+
 cone_interaction_function <- function(int_cov,
                                       cov_name,
                                       beta,
@@ -499,9 +505,11 @@ cone_interaction_function <- function(int_cov,
   lab <- expression(paste(italic("log"), "(", lambda, ")"))
   #lab <- expression(paste("ln(E(x))"))
   #lab <- (expression(paste(lambda), "\n (birds \cdot m^{-2})"))
-  
+
   #ylab(expression(Anthropogenic~SO[4]^{"2-"}~(ngm^-3))) 
   lab <- expression(paste("birds" %.% m^{-2}))
+  
+  lab <- expression(paste(birds %.% ha^{-1}))
   
   plot <- ggplot(int_df) +
     geom_tile(aes(x = cones, y = cov, fill = loglambda)) +
@@ -509,14 +517,18 @@ cone_interaction_function <- function(int_cov,
                          palette = "PuRd",
                          direction = 1,
                          breaks = c(-9.2, -13.8, -18.4),
-                         labels = c(1e-04, 1e-06, 1e-08), 
+                         labels = c(1, 0.01, 0.0001), 
                          na.value = "transparent") +
     geom_contour(aes(x = cones, y = cov, z = loglambda), color = "lightgrey", alpha = 0.5) +
-    geom_point(data = weighted_cov_sum_df, 
+    geom_point(data = weighted_cov_sum_df2, 
                aes(x = cones, y = {{cov_name}}), 
                color = "black", 
                alpha = 0.2, shape = 1) +
-    labs(fill = lab) 
+    labs(fill = lab) +
+    theme(axis.title = element_text(size = 12),
+          legend.title = element_text(size = 12),
+          legend.text = element_text(size = 10),
+          axis.text = element_text(size = 10))
   
   return(plot)
   
@@ -534,7 +546,8 @@ cone_interaction_function <- function(int_cov,
                                beta = aTmax,
                                int_beta = aConeTmax,
                                cov_name = tmax) +
-  labs(x = "Cones", y = "Maximum temperature"))
+  labs(x = "Cones", y = "Maximum temperature") +
+    theme(axis.title.x = element_blank()))
 
 #conexppt:
 b <- cone_interaction_function(int_cov = ppt_sim,
@@ -542,7 +555,8 @@ b <- cone_interaction_function(int_cov = ppt_sim,
                                int_beta = aConePPT,
                                cov_name = ppt)+
   labs(x = "Cones", y = "Precipitation")+
-  theme(legend.position = "none")
+  theme(legend.position = "none",
+        axis.title.x = element_blank())
 
 #conexmonsoon
 (c <- cone_interaction_function(int_cov = mons_sim,
@@ -568,7 +582,7 @@ b + a+ c+ d +
 ggsave(here('pictures',
             'final',
             'interaction_plots.jpg'),
-       width = 6,
+       width = 6.5,
        height = 5,
        units = 'in',
        dpi = 300)

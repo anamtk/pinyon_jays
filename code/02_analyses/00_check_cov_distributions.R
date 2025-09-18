@@ -33,7 +33,8 @@ package.list <- c("here", "tidyverse",
                   "sf",  
                   "terra",
                   'readxl',
-                  'sf')
+                  'sf',
+                  'patchwork')
 
 ## Installing them if they aren't already on the computer
 new.packages <- package.list[!(package.list %in% installed.packages()[,"Package"])]
@@ -75,11 +76,11 @@ cones2 <- cones %>%
                           TRUE ~ "no_checklist")) %>%
   mutate(logcones = log(cones + 0.000001)) 
 
-ggplot(cones2, aes(x = type, y = logcones)) +
-  geom_violin() 
-
-ggplot(cones2, aes(x = type, y = cones)) +
-  geom_violin() 
+cone_plot <- ggplot(cones2, aes(x = type, y = logcones)) +
+  geom_violin() +
+  labs(x = "Checklist present in grid",
+       y = "Cone abundance") +
+  scale_x_discrete(labels = c("Yes", "No"))
 
 #maybe don't have good coverage in the realllly high range - which 
 #i think is generally super rare anyway? so probably hard for anyone to
@@ -120,8 +121,11 @@ temp2 <- temp %>%
 mutate(type = case_when(!is.na(blobnum) ~ "checklist",
                         TRUE ~ "no_checklist")) 
 
-ggplot(temp2, aes(x = type, y = temp)) +
-  geom_violin() 
+temp_plot <- ggplot(temp2, aes(x = type, y = temp)) +
+  geom_violin()  +
+  labs(x = "Checklist present in grid",
+       y = "Maximum temperature") +
+  scale_x_discrete(labels = c("Yes", "No"))
 
 #this one looks good!
 
@@ -147,8 +151,11 @@ ppt2 <- ppt2 %>%
   group_by(type) %>%
   slice_sample(n = 100000)
 
-ggplot(ppt2, aes(x = type, y = ppt)) +
-  geom_violin() 
+(ppt_plot <- ggplot(ppt2, aes(x = type, y = ppt)) +
+  geom_violin() +
+  labs(x = "Checklist present in grid",
+       y = "Precipitation") +
+  scale_x_discrete(labels = c("Yes", "No")))
 
 #maybe not so good at getting surveys during the really wet periods - but also
 #seems fine honestly
@@ -168,8 +175,11 @@ monsoon2 <- monsoon %>%
   mutate(type = case_when(!is.na(blobnum) ~ "checklist",
                           TRUE ~ "no_checklist")) 
   
-ggplot(monsoon2, aes(x = type, y = monsoon)) +
-  geom_violin() 
+monsoon_plot <- ggplot(monsoon2, aes(x = type, y = monsoon)) +
+  geom_violin() +
+  labs(x = "Checklist present in grid",
+       y = "Monsoonality") +
+  scale_x_discrete(labels = c("Yes", "No"))
 
 #looks ok to me
 
@@ -191,8 +201,11 @@ pinyon2 <- pinyon %>%
   mutate(type = case_when(!is.na(blobnum) ~ "checklist",
                           TRUE ~ "no_checklist")) 
 
-ggplot(pinyon2, aes(x = type, y = pinyon)) +
-  geom_violin() 
+pba_plot <- ggplot(pinyon2, aes(x = type, y = pinyon)) +
+  geom_violin()+
+  labs(x = "Checklist present in grid",
+       y = "Pinyon basal area") +
+  scale_x_discrete(labels = c("Yes", "No"))
 
 #i think this high BA missing value is correlated with the missing 
 #values of cone production, i bet. it seems like it is *so little* 
@@ -215,3 +228,14 @@ nrow(nocheck_pinyon)/nrow(nocheck_num)
 #222 grid cells in this category versus ~800,000 available grid cells
 #0.026% of total possible pinyon basal area values in this edge of the range
   
+cone_plot + ppt_plot + temp_plot + monsoon_plot + pba_plot +
+  plot_annotation(tag_levels = "a")
+
+ggsave(here("pictures",
+            "final",
+            "space_for_time.jpg"),
+       width = 7,
+       height = 4,
+       units = 'in',
+       dpi = 300
+       )

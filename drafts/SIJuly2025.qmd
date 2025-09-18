@@ -33,7 +33,21 @@ for(i in package.list){library(i, character.only = T)}
 #| out-width: 100%
 #| message: false
 #| warning: false
-#| fig-cap: "SI Figure 1: Convergence statistics for biological (a and a0) and detection (c and c0) covariate effects, deviance, and the cone and climate weights (wA, wB, and wC). All covariate effects and parameters converged with Rhat values <= 1.1 (dashed line)."
+#| fig-cap: "SI Figure 1: Validation for use of space-for-time substitution of replicate checklists within sampling polygons. To use replicate eBird surveys within a year at a location in models such as N-mixture or occupancy models, checklists need to represent sites that display the full range of values for covariates of interest. In general, checklists in our dataset do; for the two covariates for which we are missing the upper tails (cone availability and pinyon basal area, panels a and e), these represent extreme outliers (<1% of total values in the dataset)."
+
+
+knitr::include_graphics(here('pictures',
+            'final',
+            'space_for_time.jpg'))
+
+```
+
+```{r}
+#| echo: false
+#| out-width: 100%
+#| message: false
+#| warning: false
+#| fig-cap: "SI Figure 2: Convergence statistics for biological (a and a0) and detection (c and c0) covariate effects, deviance, and the cone and climate weights (wA, wB, and wC). All covariate effects and parameters converged with Rhat values <= 1.1 (dashed line)."
 
 
 knitr::include_graphics(here('pictures',
@@ -47,7 +61,7 @@ knitr::include_graphics(here('pictures',
 #| out-width: 100%
 #| message: false
 #| warning: false
-#| fig-cap: "SI Figure 2: Seasonal weights for climate (precipitation and maximum temperature) in the model. The dashed line indicates the 'null' weight in which all time periods would have equal weights. Any weights that extend clearly above this line have significant importance to the climate variable. Seasons are based on bird biology and include Br: breeding (February - May), Fl: fledging (May - June), Su: summer localized foraging (July), SW: summer and winter dispersed foraging ('irruption'; August - January)."
+#| fig-cap: "SI Figure 3: Seasonal weights for climate (precipitation and maximum temperature) in the model. The dashed line indicates the 'null' weight in which all time periods would have equal weights. Any weights that extend clearly above this line have significant importance to the climate variable. Seasons are based on bird biology and include Br: breeding (February - May), Fl: fledging (May - June), Su: summer localized foraging (July), SW: summer and winter dispersed foraging ('irruption'; August - January)."
 
 
 knitr::include_graphics(here('pictures',
@@ -60,7 +74,7 @@ knitr::include_graphics(here('pictures',
 #| message: false
 #| out-width: 100%
 #| warning: false
-#| fig-cap: "SI Figure 3: As an evaluation of goodness-of-fit, we examined a) the relationship between observed pinyon jay counts and counts predicted from the model (median and 95% Bayesian Credible Interval) and b) the R2 of this relationship from ~1000 posterior samples. In a), the dashed line represents the 1:1 line where predictions exactly match. In b) the dashed vertical line represents the mean R2."
+#| fig-cap: "SI Figure 4: As an evaluation of goodness-of-fit, we examined a) the relationship between observed pinyon jay counts and counts predicted from the model (median and 95% Bayesian Credible Interval) and b) the R2 of this relationship from ~1000 posterior samples. In a), the dashed line represents the 1:1 line where predictions exactly match. In b) the dashed vertical line represents the mean R2."
 
 
 knitr::include_graphics(here('pictures',
@@ -75,7 +89,7 @@ knitr::include_graphics(here('pictures',
 #| message: false
 #| warning: false
 #| out-width: 100%
-#| fig-cap: "SI Figure 4: RMSE for the test and out of sample (oos) datasets. Values for RMSE are on the scale of the data (counts of pinyon jays). They are relatively small compared to the range of possible counts in a checklist (0 - 350 birds in our test dataset)."
+#| fig-cap: "SI Figure 5: RMSE for the test and out of sample (oos) datasets. Values for RMSE are on the scale of the data (counts of pinyon jays). They are relatively small compared to the range of possible counts in a checklist (0 - 350 birds in our test dataset)."
 
 
 knitr::include_graphics(here('pictures',
@@ -88,7 +102,7 @@ knitr::include_graphics(here('pictures',
 #| message: false
 #| warning: false
 #| out-width: 75%
-#| fig-cap: "SI Figure 5: Evaluation of spatial autocorrelation (Pearson correlation on the y-axis) for residuals in each year (1 = 2010; 13 = 2022). There was no consistent evidence of spatial autocorrelation of residuals."
+#| fig-cap: "SI Figure 6: Evaluation of spatial autocorrelation (Pearson correlation on the y-axis) for residuals in each year (1 = 2010; 13 = 2022). There was no consistent evidence of spatial autocorrelation of residuals."
 
 
 knitr::include_graphics(here('pictures',

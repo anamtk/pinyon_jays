@@ -6,7 +6,7 @@ model{
   
   #we are using eBIRD data in this study because of its broad
   #spatial and temporal coverage. We are using cone production 
-  #data from Andreas Wion (in review)
+  #data from Andreas Wion (2025)
   
   #We cleaned ebird data following that paper and guidelines from
   #the Cornell Lab Website
