@@ -244,7 +244,8 @@ for(t in 1:n.years){
       sqr[t,i,r] <- (ebird.count[t,i,r] - p.ebird[t,i,r]*N[t,i,r])^2
       
       #get replicated data
-      ebird.count.rep[t,i,r] <- p.ebird[t,i,r]*N[t,i,r]
+      ebird.count.rep[t,i,r] <- rbinom(1, N[t,i,r], p.ebird[t,i,r])
+      #ebird.count.rep[t,i,r] <- p.ebird[t,i,r]*N[t,i,r]
  
     }
     
@@ -263,10 +264,17 @@ ebird.count.rep.df <- as.data.frame(ebird.count.rep) %>%
                names_to = "val",
                values_to= "count.rep") 
 
-m1 <- cor(ebird.count.rep.df$count.rep, ebird.count.df$count,
-          use = "complete.obs")
+# m1 <- cor(ebird.count.rep.df$count.rep, ebird.count.df$count,
+#           use = "complete.obs")
+
+model <- lm(ebird.count.rep.df$count.rep ~ 
+              ebird.count.df$count)
+
+sum <- summary(model)
+
+R2 <- sum$adj.r.squared
   
-R2 <- m1^2
+#R2 <- m1
 
 RMSE <- sqrt(sum(sqr[], na.rm = T)/n.checklists)
 
