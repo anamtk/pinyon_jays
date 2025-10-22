@@ -1,0 +1,57 @@
+---
+title: "**Title**: The relationship between an avian seed disperser and seed availability in the Southwest USA is lagged and dependent on climate and habitat context"
+format:
+  docx:
+    reference-doc: custom-reference-doc.docx
+editor: visual
+bibliography: references.bib
+csl: journal-of-animal-ecology.csl
+---
+
+```{r}
+#| echo: false
+#| include: false
+#| warning: false
+#| message: false
+
+
+package.list <- c("here", "tidyverse")
+
+## Installing them if they aren't already on the computer
+new.packages <- package.list[!(package.list %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+## And loading them
+for(i in package.list){library(i, character.only = T)}
+
+```
+
+|                                                       |       |
+|-------------------------------------------------------|------:|
+| $$                                                    
+    Y_{c,i,t} \sim Binomial(p_{c,i,t},N_{c,i,t})        
+    $$                                                  | Eqn 1 |
+
+|  |  |
+|----|---:|
+| $$
+logit(p_{c,i,t}) = \gamma_0 + \sum_{j=1}^{4}\gamma_j\cdot X_{j_{c,i,t}}
+$$ | Eqn 2 |
+
+|                                                          |       |
+|----------------------------------------------------------|------:|
+| $$                                                       
+    N_{c,i,t} \sim Poisson(\lambda_{i,t}\times A_c)        
+    $$                                                     | Eqn 3 |
+
+|  |  |
+|----|---:|
+| $$
+log(\lambda_{i,t}) = \alpha_0 + \sum_{j=1}^2 \alpha_j \cdot X_{j_{i,t}} + \sum_{k=1}^3 \alpha_k \cdot Z_{k_{i,t}} + \sum_{m=1}^4\sum_{n=m+1}^4 \alpha_{mn} \cdot Z_{m_{i,t}} \cdot X/Z_{n_{i,t}}
+$$ | Eqn 4 |
+
+|  |  |
+|----|---:|
+| $$                                                                  
+   Z_{k_{i,t}} =  \sum_{l=1}^{NLags} X_{k_{i,t,l}} \cdot w_{k,l}      
+   $$ | Eqn 5 |
