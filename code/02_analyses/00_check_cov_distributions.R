@@ -43,7 +43,7 @@ if(length(new.packages)) install.packages(new.packages)
 ## And loading them
 for(i in package.list){library(i, character.only = T)}
 
-
+theme_set(theme_bw())
 # Load data ---------------------------------------------------------------
 
 ebird <- read.csv(here('data',
@@ -102,7 +102,17 @@ nrow(nocheck_cones)/nrow(nocheck_num)
 #0.0000235
 #or, 0.00235% of cells - SO FEW
 
-rm(cones2, cones)
+ggsave(here("pictures",
+            "final",
+            'si',
+            "space_for_time_cones.jpg"),
+       width = 3,
+       height = 2,
+       units = 'in',
+       dpi = 300
+)
+
+rm(cones, cones2, cone_plot)
 # temp --------------------------------------------------------------------
 
 temp <- read.csv(here('data',
@@ -128,8 +138,17 @@ temp_plot <- ggplot(temp2, aes(x = type, y = temp)) +
   scale_x_discrete(labels = c("Yes", "No"))
 
 #this one looks good!
+ggsave(here("pictures",
+            "final",
+            'si',
+            "space_for_time_temp.jpg"),
+       width = 3,
+       height = 2,
+       units = 'in',
+       dpi = 300
+)
 
-rm(temp2, temp)
+rm(temp2, temp, temp_plot)
 # PPT ---------------------------------------------------------------------
 
 ppt <- read.csv(here('data',
@@ -160,7 +179,18 @@ ppt2 <- ppt2 %>%
 #maybe not so good at getting surveys during the really wet periods - but also
 #seems fine honestly
 
-rm(ppt)
+ggsave(here("pictures",
+            "final",
+            'si',
+            "space_for_time_ppt.jpg"),
+       width = 3,
+       height = 2,
+       units = 'in',
+       dpi = 300
+)
+
+
+rm(ppt, ppt2, ppt_plot)
 
 # Monsoon -----------------------------------------------------------------
 monsoon <- read.csv(here('data',
@@ -182,7 +212,15 @@ monsoon_plot <- ggplot(monsoon2, aes(x = type, y = monsoon)) +
   scale_x_discrete(labels = c("Yes", "No"))
 
 #looks ok to me
-
+ggsave(here("pictures",
+            "final",
+            'si',
+            "space_for_time_monsoon.jpg"),
+       width = 3,
+       height = 2,
+       units = 'in',
+       dpi = 300
+)
 # Pinyon BA ---------------------------------------------------------------
 
 pinyon <- read.csv(here('data',
@@ -207,6 +245,16 @@ pba_plot <- ggplot(pinyon2, aes(x = type, y = pinyon)) +
        y = "Pinyon basal area") +
   scale_x_discrete(labels = c("Yes", "No"))
 
+ggsave(here("pictures",
+            "final",
+            'si',
+            "space_for_time_pba.jpg"),
+       width = 3,
+       height = 2,
+       units = 'in',
+       dpi = 300
+)
+
 #i think this high BA missing value is correlated with the missing 
 #values of cone production, i bet. it seems like it is *so little* 
 #of the distribution - it doesn't seem like birders are going out 
@@ -228,14 +276,15 @@ nrow(nocheck_pinyon)/nrow(nocheck_num)
 #222 grid cells in this category versus ~800,000 available grid cells
 #0.026% of total possible pinyon basal area values in this edge of the range
   
-cone_plot + ppt_plot + temp_plot + monsoon_plot + pba_plot +
-  plot_annotation(tag_levels = "a")
-
-ggsave(here("pictures",
-            "final",
-            "space_for_time.jpg"),
-       width = 7,
-       height = 4,
-       units = 'in',
-       dpi = 300
-       )
+# cone_plot + ppt_plot + temp_plot + monsoon_plot + pba_plot +
+#   plot_annotation(tag_levels = "a")
+# 
+# ggsave(here("pictures",
+#             "final",
+#             'si',
+#             "space_for_time.jpg"),
+#        width = 7,
+#        height = 4,
+#        units = 'in',
+#        dpi = 300
+#        )

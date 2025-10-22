@@ -209,9 +209,11 @@ ebird_coords <- st_coordinates(ebird) %>%
                        labels = c(0.1, 0.3, 0.5)) +
   coord_sf() +
   theme_void() +
-  theme(legend.title = element_markdown(size = 10),
+  theme(legend.title = element_markdown(size = 8),
         legend.position = "bottom",
-        legend.text = element_text(size = 8)) +
+        legend.text = element_text(size = 6),
+        legend.key.size = unit(0.5, "cm"),
+        legend.key.height = unit(0.2, 'cm')) +
     guides(fill = guide_colorbar(title.position = "top")))
 
 
@@ -227,3 +229,15 @@ ggsave(filename = here('pictures',
        height = 5, 
        width = 3,
        units = "in")
+
+total_range_map+ba_map+hex_map+
+  plot_annotation(tag_levels = "a",
+                  tag_suffix = ")")
+
+ggsave(filename = here('pictures',
+                       'final',
+                       'maps_wide.jpg'),
+       height = 2, 
+       width = 5,
+       units = "in")
+

@@ -34,7 +34,15 @@ rhat_graph_fun <- function(list){
     #unnests - so makes each Rhat a new row in the df
     unnest(c(Rhat)) %>%
     #make sure Rhat is a numeric
-    mutate(Rhat = as.numeric(Rhat)) 
+    mutate(Rhat = as.numeric(Rhat)) %>%
+    mutate(id = case_when(id == "a" ~ "alpha",
+                          id == "a0" ~ "alpha[0]",
+                          id == "c" ~ "gamma",
+                          id == "c0" ~ "gamma[0]",
+                          id == 'deviance' ~ 'deviance',
+                          id == 'wA' ~ 'w[1]',
+                          id == 'wB' ~ 'w[2]',
+                          id == 'wC' ~ 'w[3]'))
   
   #plot histogram and make sure all below 1.1
   plot <- ggplot(df, aes(x = Rhat)) +
@@ -44,15 +52,17 @@ rhat_graph_fun <- function(list){
     scale_y_sqrt() +
     #this is facetted by the parameter ID so you
     # can find problematic parameters
-    facet_wrap(~ id)
+    facet_wrap(~ id, labeller = label_parsed)
   
   return(plot)
 }
 
-rhat_graph_fun(list = mod_rhat)
+rhat_graph_fun(list = mod_rhat) +
+  theme(strip.background = element_rect(fill = "white"))
 
 ggsave(here('pictures',
             'final',
+            'si',
             'rhat.jpg'),
        width = 5,
        height = 4,

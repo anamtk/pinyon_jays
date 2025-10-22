@@ -7,7 +7,9 @@
 # Load packages -----------------------------------------------------------
 
 package.list <- c('tidyverse',
-                  'here', 'patchwork', 'coda', "FNN") 
+                  'here', 'patchwork', 'coda', 
+                  "FNN", 'ggtext',
+                  'grid') 
 
 ## Installing them if they aren't already on the computer
 new.packages <- package.list[!(package.list %in% installed.packages()[,"Package"])]
@@ -209,15 +211,15 @@ corr_beta_sum <- corr_beta_df %>%
                                            "ConexPPT",
                                            "ConexTmax") ~ "Interactions",
                           TRUE ~ NA_character_)) %>%
-  mutate(covariate = case_when(covariate == "Monsoon" ~ "Monsoonality \n (Monsoon)",
-                               covariate == "Cones" ~ "Pinyon pine seed \n availability (Cones)",
-                               covariate == "PinyonBA" ~ "Pinyon basal area \n (PBA)",
-                               covariate == "PPT" ~ "Precipitation \n (PPT)",
-                               covariate == "Tmax" ~ "Maximum temperature \n (Tmax)",
-                               covariate == "ConexBA" ~ "Cones by PBA",
-                               covariate == "ConexMonsoon" ~ "Cones by Monsoon",
-                               covariate == "ConexPPT" ~ "Cones by PPT",
-                               covariate == "ConexTmax" ~ "Cones by Tmax",
+  mutate(covariate = case_when(covariate == "Monsoon" ~ "Monsoonality",
+                               covariate == "Cones" ~ "Pinyon cone (seed) availability",
+                               covariate == "PinyonBA" ~ "Pinyon basal area (BA)",
+                               covariate == "PPT" ~ "Precipitation (PPT)",
+                               covariate == "Tmax" ~ "Maximum temperature (Tmax)",
+                               covariate == "ConexBA" ~ "Cones x BA",
+                               covariate == "ConexMonsoon" ~ "Cones x monsoonality",
+                               covariate == "ConexPPT" ~ "Cones x PPT",
+                               covariate == "ConexTmax" ~ "Cones x Tmax",
                                TRUE ~ covariate))
   
 
@@ -235,7 +237,7 @@ corr_beta_sum <- corr_beta_df %>%
                       xmin = lci,
                       xmax = uci),
                   size = 0.25) + 
-  labs(x = "Covariate effect\n(median and 95% BCI)",
+  labs(x = "Covariate effect\n(median and 95% CI)",
        y = "Covariate") +
    facet_grid(type~., scales ="free") +
    theme(strip.background = element_rect(fill = "white",
@@ -249,7 +251,7 @@ ggsave(plot = covariate_betas,
        here('pictures',
                    'final',
                    'covariate_effects.jpg'),
-       width = 6,
+       width = 6.25,
        height = 4,
        dpi = 300,
        units = "in")
@@ -271,19 +273,38 @@ weights_df <- as.data.frame(betas$quantiles) %>%
 
 # Figure 3: cone wts ------------------------------------------------------
 
-
 start <- c(0.5,2.55, 3.55)
 end <- c(2.45, 3.45, 5.5)
-times <- c("1. Quicker resources ('predict')", 
-           "2. Cone caching ('lag')", 
-           "3. More breeders in population ('lag')")
+times <- c("Anticipatory", 
+           "Immediate", 
+           "Delayed")
 
 box_df <- as.data.frame(start) %>%
   bind_cols(end = end, times = times) %>%
-  mutate(times = factor(times, levels = c("1. Quicker resources ('predict')", 
-                                          "2. Cone caching ('lag')", 
-                                          "3. More breeders in population ('lag')")))
+  mutate(times = factor(times, levels = c("Anticipatory", 
+                                          "Immediate", 
+                                          "Delayed")))
 
+#get the figure icons to all be square
+draw_square <- function(data, params, size) {
+  if (is.null(data$size)) {
+    data$size <- 0.5
+  }
+  lwd <- min(data$size, min(size) /4)
+  grid::rectGrob(
+    width  = unit(1, "snpc") - unit(lwd, "mm"),
+    height = unit(1, "snpc") - unit(lwd, "mm"),
+    gp = gpar(
+      col = data$colour %||% NA,
+      fill = alpha(data$fill %||% "grey20", data$alpha),
+      lty = data$linetype %||% 1,
+      lwd = lwd * .pt,
+      linejoin = params$linejoin %||% "mitre",
+      lineend = if (identical(params$linejoin, "round")) "round" else "square"
+    )
+  )
+}
+ 
 (cone_weight_plot <- weights_df %>%
   filter(covariate == "Cones") %>%
 ggplot(aes(x = lag, y = `50%`)) +
@@ -293,29 +314,60 @@ ggplot(aes(x = lag, y = `50%`)) +
                                ymin = 0,
                                ymax = 1,
                                fill = times),
-            inherit.aes = F, alpha = 0.6) +
+            inherit.aes = F, 
+            alpha = 0.6,
+            key_glyph = draw_square) +
   scale_fill_manual(values = c('#02818A',
                                '#67A9CF',
-                               "#A6BDDB")) +
-  #geom_hline(yintercept = 1/5, linetype = 2) +
+                               "#A6BDDB"),
+                    labels = c("H1: **Anticipatory response** <br> (jays eat acorns and juniper <br> berries or see pinyon <br> cones develop)",
+                               "H2: **Immediate response** <br> (jays eat seeds cached <br> the prior fall)",
+                               "H3: **Delayed response** <br> (population response to <br> prior seed availability<br> and maturation of fledglings)")) +
   geom_point() +
   geom_errorbar(aes(ymin = `2.5%`,
                     ymax = `97.5%`),
                 width = 0.2) +
-  scale_x_continuous(breaks = c(1:5),
-                     labels = c( "2", "1", "1", 
-                                "2", "3")) +
-  annotate(geom = "text", x = 1.5, y = 0.9, label = "Years before cones") +
-  annotate(geom = "text", x = 4.5, y = 0.9, label = "Years after cones") +
+    scale_x_reverse(breaks = c(1:5),
+                    labels = c( "+2", "+1", "-1",
+                                "-2", "-3")) +
+  # scale_x_continuous(breaks = c(1:5),
+  #                    labels = c( "+2", "+1", "-1", 
+  #                               "-2", "-3")) +
+  #annotate(geom = "text", x = 1.5, y = 1.1, label = "Cone years before \n birds surveyed") +
+  #annotate(geom = "text", x = 4.5, y = 1.1, label = "Cone years after \n birds surveyed") +
+  geom_vline(xintercept = 2.5, linetype = 2) +
     #geom_segment(aes(x = 2.5, y = 0, xend = 2.5, yend = 1)) +
-  labs(x = "",
-       y = "Importance weight \n (median and 95% BCI)") )
+  labs(x = "Cone abundance year (fall) \n (relative to spring of bird survey)",
+       y = "Importance weight \n (median and 95% CI)",
+       subtitle = c("Cone years before \nbirds surveyed", "Cone years after\n birds surveyed")) +
+    theme(plot.margin = unit(c(0.5,0.25,0.25,0.25), "cm"), #starts at top and clockwise
+          axis.text = element_text(size = 12),
+          axis.title = element_text(size = 15),
+          legend.text = element_markdown(size = 12, 
+                                         hjust = 0.5,
+                                         margin = margin(t = 10)),
+          legend.title = element_blank(),
+          legend.key.width = unit(0.75, 'cm'), #change legend key width
+          legend.key.spacing.y = unit(0.5, 'cm'),
+          plot.subtitle = element_text(size = 12, 
+                                       hjust = c(0, 1))) +
+  guides(fill = guide_legend(title = "",
+                             label.position = "right")))
+
 
 ggsave(here('pictures',
             'R',
             'cone_weights.pdf'),
-       width = 6,
-       height = 3,
+       width = 7,
+       height = 4,
+       units = 'in',
+       dpi = 300)
+
+ggsave(here('pictures',
+            'final',
+            'cone_weights.jpg'),
+       width = 7,
+       height = 4,
        units = 'in',
        dpi = 300)
 #green - lag

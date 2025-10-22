@@ -52,7 +52,9 @@ both_RMSE <- oos_RMSE_df %>%
   
 theme_set(theme_bw())
 a <- ggplot() +
-  geom_boxplot(data = both_RMSE, aes(x = type, y = RMSE))
+  geom_boxplot(data = both_RMSE, aes(x = type, y = RMSE)) +
+  labs(x = "Dataset") +
+  scale_x_discrete(labels = c("out-of-sample", "in-sample (test)"))
 a
 
 ggsave(here('pictures',
