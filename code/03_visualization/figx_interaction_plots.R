@@ -404,13 +404,15 @@ cone_interaction_function <- function(int_cov,
   theme(legend.position = "none"))
 
 #conexba
+balab <- expression(paste('Pinyon basal area (', m^2 %.% ha^-1,")" ))
+
 (d <- cone_interaction_function(int_cov = ba_sim,
                                beta = aBA,
                                int_beta = aConeBA,
                                cov_name = pinyonba,
                                cov_mean = ba_mean,
                                cov_sd = ba_sd)+
-  labs(x = "Cones", y = "Pinyon basal area (units?)") +
+  labs(x = "Cones", y = balab) +
   theme(legend.position = "none"))
 
 b + a+ c+ d +
