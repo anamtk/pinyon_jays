@@ -6,7 +6,7 @@ model{
   
   #we are using eBIRD data in this study because of its broad
   #spatial and temporal coverage. We are using cone production 
-  #data from Andreas Wion (in review)
+  #data from Andreas Wion (2025)
   
   #We cleaned ebird data following that paper and guidelines from
   #the Cornell Lab Website
@@ -49,28 +49,26 @@ model{
   for(t in 1:n.years){
     for(i in 1:n.blobs[t]){ #"blobs" of buffered points with averaged covariates
       
-      #latent "true" abundance is N, with rate parameter lambda
-      #multiplied by the varaible "effort" size of the blob
-      N[t,i] ~ dpois(lambda[t,i]*blobArea[t,i])
-      
+
       #lambda is based on a likelihood with SAM components
       log(lambda[t,i]) <- a0 + #could make this have random effects
         a[1]*AntCone[t,i] +
         a[2]*AntTmax[t,i] +
-        a[3]*AntPPT[t,i] +
-        a[4]*Monsoon[t,i] +
-        a[5]*PinyonBA[t,i] +
-        a[6]*AntCone[t,i]*AntTmax[t,i] + 
-        a[7]*AntCone[t,i]*AntPPT[t,i] + 
-        a[8]*AntCone[t,i]*Monsoon[t,i] + 
-        a[9]*AntCone[t,i]*PinyonBA[t,i]
+        #a[3]*AntPPT[t,i] +
+        a[3]*Monsoon[t,i] +
+        a[4]*PinyonBA[t,i] +
+        a[5]*AntCone[t,i]*AntTmax[t,i] + 
+        #a[7]*AntCone[t,i]*AntPPT[t,i] + 
+        a[6]*AntCone[t,i]*Monsoon[t,i] + 
+        a[7]*AntCone[t,i]*PinyonBA[t,i]
+      #maybe include a year RE and other covariate interactions??
       
       #-------------------------------------## 
       # SAM summing ###
       #-------------------------------------##
       AntCone[t,i] <- sum(ConeTemp[t,i,])
       AntTmax[t,i] <- sum(TmaxTemp[t,i,])
-      AntPPT[t,i] <- sum(PPTTemp[t,i,])
+      #AntPPT[t,i] <- sum(PPTTemp[t,i,])
       
       #weight the lags for each covariate based on
       #the lag weight for each lag
@@ -83,11 +81,11 @@ model{
       
       for(l in 1:n.clag){
         TmaxTemp[t,i,l] <- Temp[t,i,l]*wB[l]
-        PPTTemp[t,i,l] <- PPT[t,i,l]*wC[l]
+        #PPTTemp[t,i,l] <- PPT[t,i,l]*wC[l]
         
         #any missing data can be imputed
         Temp[t,i,l] ~ dnorm(mu.temp, tau.temp)
-        PPT[t,i,l] ~ dnorm(mu.ppt, tau.ppt)
+        #PPT[t,i,l] ~ dnorm(mu.ppt, tau.ppt)
       }
       
       #would it be better to do a "time since masting year" covariate? dunno
@@ -115,15 +113,27 @@ model{
       for(r in 1:n.ebird.check[t,i]){ #number of checklists in that blob
 
       #ebird raw data
-      ebird.count[t,i,r] ~ dbin(p.ebird[t,i,r], N[t,i])
+      ebird.count[t,i,r] ~ dbin(p.ebird[t,i,r], N[t,i,r])
+        #need to generate list area in the data list
+        #listArea[t,i,r] = 3.141593*pow(Distance[t,i,r]/2,2)
+        #or code this way:
+        #latent "true" abundance is N, with rate parameter lambda
+        #multiplied by the varaible "effort" size of the list
+        N[t,i,r] ~ dpois(lambda[t,i]*listArea[t,i,r])
         
       #Detection probability is dependent on covariates
       logit(p.ebird[t,i,r]) <- c0 + #could make this have random effects, maybe observer ID
-        c1[SurveyType[t,i,r]] +
-        c[2]*StartTime[t,i,r] +
-        c[3]*Duration[t,i,r] +
-        c[4]*Distance[t,i,r] +
-        c[5]*NumObservers[t,i,r] 
+        #c1[SurveyType[t,i,r]] +
+        c[1]*StartTime[t,i,r] +
+        c[2]*Duration[t,i,r] +
+        #Speed: takes into account duration and distance, 
+        #also covaries with survey type since stationary will always 
+        #be speed = 0, so took the categorical out of the model
+        c[3]*Speed[t,i,r] +
+        c[4]*NumObservers[t,i,r] 
+      
+      #include a distance/duration effect and remove distance effect
+      # Duration x Distance interaction? Or Distance/Duration effect?
         
       #checklists from breeding season (late Feb - early May)
       #only complete checklists
@@ -136,12 +146,34 @@ model{
       #doesnt matter when only thinking about one species
         
       #GOODNESS-OF-FIT EVALUATION
-      ebird.count.rep[t,i,r] ~ dbin(p.ebird[t,i,r], N[t,i])
+      #get replicate data under the model to evaluate
+      #how much variance explained by model
+      ebird.count.rep[t,i,r] ~ dbin(p.ebird[t,i,r], N[t,i,r])
+      
+      #get residuals to check for spatial/temporal
+      #correlation structures
+      resid[t,i,r] <- ebird.count[t,i,r] - p.ebird[t,i,r]*N[t,i,r]
+    
+      #to get rmse
+      sqr[t,i,r] <- (ebird.count[t,i,r] - p.ebird[t,i,r]*N[t,i,r])^2
       } 
       
+      #get the sum of all non-NA values for year and
+      #blob
+      sqrsum1[t,i] <- sum(sqr[t,i,1:n.ebird.check[t,i]])
+      
     }
+    
+    #get the sum of all values for 
+    sqrsum2[t] <- sum(sqrsum1[t,1:n.blobs[t]])
   
   } 
+  
+  #-------------------------------------## 
+  # RMSE ###
+  #-------------------------------------##
+  
+  RMSE <- sqrt(sum(sqrsum2[])/n.checklists)
   
 
   #-------------------------------------## 
@@ -155,7 +187,7 @@ model{
   #intercept and slope parameters
   a0 ~ dnorm(0, 1E-4)
   
-  for(i in 1:9){
+  for(i in 1:7){
     a[i] ~ dnorm(0, 1E-4)
   }
 
@@ -165,7 +197,7 @@ model{
   #see Ogle et al. 2015 SAM model paper in Ecology Letters
   sumA <- sum(deltaA[])
   sumB <- sum(deltaB[])
-  sumC <- sum(deltaC[])
+  #sumC <- sum(deltaC[])
   
   for(l in 1:n.lag){
     #weights for cone lags
@@ -187,11 +219,11 @@ model{
     cum.temp.wt[l] <- sum(wB[1:l])
     
     #weights for ppt lags
-    wC[l] <- deltaC[l]/sumC
+    #wC[l] <- deltaC[l]/sumC
     #relatively uninformative gamma prior
-    deltaC[l] ~ dgamma(1,1)
+    #deltaC[l] ~ dgamma(1,1)
     #derived quantity of cumulative weight
-    cum.ppt.wt[l] <- sum(wC[1:l])
+    #cum.ppt.wt[l] <- sum(wC[1:l])
     
   }
   
@@ -203,15 +235,15 @@ model{
   c0 ~ dnorm(0, 1E-4)
   
   #categorical covariate
-  for(i in 2:2){
-    c1[i] ~ dnorm(0, 1E-4)
-  }
-  
-  #cell-referenced by setting baseline level to 0
-  c1[1] <- 0
-  
+  # for(i in 2:2){
+  #   c1[i] ~ dnorm(0, 1E-4)
+  # }
+  # 
+  # #cell-referenced by setting baseline level to 0
+  # c1[1] <- 0
+  # 
   #continuous covariate slope paramters
-  for(i in 2:5){
+  for(i in 1:4){
     c[i] ~ dnorm(0, 1E-4)
   }
   
@@ -228,9 +260,9 @@ model{
   mu.temp ~ dunif(-10,10)
   sig.temp ~ dunif(0, 20)
   tau.temp <- pow(sig.temp, -2)
-  mu.ppt ~ dunif(-10,10)
-  sig.ppt ~ dunif(0, 20)
-  tau.ppt <- pow(sig.ppt, -2)
+  #mu.ppt ~ dunif(-10,10)
+  #sig.ppt ~ dunif(0, 20)
+  #tau.ppt <- pow(sig.ppt, -2)
   mu.pba ~ dunif(-10,10)
   sig.pba ~ dunif(0, 20)
   tau.pba <- pow(sig.pba, -2)
