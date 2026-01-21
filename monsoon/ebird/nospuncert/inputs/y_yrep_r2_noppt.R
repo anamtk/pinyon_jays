@@ -21,7 +21,7 @@ data <- readRDS("/scratch/atm234/pinyon_jays/ebird/nospuncert/inputs/ebird_check
 data <- data %>%
   dplyr::select(numID, yrID, obsrvtn_c, checkID)
 
-yrep_samps <- readRDS("/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model_yrepsamples.RDS")
+yrep_samps <- readRDS("/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model_noppt_yrepsamples.RDS")
 
 yrep_samps_df <- bind_rows(as.data.frame(yrep_samps[[1]]),
                            as.data.frame(yrep_samps[[2]]),
@@ -45,7 +45,7 @@ yrep_samps_df2 <- yrep_samps_df %>%
 # R2 from samples ---------------------------------------------------------
 
 y_yrep_samps_df <- yrep_samps_df2 %>%
-  left_join(data, by = c("yrID", "numID", "checkID"))
+  left_join(data, by = c("yrID", "numID", "checkID")) 
 
 y_yrep_r2 <- function(sample){
   
@@ -54,17 +54,13 @@ y_yrep_r2 <- function(sample){
   
   #combine that yrep with observed y
   
-  R2 <- cor(log(yrep$obsrvtn_c+.01), 
-            log(yrep$count+.01),
-      use = 'complete.obs')^2
+  model <- lm(obsrvtn_c ~ count, data = yrep)
   
-  R2_nolog <- cor(yrep$obsrvtn_c, yrep$count,
-                  use = 'complete.obs')^2
+  sum <- summary(model)
   
-  R2_df <- as.data.frame(cbind(R2 = R2,
-                               R2_nolog = R2_nolog))
+  R2 <- sum$adj.r.squared
   
-  return(list(R2_df))
+  return(R2)
   
 }
 
@@ -74,5 +70,5 @@ r2_list <- lapply(samps, y_yrep_r2)
 
 r2_df <- as.data.frame(do.call(rbind, r2_list))
 
-saveRDS(r2_df, "/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model_yyrepr2.RDS")
+saveRDS(r2_df, "/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model_yyrepr2_noppt.RDS")
 

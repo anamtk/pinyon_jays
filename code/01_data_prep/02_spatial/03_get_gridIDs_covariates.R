@@ -53,7 +53,7 @@ ppt_df <- terra::as.data.frame(ppt_rast2,
 
 #temperature
 temprastlist <- list.files(path = here('data',
-                                       'spatial_data',
+                                       '02_spatial_data',
                                        'prism_monthly_tmax'), pattern='.bil$', 
                            recursive = T, all.files= T, full.names= T)
 
@@ -68,7 +68,7 @@ temp_df <- terra::as.data.frame(temp_rast2,
 
 #tmean
 tmeanrastlist <- list.files(path = here('data',
-                                       'spatial_data',
+                                       '02_spatial_data',
                                        'prism_monthly_tmean'), pattern='.bil$', 
                            recursive = T, all.files= T, full.names= T)
 
@@ -82,7 +82,7 @@ tmean_df <- terra::as.data.frame(tmean_rast2,
                                 cells = TRUE)
 
 
-monsoon_rast <- terra::rast(here('data', 'spatial_data',
+monsoon_rast <- terra::rast(here('data', '02_spatial_data',
                                  'monsoon', 'SWMON.tif'))
 
 #terra::plot(monsoon_rast)
@@ -94,7 +94,7 @@ monsoon_df <- terra::as.data.frame(monsoon_rast2,
                                    cells = TRUE)
 
 pinyonba_rast <- terra::rast(here('data',
-                                  'spatial_data',
+                                  '02_spatial_data',
                                   'pinyonBA',
                                   'PinyonBA_4km_sqmPerHa.tif'))
 

@@ -212,7 +212,7 @@ corr_beta_sum <- corr_beta_df %>%
                                            "ConexTmax") ~ "Interactions",
                           TRUE ~ NA_character_)) %>%
   mutate(covariate = case_when(covariate == "Monsoon" ~ "Monsoonality",
-                               covariate == "Cones" ~ "Pinyon cone (seed) availability",
+                               covariate == "Cones" ~ "Pinyon (seed) cone availability",
                                covariate == "PinyonBA" ~ "Pinyon basal area (BA)",
                                covariate == "PPT" ~ "Precipitation (PPT)",
                                covariate == "Tmax" ~ "Maximum temperature (Tmax)",
@@ -223,7 +223,9 @@ corr_beta_sum <- corr_beta_df %>%
                                TRUE ~ covariate))
   
 
-
+saveRDS(corr_beta_sum, here('data',
+                            '04_jags_output_data',
+                            'corrected_covariate_effects.RDS'))
 # Figure 2: covariate effects ---------------------------------------------
 
 

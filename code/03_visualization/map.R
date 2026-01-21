@@ -210,7 +210,7 @@ ebird_coords <- st_coordinates(ebird) %>%
   coord_sf() +
   theme_void() +
   theme(legend.title = element_markdown(size = 8),
-        legend.position = "bottom",
+        #legend.position = "bottom",
         legend.text = element_text(size = 6),
         legend.key.size = unit(0.5, "cm"),
         legend.key.height = unit(0.2, 'cm')) +

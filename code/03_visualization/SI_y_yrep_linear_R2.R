@@ -39,6 +39,18 @@ yrep_sum2 <- as.data.frame(yrep_sum$quantiles) %>%
          numID = as.numeric(numID),
          checkID = as.numeric(checkID))
 
+yrep_sum3 <- as.data.frame(yrep_sum$statistics) %>%
+  rownames_to_column(var = "parm")%>%
+  filter(parm != "deviance") %>%
+  separate(parm, 
+           into = c("yrID", "numID", "checkID"),
+           sep = ",") %>%
+  mutate(yrID = str_sub(yrID, 17, nchar(yrID)),
+         checkID =str_sub(checkID, 1, (nchar(checkID)-1)),
+         yrID =as.numeric(yrID),
+         numID = as.numeric(numID),
+         checkID = as.numeric(checkID))
+
 yyrepr2 <- readRDS(here('monsoon',
                         'ebird',
                         'nospuncert',
@@ -50,11 +62,31 @@ yyrepr2 <- readRDS(here('monsoon',
 y_yrep_med <- yrep_sum2 %>%
   left_join(data, by = c("yrID", "numID", "checkID"))
 
-linear <- ggplot(y_yrep_med, aes(x = obsrvtn_c, y = `50%`)) +
+
+y_yrep_mean <- yrep_sum3 %>%
+  left_join(data, by = c("yrID", "numID", "checkID"))
+
+mod1 <- lm(log(`50%`+0.01) ~ log(obsrvtn_c+0.01),
+            data = y_yrep_med)
+
+cor(log(y_yrep_med$`50`+0.01), log(y_yrep_med$obsrvtn_c+0.01),
+    use = "complete.obs")^2
+
+cor(log(y_yrep_mean$Mean+0.01), log(y_yrep_mean$obsrvtn_c+0.01),
+    use = "complete.obs")^2
+
+cor(y_yrep_mean$Mean, y_yrep_mean$obsrvtn_c,
+    use = "complete.obs")^2
+
+summary(mod1)
+
+(linear <- ggplot(y_yrep_med, aes(x = obsrvtn_c, 
+                                  y = `50%`)) +
   geom_abline(slope = 1, intercept = 0, linetype = 2) +
   geom_point() +
   geom_linerange(aes(ymin = `2.5%`, ymax = `97.5%`)) +
-  labs(x = "Observed count", y = "Predicted count")
+    geom_abline(slope = 0.57, intercept = .13, linetype = 2, color = "pink") +
+  labs(x = "Observed count", y = "Predicted count"))
 
 # R2 from samples ---------------------------------------------------------
 

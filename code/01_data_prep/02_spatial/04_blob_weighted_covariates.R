@@ -81,7 +81,7 @@ monsoon <- read.csv(here('data',
   filter(cellID %in% cells$cellID)
 
 pinyon <- read.csv(here('data',
-                            'spatial_data',
+                            '02_spatial_data',
                             'cleaned_data',
                             'pinyonba_data_df.csv'))%>%
   dplyr::select(cell, 
