@@ -52,6 +52,7 @@ set.seed(1)
 ebird <- read.csv(here('data',
                        '01_ebird_data',
                        'cleaned_data',
+                       '02_all_auk_filtered',
                        'all_ebird_data.csv'))
 
 ebird %>%
@@ -179,48 +180,6 @@ total_sum %>%
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-#looks like there are more checklists per cell following
-#2009 (2010 onward) ~4.2 checklists/cell then
-#so we can use 2010 as our baseline 
-#for filtering other years
-# weekly_sum <- as.data.frame(ebird_spatial3) %>% 
-#   mutate(week = week(observation_date)) %>%
-#   group_by(year, week, cellID) %>% 
-#   tally() %>%
-#   ungroup()
-# 
-# #this ends up being ~same as just doing it yearly like below
-# weekly_ss <- ebird_spatial3 %>% 
-#   mutate(week = week(observation_date)) %>%
-#   group_by(year, week, cellID) %>% 
-#   #5 per week that we can then subsample to be 
-#   #5 per cell in a year
-#   slice_sample(n = 5) %>% 
-#   ungroup() %>%
-#   group_by(year, cellID) %>%
-#   slice_sample(n = 5)
-# 
-# yearly_ss <- ebird_spatial3 %>%
-#   mutate(week = week(observation_date)) %>%
-#   group_by(year, cellID) %>%
-#   slice_sample(n = 5)
-#   
-# weekly <- weekly_ss %>%
-#   dplyr::select(week) %>%
-#   mutate(type = 'weekly')
-# 
-# yearly <- yearly_ss %>%
-#   dplyr::select(week) %>%
-#   mutate(type = 'yearly')
-# 
-# df <- as.data.frame(weekly) %>%
-#   bind_rows(as.data.frame(yearly)) 
-# 
-# ggplot(df, aes(x = week, fill = type)) +
-#   geom_histogram(position = 'dodge') +
-#   theme_bw()
-
-
 # Get polygons around each bird point -------------------------------------
 
 ebird_spatial3 %>%
@@ -273,6 +232,7 @@ ebird_buffer2 <-  ebird_buffer %>%
 st_write(ebird_buffer2, here('data',
                              'ebird_data',
                              'cleaned_data',
+                             '03_subsampled',
                              'all_ebird_data_buffercellIDs.shp'))
 
 
@@ -280,4 +240,5 @@ st_write(ebird_buffer2, here('data',
 st_write(ebird_spatial4, here('data',
                       'ebird_data',
                       'cleaned_data',
+                      '03_subsampled',
                       'all_ebird_data_conefiltered.shp'))

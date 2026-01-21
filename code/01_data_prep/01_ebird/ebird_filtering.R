@@ -50,10 +50,12 @@ ebd_filters <- ebd_co %>%
 f_ebd_co <- file.path(here('data',
                            '01_ebird_data',
                            'cleaned_data',
+                           '01_auk_filtering',
                            'ebd_co_filtered.txt'))
 f_sampling_co <- file.path(here('data',
                             '01_ebird_data',
                             'cleaned_data',
+                            '01_auk_filtering',
                             'ebd_co_checklists.txt'))
 
 # only run if the files don't already exist
@@ -94,10 +96,12 @@ ebd_filters <- ebd_nm %>%
 f_ebd_nm <- file.path(here('data',
                            '01_ebird_data',
                            'cleaned_data',
+                           '01_auk_filtering',
                            'ebd_nm_filtered.txt'))
 f_sampling_nm <- file.path(here('data',
                                 '01_ebird_data',
                                 'cleaned_data',
+                                '01_auk_filtering',
                                 'ebd_nm_checklists.txt'))
 
 # only run if the files don't already exist
@@ -139,10 +143,12 @@ ebd_filters <- ebd_az %>%
 f_ebd_az <- file.path(here('data',
                            '01_ebird_data',
                            'cleaned_data',
+                           '01_auk_filtering',
                            'ebd_az_filtered.txt'))
 f_sampling_az <- file.path(here('data',
                                 '01_ebird_data',
                                 'cleaned_data',
+                                '01_auk_filtering',
                                 'ebd_az_checklists.txt'))
 
 # only run if the files don't already exist
@@ -184,10 +190,12 @@ ebd_filters <- ebd_ut %>%
 f_ebd_ut <- file.path(here('data',
                            '01_ebird_data',
                            'cleaned_data',
+                           '01_auk_filtering',
                            'ebd_ut_filtered.txt'))
 f_sampling_ut <- file.path(here('data',
                                 '01_ebird_data',
                                 'cleaned_data',
+                                '01_auk_filtering',
                                 'ebd_ut_checklists.txt'))
 
 # only run if the files don't already exist
@@ -268,6 +276,7 @@ ebird <- ebd_zf_filtered %>%
 write.csv(ebird, here('data',
                '01_ebird_data',
                'cleaned_data',
+               '02_all_auk_filtered',
                'all_ebird_data.csv'))
 
 

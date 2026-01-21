@@ -16,8 +16,6 @@ for(i in package.list){library(i, character.only = T)}
 # Load Rhat ---------------------------------------------------------------
 
 mod_rhat <- readRDS(here('monsoon',
-                         'ebird',
-                         'nospuncert',
                          'outputs',
                          'ebird_abund_model2_Rhat.RDS'))
 

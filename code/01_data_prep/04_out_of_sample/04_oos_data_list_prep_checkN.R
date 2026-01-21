@@ -42,7 +42,7 @@ theme_set(theme_bw())
 ebird <- read_sf(here('data',
                       'ebird_data',
                       'cleaned_data',
-                      "oos",
+                      "05_oos",
                       'all_oos_ebird_data_conefiltered.shp')) %>%
   dplyr::select(cellID,
                 chckls_, #checklist ID
@@ -60,7 +60,7 @@ ebird <- read_sf(here('data',
 ebird_blobIDs <- read.csv(here('data',
                                'ebird_data',
                                'cleaned_data',
-                               'oos',
+                               '05_oos',
                                'ebird_oos_cellIDlists.csv')) %>%
   dplyr::select(-X) %>%
   rename(blobID = cellID) %>%
@@ -69,37 +69,37 @@ ebird_blobIDs <- read.csv(here('data',
 cones <- read.csv(here('data',
                        'spatial_data',
                        'cleaned_data',
-                       'oos',
+                       '03_oos',
                        'oos_cones_weighted_mean_blob.csv'))
 
 temp <- read.csv(here('data',
                       'spatial_data',
                       'cleaned_data',
-                      'oos',
+                      '03_oos',
                       'oos_temp_weighted_mean_blob.csv'))
 
 tmean <- read.csv(here('data',
                        'spatial_data',
                        'cleaned_data',
-                       'oos',
+                       '03_oos',
                        'oos,tmean_weighted_mean_blob.csv'))
 
 ppt <- read.csv(here('data',
                      'spatial_data',
                      'cleaned_data',
-                     'oos',
+                     '03_oos',
                      'oos_ppt_weighted_mean_blob.csv'))
 
 monsoon <- read.csv(here('data',
                          'spatial_data',
                          'cleaned_data',
-                         'oos',
+                         '03_oos',
                          'oos_monsoon_weighted_mean_blob.csv'))
 
 pinyon <- read.csv(here('data',
                         'spatial_data',
                         'cleaned_data',
-                        'oos',
+                        '03_oos',
                         'oos_pinyonBA_weighted_mean_blob.csv'))
 
 
@@ -550,7 +550,7 @@ saveRDS(ebird_index_df,
         here('data',
              'ebird_data',
              'cleaned_data',
-             'oos',
+             '05_oos',
              'oos_ebird_check_blob_yr_ids.RDS'))
 
 

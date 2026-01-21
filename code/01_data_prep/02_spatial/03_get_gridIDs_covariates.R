@@ -190,36 +190,38 @@ monsoon_df2 <- monsoon_df %>%
 write.csv(cone_df, here('data',
                         'spatial_data',
                         'cleaned_data',
+                        '01_get_gridIDs',
                         'cone_masting_df.csv'))
 
 
 write.csv(temp_df2, here('data',
                          'spatial_data',
                          'cleaned_data',
+                         '01_get_gridIDs',
                          'temp_data_df.csv'))
 
 write.csv(tmean_df2, here('data',
                          'spatial_data',
                          'cleaned_data',
+                         '01_get_gridIDs',
                          'tmean_data_df.csv'))
 
 write.csv(ppt_df2, here('data',
                         'spatial_data',
                         'cleaned_data',
+                        '01_get_gridIDs',
                         'ppt_data_df.csv'))
 
 
 write.csv(monsoon_df2, here('data',
                             'spatial_data',
                             'cleaned_data',
+                            '01_get_gridIDs',
                             'monsoon_data_df.csv'))
 
 write.csv(pinyonba_df, here('data',
                              'spatial_data',
                              'cleaned_data',
+                            '01_get_gridIDs',
                              'pinyonba_data_df.csv'))
-
-
- 
-
 

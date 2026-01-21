@@ -29,7 +29,7 @@ for(i in package.list){library(i, character.only = T)}
 ebird <- read.csv(here('data',
                        'ebird_data',
                        'cleaned_data',
-                       'oos',
+                       '05_oos',
                        'ebird_oos_cellIDlists.csv')) %>%
   dplyr::select(-X) %>%
   rename(blobID = cellID) %>%
@@ -41,6 +41,7 @@ cells <- ebird %>%
 cones <- read.csv(here('data',
                         'spatial_data',
                         'cleaned_data',
+                       '01_get_gridIDs',
                         'cone_masting_df.csv'))%>%
   dplyr::select(cell, 
                 X2000:X2024) %>%
@@ -51,6 +52,7 @@ cones <- read.csv(here('data',
 temp <- read.csv(here('data',
                          'spatial_data',
                          'cleaned_data',
+                      '01_get_gridIDs',
                          'temp_data_df.csv')) %>%
   dplyr::select(cellID, 
                 PRISM_tmax_stable_4kmM3_200001_bil:PRISM_tmax_stable_4kmM3_202312_bil) %>%
@@ -59,6 +61,7 @@ temp <- read.csv(here('data',
 tmean <- read.csv(here('data',
                        'spatial_data',
                        'cleaned_data',
+                       '01_get_gridIDs',
                        'tmean_data_df.csv')) %>%
   dplyr::select(cellID, 
                 PRISM_tmean_stable_4kmM3_200001_bil:PRISM_tmean_stable_4kmM3_202312_bil) %>%
@@ -68,6 +71,7 @@ tmean <- read.csv(here('data',
 ppt <- read.csv(here('data',
                         'spatial_data',
                         'cleaned_data',
+                     '01_get_gridIDs',
                         'ppt_data_df.csv')) %>%
   dplyr::select(cellID, 
                 PRISM_ppt_stable_4kmM3_200001_bil:PRISM_ppt_stable_4kmM3_202312_bil)%>%
@@ -76,6 +80,7 @@ ppt <- read.csv(here('data',
 monsoon <- read.csv(here('data',
                             'spatial_data',
                             'cleaned_data',
+                         '01_get_gridIDs',
                             'monsoon_data_df.csv')) %>%
   dplyr::select(cellID, PRISM_ppt_30yr_normal_800mM4_07_bil) %>%
   rename(monsoon = PRISM_ppt_30yr_normal_800mM4_07_bil) %>%
@@ -84,6 +89,7 @@ monsoon <- read.csv(here('data',
 pinyon <- read.csv(here('data',
                             'spatial_data',
                             'cleaned_data',
+                        '01_get_gridIDs',
                             'pinyonba_data_df.csv'))%>%
   dplyr::select(cell, 
                 PinyonBA_sqftPerAc_2010:PinyonBA_sqftPerAc_2022) %>%
@@ -123,7 +129,7 @@ cones2 <- ebird %>%
 write.csv(cones2, here('data',
               'spatial_data',
               'cleaned_data',
-              'oos',
+              '03_oos',
               'oos_cones_weighted_mean_blob.csv'))
 
 # temp --------------------------------------------------------------------
@@ -187,7 +193,7 @@ temp2 <- ebird %>%
 write.csv(temp2, here('data',
                        'spatial_data',
                        'cleaned_data',
-                      'oos',
+                      '03_oos',
                        'oos_temp_weighted_mean_blob.csv'))
 
 # tmean --------------------------------------------------------------------
@@ -251,7 +257,7 @@ tmean2 <- ebird %>%
 write.csv(tmean2, here('data',
                       'spatial_data',
                       'cleaned_data',
-                      'oos',
+                      '03_oos',
                       'oos,tmean_weighted_mean_blob.csv'))
 
 # PPT ---------------------------------------------------------------------
@@ -301,7 +307,7 @@ ppt2 <- ebird %>%
 write.csv(ppt2, here('data',
                       'spatial_data',
                       'cleaned_data',
-                     'oos',
+                     '03_oos',
                       'oos_ppt_weighted_mean_blob.csv'))
 
 
@@ -316,7 +322,7 @@ monsoon2 <- ebird %>%
 write.csv(monsoon2, here('data',
                      'spatial_data',
                      'cleaned_data',
-                     'oos',
+                     '03_oos',
                      'oos_monsoon_weighted_mean_blob.csv'))
 
 
@@ -337,7 +343,7 @@ pinyon2 <- ebird %>%
 write.csv(pinyon2, here('data',
                          'spatial_data',
                          'cleaned_data',
-                        'oos',
+                        '03_oos',
                          'oos_pinyonBA_weighted_mean_blob.csv'))
   
   

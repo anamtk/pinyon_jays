@@ -22,8 +22,6 @@ theme_set(theme_bw())
 # Load model summary ------------------------------------------------------
 # 
 betas <- readRDS(here('monsoon',
-                      'ebird',
-                      'nospuncert',
                       'outputs',
                       'ebird_abund_model2_summary.RDS'))
 

@@ -40,22 +40,16 @@ for(i in package.list){library(i, character.only = T)}
 #          checkID = as.numeric(checkID))
 
 r2 <- readRDS(here('monsoon',
-                        'ebird',
-                        'nospuncert',
                         'outputs',
                         'ebird_abund_model_yyrepr2.RDS')) %>%
   mutate(model = "full") 
 
 r2_nocone <- readRDS(here('monsoon',
-                        'ebird',
-                        'nospuncert',
                         'outputs',
                         'ebird_abund_model_yyrepr2_nocone.RDS'))%>%
   mutate(model = "nocone")
 
 r2_noppt <- readRDS(here('monsoon',
-                        'ebird',
-                        'nospuncert',
                         'outputs',
                         'ebird_abund_model_yyrepr2_noppt.RDS'))%>%
   mutate(model = "noppt") 

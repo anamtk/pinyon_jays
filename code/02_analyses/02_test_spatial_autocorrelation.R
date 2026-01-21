@@ -29,12 +29,11 @@ for(i in package.list){library(i, character.only = T)}
 ebird <- readRDS(here('data',
                       '01_ebird_data',
                       'cleaned_data',
+                      '04_JAGS_indexIDs',
                       'ebird_check_blob_yr_ids.RDS')) %>%
   st_as_sf()
 
 residuals_sum <- readRDS(here('monsoon',
-                       'ebird',
-                       'nospuncert',
                        'outputs',
                        'ebird_abund_model_residuals.RDS'))
 

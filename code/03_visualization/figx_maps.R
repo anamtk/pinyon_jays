@@ -27,6 +27,7 @@ theme_set(theme_void())
 ebird <- read_sf(here('data',
                        '01_ebird_data',
                        'cleaned_data',
+                      '03_subsampled',
                        'all_ebird_data_conefiltered.shp'))
 
 pinyonba_rast <- terra::rast(here('data',

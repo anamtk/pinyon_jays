@@ -22,16 +22,12 @@ theme_set(theme_bw())
 # Load model summary ------------------------------------------------------
 # 
 betas <- readRDS(here('monsoon',
-                      'ebird',
-                      'nospuncert',
                       'outputs',
                       'ebird_abund_model2_summary.RDS'))
 # 
 
 
 beta_samples <- readRDS(here('monsoon',
-                           'ebird',
-                           'nospuncert',
                            'outputs',
                            'ebird_abund_model_covariate_effect_samples.RDS'))
 
@@ -50,6 +46,7 @@ data_list <- readRDS(here('data',
 ebird_blobIDs <- read.csv(here('data',
                                '01_ebird_data',
                                'cleaned_data',
+                               '03_subsampled',
                                'ebird_cellIDlists.csv')) %>%
   dplyr::select(-X) %>%
   rename(blobID = cellID) %>%
@@ -66,27 +63,32 @@ all_blobs <- ebird_blobIDs %>%
 cones <- read.csv(here('data',
                        '02_spatial_data',
                        'cleaned_data',
+                       '02_weighted_blob_covariates',
                        'cones_weighted_mean_blob.csv')) 
 
 temp <- read.csv(here('data',
                       '02_spatial_data',
                       'cleaned_data',
+                      '02_weighted_blob_covariates',
                       'temp_weighted_mean_blob.csv'))
 
 ppt <- read.csv(here('data',
                      '02_spatial_data',
                      'cleaned_data',
+                     '02_weighted_blob_covariates',
                      'ppt_weighted_mean_blob.csv'))
 
 monsoon <- read.csv(here('data',
                          '02_spatial_data',
                          'cleaned_data',
+                         '02_weighted_blob_covariates',
                          'monsoon_weighted_mean_blob.csv')) %>%
   filter(blobnum %in% all_blobs$blobnum) 
 
 pinyon <- read.csv(here('data',
                         '02_spatial_data',
                         'cleaned_data',
+                        '02_weighted_blob_covariates',
                         'pinyonBA_weighted_mean_blob.csv')) %>%
   filter(blobnum %in% all_blobs$blobnum)
 

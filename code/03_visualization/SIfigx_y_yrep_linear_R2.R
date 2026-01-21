@@ -18,12 +18,11 @@ for(i in package.list){library(i, character.only = T)}
 data <- readRDS(here('data',
                       '01_ebird_data',
                       'cleaned_data',
+                     '03_subsampled',
                       'ebird_check_blob_yr_ids.RDS')) %>%
   dplyr::select(numID, yrID, obsrvtn_c, checkID)
 
 yrep_sum <- readRDS(here('monsoon',
-                           'ebird',
-                           'nospuncert',
                            'outputs',
                            'ebird_abund_model_yrep.RDS'))
 
@@ -52,8 +51,6 @@ yrep_sum3 <- as.data.frame(yrep_sum$statistics) %>%
          checkID = as.numeric(checkID))
 
 yyrepr2 <- readRDS(here('monsoon',
-                        'ebird',
-                        'nospuncert',
                         'outputs',
                         'ebird_abund_model_yyrepr2.RDS'))
 

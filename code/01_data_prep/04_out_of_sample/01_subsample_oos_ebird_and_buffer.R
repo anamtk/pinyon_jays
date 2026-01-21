@@ -54,6 +54,7 @@ set.seed(1)
 ebird_test <- read_sf(here('data',
                            'ebird_data',
                            'cleaned_data',
+                           '03_subsampled',
                            'all_ebird_data_conefiltered.shp'))
 
 #unique checklist IDs
@@ -64,6 +65,7 @@ test_checks <- ebird_test$chckls_
 ebird <- read.csv(here('data',
                        'ebird_data',
                        'cleaned_data',
+                       '02_all_auk_filtered',
                        'all_ebird_data.csv')) %>%
   filter(!checklist_id %in% test_checks)
 
@@ -284,7 +286,7 @@ ebird_buffer3 <- ebird_buffer2 %>%
 st_write(ebird_buffer3, here('data',
                              'ebird_data',
                              'cleaned_data',
-                             "oos",
+                             "05_oos",
                              'all_oos_ebird_data_buffercellIDs.shp'))
 
 
@@ -292,5 +294,5 @@ st_write(ebird_buffer3, here('data',
 st_write(ebird_spatial4, here('data',
                       'ebird_data',
                       'cleaned_data',
-                      "oos",
+                      "05_oos",
                       'all_oos_ebird_data_conefiltered.shp'))

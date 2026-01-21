@@ -31,6 +31,7 @@ pinyonba_df <- terra::as.data.frame(pinyonba_rast,
 ebird_buffer <- read_sf(here('data',
                            'ebird_data',
                            'cleaned_data',
+                           '03_subsampled',
                            'all_ebird_data_buffercellIDs.shp')) %>%
   st_make_valid() %>% 
   rowwise() %>%
@@ -72,6 +73,7 @@ write.csv(ebird_df2,
           here('data',
                'ebird_data',
                'cleaned_data',
+               '03_subsampled',
                'ebird_cellIDlists.csv'))
 
 
@@ -79,11 +81,5 @@ write.csv(cells,
           here('data',
                'spatial_data',
                'cleaned_data',
+               '00_metadata',
                'cellIDs.csv'))
-
-
-
-
-
-
-

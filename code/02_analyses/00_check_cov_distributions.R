@@ -49,6 +49,7 @@ theme_set(theme_bw())
 ebird <- read.csv(here('data',
                        '01_ebird_data',
                        'cleaned_data',
+                       '03_subsampled',
                        'ebird_cellIDlists.csv')) %>%
   dplyr::select(-X) %>%
   rename(blobID = cellID) %>%
@@ -63,6 +64,7 @@ ebird <- read.csv(here('data',
 cones <- read.csv(here('data',
                        '02_spatial_data',
                        'cleaned_data',
+                       '01_get_gridIDs',
                        'cone_masting_df.csv'))%>%
   rename(cellID = cell)
 
@@ -118,6 +120,7 @@ rm(cones, cones2, cone_plot)
 temp <- read.csv(here('data',
                       '02_spatial_data',
                       'cleaned_data',
+                      '01_get_gridIDs',
                       'temp_data_df.csv')) %>%
   dplyr::select(cellID, 
                 PRISM_tmax_stable_4kmM3_200001_bil:PRISM_tmax_stable_4kmM3_202312_bil) 
@@ -154,6 +157,7 @@ rm(temp2, temp, temp_plot)
 ppt <- read.csv(here('data',
                      '02_spatial_data',
                      'cleaned_data',
+                     '01_get_gridIDs',
                      'ppt_data_df.csv')) %>%
   dplyr::select(cellID, 
                 PRISM_ppt_stable_4kmM3_200001_bil:PRISM_ppt_stable_4kmM3_202312_bil)
@@ -196,6 +200,7 @@ rm(ppt, ppt2, ppt_plot)
 monsoon <- read.csv(here('data',
                          '02_spatial_data',
                          'cleaned_data',
+                         '01_get_gridIDs',
                          'monsoon_data_df.csv')) %>%
   dplyr::select(cellID, PRISM_ppt_30yr_normal_800mM4_07_bil) %>%
   rename(monsoon = PRISM_ppt_30yr_normal_800mM4_07_bil)
@@ -226,6 +231,7 @@ ggsave(here("pictures",
 pinyon <- read.csv(here('data',
                         '02_spatial_data',
                         'cleaned_data',
+                        '01_get_gridIDs',
                         'pinyonba_data_df.csv'))%>%
   dplyr::select(cell, 
                 PinyonBA_sqftPerAc_2010:PinyonBA_sqftPerAc_2022) %>%

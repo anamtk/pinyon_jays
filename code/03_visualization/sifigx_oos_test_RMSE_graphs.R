@@ -27,8 +27,6 @@ test <- readRDS(here("data",
 mean_y <- mean(c(data$ebird.count, test$ebird.count), na.rm = T)
 
 rmse_samples <- readRDS(here('monsoon',
-                             'ebird',
-                             'nospuncert',
                              'outputs',
                              'ebird_abund_model_RMSE_samples.RDS'))
 

@@ -42,6 +42,7 @@ theme_set(theme_bw())
 ebird <- read_sf(here('data',
                        '01_ebird_data',
                        'cleaned_data',
+                      '03_subsampled',
                        'all_ebird_data_conefiltered.shp')) %>%
   dplyr::select(cellID,
                 chckls_, #checklist ID
@@ -59,6 +60,7 @@ ebird <- read_sf(here('data',
 ebird_blobIDs <- read.csv(here('data',
                        '01_ebird_data',
                        'cleaned_data',
+                       '03_subsampled',
                        'ebird_cellIDlists.csv')) %>%
   dplyr::select(-X) %>%
   rename(blobID = cellID) %>%
@@ -67,31 +69,37 @@ ebird_blobIDs <- read.csv(here('data',
 cones <- read.csv(here('data',
                        '02_spatial_data',
                        'cleaned_data',
+                       '02_weighted_blob_covariates',
                        'cones_weighted_mean_blob.csv'))
 
 temp <- read.csv(here('data',
                       '02_spatial_data',
                       'cleaned_data',
+                      '02_weighted_blob_covariates',
                       'temp_weighted_mean_blob.csv'))
 
 tmean <- read.csv(here('data',
                       '02_spatial_data',
                       'cleaned_data',
+                      '02_weighted_blob_covariates',
                       'tmean_weighted_mean_blob.csv'))
 
 ppt <- read.csv(here('data',
                      '02_spatial_data',
                      'cleaned_data',
+                     '02_weighted_blob_covariates',
                      'ppt_weighted_mean_blob.csv'))
 
 monsoon <- read.csv(here('data',
                          '02_spatial_data',
                          'cleaned_data',
+                         '02_weighted_blob_covariates',
                          'monsoon_weighted_mean_blob.csv'))
 
 pinyon <- read.csv(here('data',
                         '02_spatial_data',
                         'cleaned_data',
+                        '02_weighted_blob_covariates',
                         'pinyonBA_weighted_mean_blob.csv'))
 
 
@@ -150,11 +158,13 @@ as.data.frame(ebird3) %>%
 ba <- read.csv(here('data',
                     '02_spatial_data',
                     'cleaned_data',
+                    '01_get_gridIDs',
                     'pinyonba_data_df.csv'))
 
 cone_map <- read.csv(here('data',
                           '02_spatial_data',
                           'cleaned_data',
+                          '01_get_gridIDs',
                           'cone_masting_df.csv'))
 
 states <- st_as_sf(maps::map("state", fill=TRUE, plot =FALSE)) %>%
@@ -646,6 +656,7 @@ saveRDS(ebird_index_df,
         here('data',
              'ebird_data',
              'cleaned_data',
+             '04_JAGS_indexIDs',
              'ebird_check_blob_yr_ids.RDS'))
 
 

@@ -22,14 +22,10 @@ data <- readRDS(here('data',
 
 
 betas <- readRDS(here('monsoon',
-                      'ebird',
-                      'nospuncert',
                       'outputs',
                       'ebird_abund_model2_summary.RDS'))
 
 beta_samples <- readRDS(here('monsoon',
-                             'ebird',
-                             'nospuncert',
                              'outputs',
                              'ebird_abund_model_covariate_effect_samples.RDS'))
 
@@ -43,8 +39,6 @@ beta_samps <- bind_rows(as.data.frame(beta_samples[[1]]),
                values_to = "value")
 
 rmse_samples <- readRDS(here('monsoon',
-                             'ebird',
-                             'nospuncert',
                              'outputs',
                              'ebird_abund_model_RMSE_samples.RDS'))
 
@@ -57,7 +51,7 @@ rmse_df <- bind_rows(as.data.frame(rmse_samples[[1]]),
 tidy_oos_df <- readRDS(here('data',
              '01_ebird_data',
              'cleaned_data',
-             'oos',
+             '05_oos',
              'oos_ebird_check_blob_yr_ids.RDS'))
 
 # Prep data for the loop --------------------------------------------------
