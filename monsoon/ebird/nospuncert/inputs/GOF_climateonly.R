@@ -17,7 +17,17 @@ for(i in package.list){library(i, character.only = T)}
 
 # Load model --------------------------------------------------------------
 
-mod <- readRDS("/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model2_checkN_habitatonly.RDS")
+mod <- readRDS("/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model2_checkN_climateonly.RDS")
+
+# samples of yrep ---------------------------------------------------------
+
+mod4 <- update(mod,
+               parameters.to.save = parms2,
+               n.iter = 350)
+
+saveRDS(mod4$samples, file ="/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model_yrepsamples_climateonly.RDS")
+
+(end.time <- Sys.time())
 
 # Replicated data ---------------------------------------------------------
 
@@ -29,16 +39,8 @@ mod3 <- update(mod,
 
 sum3 <- summary(mod3$samples)
 
-saveRDS(sum3, file ="/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model_yrep_habitatonly.RDS")
+saveRDS(sum3, file ="/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model_yrep_climateonly.RDS")
 
 (end.time <- Sys.time())
 
-# samples of yrep ---------------------------------------------------------
 
-mod4 <- update(mod,
-               parameters.to.save = parms2,
-               n.iter = 350)
-
-saveRDS(mod4$samples, file ="/scratch/atm234/pinyon_jays/ebird/nospuncert/outputs/ebird_abund_model_yrepsamples_habitatonly.RDS")
-
-(end.time <- Sys.time())
