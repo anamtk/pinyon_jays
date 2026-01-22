@@ -18,7 +18,7 @@ for(i in package.list){library(i, character.only = T)}
 data <- readRDS(here('data',
                       '01_ebird_data',
                       'cleaned_data',
-                     '03_subsampled',
+                     '04_JAGS_indexIDs',
                       'ebird_check_blob_yr_ids.RDS')) %>%
   dplyr::select(numID, yrID, obsrvtn_c, checkID)
 
@@ -63,41 +63,43 @@ y_yrep_med <- yrep_sum2 %>%
 y_yrep_mean <- yrep_sum3 %>%
   left_join(data, by = c("yrID", "numID", "checkID"))
 
-mod1 <- lm(log(`50%`+0.01) ~ log(obsrvtn_c+0.01),
-            data = y_yrep_med)
-
-cor(log(y_yrep_med$`50`+0.01), log(y_yrep_med$obsrvtn_c+0.01),
-    use = "complete.obs")^2
+mod1 <- lm(log(Mean+0.01) ~ log(obsrvtn_c+0.01),
+            data = y_yrep_mean)
 
 cor(log(y_yrep_mean$Mean+0.01), log(y_yrep_mean$obsrvtn_c+0.01),
     use = "complete.obs")^2
 
-cor(y_yrep_mean$Mean, y_yrep_mean$obsrvtn_c,
-    use = "complete.obs")^2
-
 summary(mod1)
 
-(linear <- ggplot(y_yrep_med, aes(x = obsrvtn_c, 
-                                  y = `50%`)) +
+(linear <- ggplot(y_yrep_mean, aes(x = obsrvtn_c, 
+                                  y = Mean)) +
   geom_abline(slope = 1, intercept = 0, linetype = 2) +
   geom_point() +
-  geom_linerange(aes(ymin = `2.5%`, ymax = `97.5%`)) +
-    geom_abline(slope = 0.57, intercept = .13, linetype = 2, color = "pink") +
-  labs(x = "Observed count", y = "Predicted count"))
+  geom_linerange(aes(ymin = Mean-SD, ymax = Mean+SD)) +
+    #geom_abline(slope = 0.62, intercept = .15, linetype = 2, color = "pink") +
+  labs(x = "Observed count", y = "Mean Predicted count"))
+
+(linear <- ggplot(y_yrep_mean, aes(x = log(obsrvtn_c+0.01), 
+                                   y = log(Mean+0.01))) +
+    geom_abline(slope = 1, intercept = 0, linetype = 2) +
+    geom_point() +
+    geom_linerange(aes(ymin = log(Mean-SD+0.01), ymax = log(Mean+SD+0.01))) +
+    geom_abline(slope = 0.62, intercept = .15, linetype = 2, color = "pink") +
+    labs(x = "log(Observed count)", y = "log(Mean Predicted count)"))
 
 # R2 from samples ---------------------------------------------------------
 
 mean_r2 <- yyrepr2 %>%
-  summarise(mean = mean(V1, na.rm = T))
+  summarise(mean = mean(R2, na.rm = T))
 
 yyrepr2 %>%
-  summarise(mean = mean(V1, na.rm = T),
-            sd = sd(V1, na.rm = T),
+  summarise(mean = mean(R2, na.rm = T),
+            sd = sd(R2, na.rm = T),
             total = n(),
             se = sd/sqrt(total))
 
 r2 <- ggplot(yyrepr2) +
-  geom_histogram(aes(x = V1)) +
+  geom_histogram(aes(x = R2)) +
   geom_vline(xintercept = mean_r2$mean, linetype = 2) +
   labs(x = expression(paste(R^2)), y = "Count")
 

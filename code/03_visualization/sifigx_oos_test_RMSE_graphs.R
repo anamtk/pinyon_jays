@@ -37,7 +37,7 @@ rmse_df <- bind_rows(as.data.frame(rmse_samples[[1]]),
   mutate(type = "test")
 
 oos_RMSE_df <- readRDS(here('data',
-                          '04_cross_validation',
+                          '05_cross_validation',
                           'oos_RMSE.RDS')) %>%
   mutate(type = "oos") %>%
   rename(RMSE = oos_RMSE)

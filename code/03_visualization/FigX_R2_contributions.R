@@ -44,21 +44,16 @@ r2 <- readRDS(here('monsoon',
                         'ebird_abund_model_yyrepr2.RDS')) %>%
   mutate(model = "full") 
 
-r2_nocone <- readRDS(here('monsoon',
-                        'outputs',
-                        'ebird_abund_model_yyrepr2_nocone.RDS'))%>%
-  mutate(model = "nocone")
-
-r2_noppt <- readRDS(here('monsoon',
-                        'outputs',
-                        'ebird_abund_model_yyrepr2_noppt.RDS'))%>%
-  mutate(model = "noppt") 
+r2_habitat <- readRDS(here('monsoon',
+                           'outputs',
+                           'ebird_abund_model_yyrepr2_habitatonly.RDS')) %>%
+  mutate(model = "habitat")
 
 
 # COmbine -----------------------------------------------------------------
 
 r2_all <- r2 %>%
-  bind_rows(r2_nocone, r2_noppt)
+  bind_rows(r2_habitat)
 
 
 # Plot --------------------------------------------------------------------
@@ -77,21 +72,11 @@ R2_full <- r2 %>%
   summarise(Mean = mean(R2)) %>%
   as_vector()
 
-noconeR2 <- r2_nocone%>%
+habitatR2 <- r2_habitat%>%
   summarise(Mean = mean(R2)) %>%
   as_vector()
 
-nopptR2 <- r2_noppt%>%
-  summarise(Mean = mean(R2)) %>%
-  as_vector()
-
-cone_prop <- (R2_full-noconeR2)/R2_full
-ppt_prop <- (R2_full-nopptR2)/R2_full
-(noconeR2)/R2_full
-(nopptR2)/R2_full
-(R2_full-noconeR2)/R2_full
-(R2_full-nopptR2)/R2_full
-
+habitat_prop <- (habitatR2)/R2_full
 
 # Stacked bar -------------------------------------------------------------
 

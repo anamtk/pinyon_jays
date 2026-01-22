@@ -92,6 +92,10 @@ pinyon <- read.csv(here('data',
                         'pinyonBA_weighted_mean_blob.csv')) %>%
   filter(blobnum %in% all_blobs$blobnum)
 
+variable_importance <- readRDS(here('data',
+             '06_variable_importance',
+             'variable_relative_importance.RDS'))
+
 # Filter and scale all covariate datasets ---------------------------------
 
 cones2 <- cones %>%
@@ -260,3 +264,58 @@ ggsave(plot = covariate_betas,
        dpi = 300,
        units = "in")
 
+
+# Variable importance -----------------------------------------------------
+
+variable_importance %>%
+  mutate(variable = factor(variable, levels = c("PPT", "Temp",
+                                                "PinyonBA", 
+                                                "Monsoon", "Cone")) )%>%
+ggplot()+
+  geom_bar(aes(x = variable, y = relative_importance),
+           stat = 'identity') +
+  scale_x_discrete(labels = c("Monsoon" = "Monsoonality", 
+                              "Cone" = "Pinyon (seed) cone availability",
+                              "PinyonBA" = "Pinyon basal area (BA)",
+                              "PPT" = "Precipitation (PPT)",
+                              "Temp" = "Maximum temperature (Tmax)")) +
+  coord_flip()
+
+(imp_graph <- variable_importance %>%
+  mutate(var_type = case_when(variable %in% c("Monsoon", "PinyonBA") ~ "Habitat",
+                              variable %in% c("PPT", "Temp") ~ "Climate",
+                              TRUE ~ "Cones")) %>%
+  mutate(var_type = factor(var_type, levels = c("Cones","Climate", "Habitat"))) %>%
+  group_by(var_type) %>%
+  summarise(relative_importance = sum(relative_importance)) %>%
+  ggplot() +
+  geom_bar(aes(x = 1, y = relative_importance, fill = var_type),
+           stat = "identity",
+           width = 0.1,
+           color = "black") +
+  geom_text(aes(x = 1, y = relative_importance, group = var_type,
+                label = paste0(var_type, "\n", round(relative_importance*100, 0), "%")),
+            position = position_stack(vjust = 0.5 )) +
+  scale_y_continuous(labels = function(x) x * 100,
+                     name = "Relative importance (%)",
+                     position = "right") +
+  #xlim(0.95, 1.4) +
+  theme_minimal(base_size = 16) +
+  theme(legend.position ="none",
+        axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.tick.x = element_blank()) +
+  scale_fill_manual(values = c('#d9d9d9', '#bdbdbd','#969696')))
+
+covariate_betas + imp_graph +
+  plot_layout(widths = c(4,1))+
+  plot_annotation(tag_levels = "a",
+                  tag_suffix = ")")
+
+ggsave(here('pictures',
+            'final',
+            'covariate_effects_and_importance.jpg'),
+       width = 7,
+       height = 4,
+       dpi = 300,
+       units = "in")
