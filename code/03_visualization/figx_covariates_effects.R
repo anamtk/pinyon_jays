@@ -96,6 +96,20 @@ variable_importance <- readRDS(here('data',
              '06_variable_importance',
              'variable_relative_importance.RDS'))
 
+r2 <- readRDS(here('monsoon',
+                   'outputs',
+                   'ebird_abund_model_yyrepr2.RDS')) %>%
+  mutate(model = "full") 
+r2_nocone <- readRDS(here('monsoon',
+                          'outputs',
+                          'ebird_abund_model_yyrepr2_climatehabitat.RDS'))  %>%
+  mutate(model = "nocone") 
+
+r2_null <- readRDS(here('monsoon',
+                        'outputs',
+                        'ebird_abund_model_yyrepr2_null.RDS')) %>%
+  mutate(model = "null")
+
 # Filter and scale all covariate datasets ---------------------------------
 
 cones2 <- cones %>%
@@ -319,3 +333,72 @@ ggsave(here('pictures',
        height = 4,
        dpi = 300,
        units = "in")
+
+
+# R2 ----------------------------------------------------------------------
+
+r2_null_sum <- r2_null %>%
+  summarise(r2 = mean(R2)) %>%
+  dplyr::select(r2) %>%
+  as_vector()
+
+r2_full_sum <- r2 %>%
+  summarise(r2 = mean(R2)) %>%
+  dplyr::select(r2) %>%
+  as_vector()
+
+r2_nocone_sum <- r2_nocone %>%
+  summarise(r2 = mean(R2)) %>%
+  dplyr::select(r2) %>%
+  as_vector()
+
+r2_cont_habclim <- r2_nocone_sum-r2_null_sum
+r2_cont_cone <- r2_full_sum-r2_nocone_sum
+r2_cont_covs <- r2_full_sum-r2_null_sum
+
+r2_df <- as.data.frame(cbind(model = c("Cones", "Habitat & \n Climate"),
+                             r2_cont = c(r2_cont_cone,
+                                          r2_cont_habclim))) %>%
+  mutate(total_r2cont = r2_cont_covs) %>%
+  mutate(r2_cont = as.numeric(r2_cont)) %>%
+  rowwise() %>%
+  mutate(proportion_r2 = r2_cont/total_r2cont)
+
+(r2_graph <- r2_df %>%
+    ggplot() +
+    geom_bar(aes(x = 1, y = proportion_r2, fill = model),
+             stat = "identity",
+             width = 0.1,
+             color = "black") +
+    geom_text(aes(x = 1, y = proportion_r2, group = model,
+                  label = paste0(model, "\n", round(proportion_r2*100, 0), "%")),
+              position = position_stack(vjust = 0.5 )) +
+    scale_y_continuous(labels = function(x) x * 100,
+                       name = expression(paste("Relative contribution to ", R^2, " (%)")),
+                       #name = "Relative contribution to R2 (%)",
+                       position = "right") +
+    #xlim(0.95, 1.4) +
+    theme_minimal(base_size = 16) +
+    theme(legend.position ="none",
+          axis.text.x = element_blank(),
+          axis.title.x = element_blank(),
+          axis.tick.x = element_blank(),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor.x = element_blank()) +
+    scale_fill_manual(values = c('#67A9CF', '#d9d9d9'))
+)
+
+covariate_betas + r2_graph +
+  plot_layout(widths = c(4,1))+
+  plot_annotation(tag_levels = "a",
+                  tag_suffix = ")")
+
+
+ggsave(here('pictures',
+            'final',
+            'covariate_effects_and_r2.jpg'),
+       width = 8,
+       height = 4,
+       dpi = 300,
+       units = "in")
+

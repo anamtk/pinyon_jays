@@ -49,11 +49,27 @@ r2_habitat <- readRDS(here('monsoon',
                            'ebird_abund_model_yyrepr2_habitatonly.RDS')) %>%
   mutate(model = "habitat")
 
+r2_climate <- readRDS(here('monsoon',
+                           'outputs',
+                           'ebird_abund_model_yyrepr2_climateonly.RDS')) %>%
+  mutate(model = "climate")
+
+r2_null <- readRDS(here('monsoon',
+                           'outputs',
+                           'ebird_abund_model_yyrepr2_null.RDS')) %>%
+  mutate(model = "null")
+
+r2_nocone <- readRDS(here('monsoon',
+                        'outputs',
+                        'ebird_abund_model_yyrepr2_climatehabitat.RDS'))  %>%
+  mutate(model = "nocone") 
 
 # COmbine -----------------------------------------------------------------
 
+# r2_all <- r2 %>%
+#   bind_rows(r2_habitat, r2_climate, r2_null)
 r2_all <- r2 %>%
-  bind_rows(r2_habitat)
+  bind_rows(r2_nocone, r2_null)
 
 
 # Plot --------------------------------------------------------------------
@@ -67,6 +83,22 @@ ggplot(r2_all) +
                    fill = model), alpha = 0.6)
 
 # Get proportions ---------------------------------------------------------
+
+r2_all %>%
+  group_by(model) %>%
+  summarise(R2 = mean(R2)) %>%
+  arrange(R2)
+
+r2_null <- r2_all %>%
+  group_by(model) %>%
+  summarise(R2 = mean(R2)) %>%
+  arrange(R2) %>%
+  filter(model == 'null') %>%
+  dplyr::select(R2) %>%
+  as_vector()
+
+props <- r2_all %>%
+  mutate(null = )
 
 R2_full <- r2 %>%
   summarise(Mean = mean(R2)) %>%
